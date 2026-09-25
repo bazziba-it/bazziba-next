@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "cleanOutputs": true,
   "functions": {
     "api/**/*.ts": {
       "maxDuration": 30
