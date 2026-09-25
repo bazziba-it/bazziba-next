@@ -7,6 +7,8 @@ import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
 import Link from "next/link";
 import type { Video } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 interface ContestEntry {
   id: string;
   voteCount: number;
@@ -29,7 +31,7 @@ const mockContest = {
   startAt: "2025-09-01T00:00:00Z",
   endAt: "2025-09-30T23:59:59Z",
   prizePool: 5000,
-  status: "ACTIVE",
+  status: "ACTIVE" as const,
   entries: [
     {
       id: "entry-1",
@@ -66,7 +68,7 @@ const mockContest = {
         id: "vid-9",
         title: "Graffiti Stories - Roma",
         slug: "graffiti-stories-roma",
-        thumbnail: "https://images.unsplash.com/photo-1577032819764-2b9a6a3c3f8e?w=400&h=300&fit=crop",
+        thumbnail: "https://images.unsplash.com/photo-1578301979-642908803e52?w=400&h=300&fit=crop",
         viewCount: 445,
         duration: 380,
         createdAt: "2025-09-12T10:00:00Z",
@@ -228,7 +230,7 @@ export default function ContestPage() {
                 key={entry.id}
                 className="flex items-center gap-4 p-4 rounded-xl bg-card border hover:shadow-md transition-all duration-200 group"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-b from-brand-yellow to-amber-400 text-black font-bold text-lg flex-shrink-0">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-b from-brand-yellow to-amber-400 text-black font-bold flex-shrink-0">
                   {index < 3 ? (
                     <span className="text-xl">
                       {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
