@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { Play, Clock, User } from "lucide-react";
+import { Play, Clock } from "lucide-react";
 import { Badge } from "@/components/ui";
-import { formatViews, formatDate } from "@/lib/utils";
 import { getThumbnailUrl, getAvatarUrl } from "@/lib/server";
 import type { Video } from "@/types";
+
+function formatDurationFromSeconds(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 interface VideoCardProps {
   video: Video & {
@@ -38,20 +45,22 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
       prefetch={false}
     >
       <div className="space-y-2">
-        <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+        <div className="relative aspect-video rounded-xl overflow-hidden bg-muted shadow-md">
           <img
             src={getThumbnailUrl(video.thumbnail)}
             alt={video.title}
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
-            sizes="(max-width: 768px) 100vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw"
           />
           {video.duration && (
-            <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+            <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-md font-mono">
               {formatDurationFromSeconds(video.duration)}
             </div>
           )}
-          <Play className="absolute inset-0 m-auto h-10 w-10 text-white/80 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+            <Play className="h-10 w-10 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
+          </div>
         </div>
 
         <div className="flex gap-3">
@@ -61,14 +70,16 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
                 <img
                   src={getAvatarUrl(video.author?.image, video.author?.username)}
                   alt={video.author?.username || "Author"}
-                  className="h-7 w-7 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full object-cover ring-1 ring-border"
                   loading="lazy"
-                  width={28}
-                  height={28}
+                  width={32}
+                  height={32}
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className={`font-medium leading-tight line-clamp-2 ${isCompact ? "text-sm" : "text-base"}`}>
+                <h3 className={`font-medium leading-tight line-clamp-2 ${
+                  isCompact ? "text-sm" : "text-base"
+                }`}>
                   {video.title}
                 </h3>
                 {!isCompact && (
@@ -76,15 +87,29 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
                     <p className="text-sm text-muted-foreground line-clamp-1">
                       {video.author?.name || video.author?.username || "Unknown"}
                     </p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span>{formatViews(video.viewCount)} visualizzazioni</span>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                      <span>{video.viewCount} visualizzazioni</span>
                       <span>·</span>
-                      <span>{formatDate(video.createdAt)}</span>
+                      <span>{new Date(video.createdAt).toLocaleDateString("it-IT")}</span>
                     </div>
                   </>
                 )}
               </div>
             </>
+          )}
+          {!showAuthor && (
+            <div className="min-w-0 flex-1">
+              <h3 className={`font-medium leading-tight line-clamp-2 ${
+                isCompact ? "text-sm" : "text-base"
+              }`}>
+                {video.title}
+              </h3>
+              {!isCompact && (
+                <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
+                  {video.author?.name || video.author?.username || "Unknown"}
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -92,25 +117,21 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
   );
 }
 
-function formatDurationFromSeconds(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 interface VideoGridProps {
   videos: Video[];
   title?: string;
   emptyMessage?: string;
   compact?: boolean;
+  showAuthor?: boolean;
 }
 
-export function VideoGrid({ videos, title, emptyMessage = "No videos found", compact = false }: VideoGridProps) {
+export function VideoGrid({ videos, title, emptyMessage = "No videos found", compact = false, showAuthor = true }: VideoGridProps) {
   if (videos.length === 0) {
     return (
       <div className="text-center py-12">
+        <div className="inline-flex h-10 w-10 rounded-full bg-muted items-center justify-center mb-3">
+          <Play className="h-5 w-5 text-muted-foreground" />
+        </div>
         <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
     );
@@ -119,13 +140,14 @@ export function VideoGrid({ videos, title, emptyMessage = "No videos found", com
   return (
     <div className="space-y-4">
       {title && <h2 className="text-xl font-bold mb-4">{title}</h2>}
-      <div className="grid gap-4 sm:gap-6 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+      <div className="grid gap-5 sm:gap-6 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
         {videos.map((video) => (
           <VideoCard
             key={video.id}
             video={video}
             size={compact ? "compact" : "md"}
-            className="hover:shadow-lg transition-shadow"
+            showAuthor={showAuthor}
+            className="hover:shadow-xl transition-shadow"
           />
         ))}
       </div>
@@ -147,9 +169,9 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           className="group block"
           prefetch={false}
         >
-          <div className="rounded-xl border bg-card p-4 text-center transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
+          <div className="rounded-xl border bg-card p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02]">
             <div
-              className="mx-auto mb-2 h-10 w-10 rounded-lg flex items-center justify-center"
+              className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg"
               style={{ backgroundColor: category.color || "hsl(var(--primary))" }}
             >
               <span className="text-lg font-bold text-white">
@@ -159,7 +181,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
             <h3 className="text-sm font-medium">{category.name}</h3>
             {category.videoCount && (
               <p className="text-xs text-muted-foreground mt-1">
-                {formatViews(category.videoCount)} video
+                {category.videoCount} video
               </p>
             )}
           </div>

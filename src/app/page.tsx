@@ -1,16 +1,9 @@
 import { prisma } from "@/lib/server";
 import { VideoGrid, CategoryGrid } from "@/components/video/video-card";
 import type { Video, Category } from "@/types";
-
-// Wrap Prisma calls in try/catch to handle missing database engine gracefully
-async function safeQuery<T>(fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch (error) {
-    console.error("[Bazziba] Database query failed:", error);
-    return [] as T;
-  }
-}
+import { safeQuery } from "@/lib/server";
+import { TrendingUp, Trophy, Play, Star } from "lucide-react";
+import Image from "next/image";
 
 async function getVideos() {
   return safeQuery(async () => {
@@ -113,30 +106,69 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="py-6">
-      <div className="container mx-auto px-4 space-y-8">
-        {/* Hero / Banner */}
-        <section className="space-y-4">
-          <h1 className="text-2xl font-bold md:text-3xl">BAZZIBA!</h1>
-          <p className="text-muted-foreground max-w-2xl">
-            La piattaforma digitale dedicata esclusivamente al mondo artistico.
-            Condividi e scopri contenuti video con carattere e interesse artistico.
-          </p>
+    <div className="py-8">
+      <div className="container mx-auto px-4 space-y-12">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-yellow/20 via-background to-primary/5 py-12 md:py-20">
+          <div className="absolute inset-0 -z-10">
+            <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-yellow/10 blur-3xl"></div>
+            <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl"></div>
+          </div>
+
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-3xl space-y-6 text-center">
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                <span className="text-brand-yellow">BAZZIBA!</span>
+                <br />
+                <span className="text-2xl md:text-3xl text-muted-foreground">
+                  La Nuova Piattaforma delle Arti
+                </span>
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Scopri e condividi contenuti video dedicati esclusivamente al mondo artistico.
+                Musica, arte, cinema, teatro e molto altro.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a
+                  href="/feed/latest"
+                  className="inline-flex items-center justify-center rounded-lg bg-brand-yellow px-6 py-3 text-base font-semibold text-black transition-colors hover:bg-brand-yellow-hover"
+                >
+                  <Play className="mr-2 h-5 w-5 fill-current" />
+                  Esplora i video
+                </a>
+                <a
+                  href="/upload"
+                  className="inline-flex items-center justify-center rounded-lg border border-border px-6 py-3 text-base font-semibold transition-colors hover:bg-accent"
+                >
+                  <Star className="mr-2 h-5 w-5" />
+                  Carica il tuo video
+                </a>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Categories */}
         <section>
-          <h2 className="text-xl font-semibold mb-4">Categorie</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Categorie</h2>
+            <a
+              href="/categories"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Tutte le categorie →
+            </a>
+          </div>
           <CategoryGrid categories={categories} />
         </section>
 
         {/* Latest Videos */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Video Recenti</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Video Recenti</h2>
             <a
               href="/feed/latest"
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Vedi tutti
             </a>
@@ -147,30 +179,44 @@ export default async function HomePage() {
         {/* Contest */}
         {contestVideos.length > 0 && (
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-brand-yellow">
-                  Contest in Corso
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Vota il tuo video preferito
-                </p>
+            <div className="rounded-2xl bg-gradient-to-r from-brand-yellow/10 to-primary/10 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-brand-yellow flex items-center gap-2">
+                    <Trophy className="h-6 w-6" />
+                    Contest in Corso
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Vota il tuo video preferito
+                  </p>
+                </div>
+                <a
+                  href="/contest"
+                  className="text-sm font-medium text-brand-yellow hover:text-brand-yellow-hover"
+                >
+                  Vai al contest →
+                </a>
               </div>
-              <a
-                href="/contest"
-                className="text-sm font-medium text-brand-yellow hover:text-brand-yellow/80"
-              >
-                Vai al contest
-              </a>
+              <VideoGrid videos={contestVideos} compact emptyMessage="Nessun video in contest" />
             </div>
-            <VideoGrid videos={contestVideos} compact emptyMessage="Nessun video in contest" />
           </section>
         )}
 
         {/* Trending */}
         <section>
-          <h2 className="text-xl font-semibold mb-4">Trending</h2>
-          <VideoGrid videos={trending} compact showAuthor={false} emptyMessage="Nessun video trending" />
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              Trending
+            </h2>
+            <a
+              href="/feed/trending"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Vedi tutti
+            </a>
+          </div>
+          <VideoGrid videos={trending} showAuthor={false} emptyMessage="Nessun video trending" />
         </section>
       </div>
     </div>
