@@ -3,7 +3,6 @@
 @import "tailwindcss";
 
 @theme {
-  /* Light theme */
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
@@ -24,16 +23,13 @@
   --ring: 221.2 83.2% 53.3%;
   --radius: 0.5rem;
 
-  /* Brand colors */
   --brand-yellow: #FFD700;
   --brand-yellow-hover: #FFC107;
   --brand-yellow-dark: #FFA700;
 
-  /* Dark theme overrides */
   --background-dark: 222.2 84% 4.9%;
   --foreground-dark: 0 0% 93%;
   --card-dark: 222.2 84% 8%;
-  --popover-dark: 222.2 84% 8%;
   --border-dark: 210 30.1% 20%;
   --muted-dark: 210 30.1% 12%;
   --muted-foreground-dark: 222.2 47.4% 60%;
@@ -58,24 +54,27 @@
 .brand-yellow { color: var(--brand-yellow); }
 .bg-brand-yellow { background-color: var(--brand-yellow); }
 .text-brand-yellow { color: var(--brand-yellow); }
-.border-brand-yellow { border-color: var(--brand-yellow); }
 
 /* Video card hover */
 .video-card {
-  @apply transition-all duration-300 ease-out;
+  transition-property: transform, box-shadow;
+  transition-duration: 300ms;
+  transition-timing-function: ease-out;
   transform: translateY(0);
 }
 .video-card:hover {
-  @apply scale-[1.03] shadow-xl;
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .card-hover {
-  @apply transition-all duration-300 ease-out;
+  transition-property: transform, box-shadow;
+  transition-duration: 300ms;
+  transition-timing-function: ease-out;
 }
 .card-hover:hover {
-  @apply shadow-lg;
   transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
 
 /* Custom scrollbar */
@@ -93,7 +92,7 @@
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .animate-float { animation: float 3s ease-in-out infinite; }
 
-/* Gradient text for headings */
+/* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, #FFD700 0%, #FF8C00 50%, #FF6B6B 100%);
   -webkit-background-clip: text;
@@ -106,8 +105,4 @@
   background: hsl(var(--background) / 0.7);
   border: 1px solid hsl(var(--border) / 0.5);
   backdrop-filter: blur(12px);
-}
-
-.focus-ring {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
 }
