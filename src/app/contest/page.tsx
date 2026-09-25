@@ -1,89 +1,138 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { VideoCard } from "@/components/video/video-card";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { Trophy, Calendar, Users, Clock, Share2, ExternalLink, Upload } from "lucide-react";
+import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
 import Link from "next/link";
+import type { Video } from "@/types";
 
-interface Contest {
+interface ContestEntry {
   id: string;
-  title: string;
-  description: string;
-  startAt: string;
-  endAt: string;
-  prizePool: number;
-  status: "ACTIVE" | "UPCOMING" | "ENDED";
-  entries: Array<{
+  voteCount: number;
+  video: {
     id: string;
-    voteCount: number;
-    video: {
-      id: string;
-      title: string;
-      slug: string;
-      thumbnail: string;
-      viewCount: number;
-      duration: number;
-      createdAt: string;
-      author: { id: string; username: string; name: string; image: string };
-    };
-  }>;
+    title: string;
+    slug: string;
+    thumbnail: string;
+    viewCount: number;
+    duration: number;
+    createdAt: string;
+    author: { id: string; username: string; name: string; image: string };
+  };
 }
 
+const mockContest = {
+  id: "contest-1",
+  title: "Arte e Street Culture",
+  description: "Un contest dedicato all'arte urbana, street art, e culture di strada. Partecipa con i tuoi video artistici!",
+  startAt: "2025-09-01T00:00:00Z",
+  endAt: "2025-09-30T23:59:59Z",
+  prizePool: 5000,
+  status: "ACTIVE",
+  entries: [
+    {
+      id: "entry-1",
+      voteCount: 1248,
+      video: {
+        id: "vid-7",
+        title: "Musa Urbana - Frammenti di Luce",
+        slug: "musa-urbana-frammenti-di-luce",
+        thumbnail: "https://images.unsplash.com/photo-1578301979-642908803e52?w=400&h=300&fit=crop",
+        viewCount: 890,
+        duration: 520,
+        createdAt: "2025-09-15T12:00:00Z",
+        author: { id: "user-7", username: "musa_urbana", name: "Musa Urbana", image: "https://i.pravatar.com/64?img=7" },
+      },
+    },
+    {
+      id: "entry-2",
+      voteCount: 982,
+      video: {
+        id: "vid-8",
+        title: "Street Art Live Painting",
+        slug: "street-art-live-painting",
+        thumbnail: "https://images.unsplash.com/photo-1577032819764-2b9a6a3c3f8e?w=400&h=300&fit=crop",
+        viewCount: 654,
+        duration: 480,
+        createdAt: "2025-09-14T15:30:00Z",
+        author: { id: "user-8", username: "bluemark", name: "Blu Mark", image: "https://i.pravatar.com/64?img=8" },
+      },
+    },
+    {
+      id: "entry-3",
+      voteCount: 756,
+      video: {
+        id: "vid-9",
+        title: "Graffiti Stories - Roma",
+        slug: "graffiti-stories-roma",
+        thumbnail: "https://images.unsplash.com/photo-1577032819764-2b9a6a3c3f8e?w=400&h=300&fit=crop",
+        viewCount: 445,
+        duration: 380,
+        createdAt: "2025-09-12T10:00:00Z",
+        author: { id: "user-9", username: "romano_graffiti", name: "Romano", image: "https://i.pravatar.com/64?img=9" },
+      },
+    },
+    {
+      id: "entry-4",
+      voteCount: 432,
+      video: {
+        id: "vid-10",
+        title: "Bboying Under the Bridges",
+        slug: "bboying-under-the-bridges",
+        thumbnail: "https://images.unsplash.com/photo-15188376950205-8d818a1a3175?w=400&h=300&fit=crop",
+        viewCount: 312,
+        duration: 290,
+        createdAt: "2025-09-08T18:00:00Z",
+        author: { id: "user-10", username: "breaker_kid", name: "Kid Breaker", image: "https://i.pravatar.com/64?img=10" },
+      },
+    },
+    {
+      id: "entry-5",
+      voteCount: 298,
+      video: {
+        id: "vid-11",
+        title: "Urban Canvas - Berlin Walls",
+        slug: "urban-canvas-berlin-walls",
+        thumbnail: "https://images.unsplash.com/photo-1578301979-642908803e52?w=400&h=300&fit=crop",
+        viewCount: 267,
+        duration: 420,
+        createdAt: "2025-09-05T14:00:00Z",
+        author: { id: "user-11", username: "berlin_street", name: "Alex K", image: "https://i.pravatar.com/64?img=11" },
+      },
+    },
+  ] as ContestEntry[],
+};
+
+const mockContestVideos: Video[] = mockContest.entries.reduce(
+  (acc: Video[], entry) => [
+    ...acc,
+    {
+      id: entry.video.id,
+      title: entry.video.title,
+      slug: entry.video.slug,
+      description: "",
+      thumbnail: entry.video.thumbnail,
+      duration: entry.video.duration,
+      viewCount: entry.video.viewCount,
+      status: "PUBLISHED",
+      visibility: "PUBLIC",
+      authorId: entry.video.author.id,
+      createdAt: entry.video.createdAt,
+      updatedAt: entry.video.createdAt,
+      author: entry.video.author,
+      category: { id: "cat-1", name: "Cantanti", slug: "cantanti", color: "#FFD700" },
+      tags: [],
+    },
+  ],
+  []
+);
+
 export default function ContestPage() {
-  const [contest, setContest] = useState<Contest | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/contest")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.result.activeContest) {
-          setContest(data.result.activeContest);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  const remainingDays = contest
-    ? Math.ceil((new Date(contest.endAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0;
-
-  if (loading) {
-    return (
-      <div className="py-8">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-muted rounded w-2/3 mb-6"></div>
-            <div className="h-48 bg-muted rounded-xl mb-8"></div>
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-20 bg-muted rounded-lg"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!contest) {
-    return (
-      <div className="py-12">
-        <div className="container mx-auto px-4 text-center">
-          <div className="inline-flex h-20 w-20 rounded-full bg-muted items-center justify-center mb-6">
-            <Trophy className="h-10 w-10 text-muted-foreground" />
-          </div>
-          <h2 className="text-3xl font-bold mb-2">Nessun Contest Attivo</h2>
-          <p className="text-muted-foreground text-lg max-w-md mx-auto">
-            Non ci sono contest in corso in questo momento. Torna presto per partecipare!
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const contest = mockContest;
+  const remainingDays = Math.ceil(
+    (new Date(contest.endAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  );
 
   return (
     <div className="py-8">
@@ -137,7 +186,7 @@ export default function ContestPage() {
               </div>
 
               <div className="flex items-center gap-3 p-4 rounded-xl bg-card border">
-                <Trophy className="h-5 w-5 text-brand-yellow flex-shrink-0 fill-current" />
+                <Trophy className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Premio</p>
                   <p className="font-bold text-xl">€{contest.prizePool.toLocaleString()}</p>
@@ -169,7 +218,7 @@ export default function ContestPage() {
               href="/contest/entries"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              Vedi tutti →
+              Vedi tutti
             </a>
           </div>
 
@@ -181,12 +230,9 @@ export default function ContestPage() {
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-b from-brand-yellow to-amber-400 text-black font-bold text-lg flex-shrink-0">
                   {index < 3 ? (
-                    <>
-                      {index === 0 && "🥇"}
-                      {index === 1 && "🥈"}
-                      {index === 2 && "🥉"}
-                      {index >= 3 && index + 1}
-                    </>
+                    <span className="text-xl">
+                      {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+                    </span>
                   ) : (
                     index + 1
                   )}
@@ -226,19 +272,6 @@ export default function ContestPage() {
                   variant="outline"
                   size="sm"
                   className="flex-shrink-0"
-                  onClick={async () => {
-                    const res = await fetch("/api/contest", {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        entryId: entry.id,
-                        action: "vote",
-                      }),
-                    });
-                    if (res.ok) {
-                      window.location.reload();
-                    }
-                  }}
                 >
                   Vota
                 </Button>
@@ -255,8 +288,7 @@ export default function ContestPage() {
           <CardContent>
             <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
               <li>
-                Pubblica un video con contenuti artistici nella tua categoria
-                preferita
+                Pubblica un video con contenuti artistici nella tua categoria preferita
               </li>
               <li>
                 Vai alla pagina del contest e clicca "Candida il tuo video"
