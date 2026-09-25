@@ -110,7 +110,8 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
                   </>
                 )}
               </div>
-            </>}
+            </>)
+          )}
           {!showAuthor && (
             <div className="min-w-0 flex-1">
               <h3 className={`font-medium leading-tight line-clamp-2 ${
