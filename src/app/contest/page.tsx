@@ -1,8 +1,8 @@
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
 import Link from "next/link";
-export const dynamic = "force-dynamic";
 
+export const dynamic = "force-dynamic";
 
 interface ContestEntry {
   id: string;
@@ -167,16 +167,13 @@ export default function ContestPage() {
               </div>
             </div>
 
-            <Button
-              size="lg"
-              className="bg-brand-yellow text-black hover:bg-brand-yellow-hover font-bold"
-              asChild
+            <a
+              href="/upload"
+              className="inline-flex items-center justify-center rounded-md bg-brand-yellow px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-brand-yellow-hover"
             >
-              <Link href="/upload" className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Candida il tuo video
-              </Link>
-            </Button>
+              <Upload className="h-5 w-5 mr-2" />
+              Candida il tuo video
+            </a>
           </div>
         </div>
 
@@ -241,13 +238,9 @@ export default function ContestPage() {
                   <Share2 className="h-4 w-4 text-muted-foreground" />
                 </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-shrink-0"
-                >
+                <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50">
                   Vota
-                </Button>
+                </button>
               </div>
             ))}
           </div>
