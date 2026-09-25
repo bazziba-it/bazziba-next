@@ -31,14 +31,48 @@ export default async function FaqPage() {
   return (
     <div className="py-8">
       <div className="container mx-auto px-4 max-w-3xl">
-        <h1 className="text-3xl font-bold mb-8">FAQ - Domande Frequenti</h1>
-        <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">
+            <span className="gradient-text">FAQ</span>
+          </h1>
+          <p className="text-muted-foreground">
+            Domande frequenti su Bazziba e il suo funzionamento
+          </p>
+        </div>
+
+        {/* FAQ items */}
+        <div className="space-y-4">
           {faqs.map((faq, i) => (
-            <div key={i} className="border rounded-lg p-4">
-              <h2 className="text-xl font-semibold mb-2">{faq.q}</h2>
-              <p className="text-muted-foreground">{faq.a}</p>
-            </div>
+            <details
+              key={i}
+              className="group border rounded-xl p-4 bg-card transition-all duration-200 hover:shadow-md"
+            >
+              <summary className="flex items-center justify-between cursor-pointer font-semibold text-lg">
+                <span>{faq.q}</span>
+                <span className="text-muted-foreground group-hover:text-brand-yellow transition-colors">
+                  ▼
+                </span>
+              </summary>
+              <div className="mt-3 text-muted-foreground leading-relaxed">
+                {faq.a}
+              </div>
+            </details>
           ))}
+        </div>
+
+        {/* Contact section */}
+        <div className="border-t mt-12 pt-8 text-center">
+          <h3 className="font-semibold mb-2">Non hai trovato la risposta?</h3>
+          <p className="text-muted-foreground mb-4">
+            Contattaci all'indirizzo{" "}
+            <a
+              href="mailto:info@bazziba.it"
+              className="text-brand-yellow hover:underline"
+            >
+              info@bazziba.it
+            </a>
+          </p>
         </div>
       </div>
     </div>

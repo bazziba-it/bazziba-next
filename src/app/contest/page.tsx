@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
 import Link from "next/link";
 
@@ -111,10 +110,10 @@ export default function ContestPage() {
     <div className="py-8">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Contest Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-yellow/10 via-primary/5 to-background border mb-8">
+        <div className="hero-section relative overflow-hidden rounded-2xl border mb-8">
           <div className="absolute inset-0 -z-10">
-            <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-yellow/10 blur-3xl"></div>
-            <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl"></div>
+            <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>
+            <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>
           </div>
 
           <div className="p-8">
@@ -132,8 +131,8 @@ export default function ContestPage() {
 
             {/* Contest Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border">
-                <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
+                <Calendar className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Inizio</p>
                   <p className="font-medium">
@@ -142,23 +141,23 @@ export default function ContestPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border">
-                <Clock className="h-5 w-5 text-primary flex-shrink-0" />
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
+                <Clock className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Giorni Rimasti</p>
                   <p className="font-bold text-2xl text-brand-yellow">{remainingDays}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border">
-                <Users className="h-5 w-5 text-primary flex-shrink-0" />
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
+                <Users className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Partecipanti</p>
                   <p className="font-medium">{contest.entries.length}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
                 <Trophy className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Premio</p>
@@ -169,7 +168,7 @@ export default function ContestPage() {
 
             <a
               href="/upload"
-              className="inline-flex items-center justify-center rounded-md bg-brand-yellow px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-brand-yellow-hover"
+              className="inline-flex items-center justify-center rounded-lg bg-brand-yellow px-6 py-3 text-sm font-bold text-black transition-all duration-200 hover:bg-brand-yellow-hover hover:scale-105"
             >
               <Upload className="h-5 w-5 mr-2" />
               Candida il tuo video
@@ -196,7 +195,7 @@ export default function ContestPage() {
             {contest.entries.map((entry, index) => (
               <div
                 key={entry.id}
-                className="flex items-center gap-4 p-4 rounded-xl bg-card border hover:shadow-md transition-all duration-200 group"
+                className="flex items-center gap-4 p-4 rounded-xl bg-card border card-elevated"
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-b from-brand-yellow to-amber-400 text-black font-bold flex-shrink-0">
                   {index < 3 ? (
@@ -212,13 +211,13 @@ export default function ContestPage() {
                   <img
                     src={entry.video.thumbnail}
                     alt={entry.video.title}
-                    className="w-24 h-16 object-cover rounded-lg group-hover:scale-105 transition-transform"
+                    className="w-24 h-16 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                   />
                 </Link>
 
                 <div className="flex-1 min-w-0">
                   <Link href={`/watch/${entry.video.slug}`}>
-                    <h3 className="font-medium hover:underline line-clamp-1">
+                    <h3 className="font-medium hover:text-brand-yellow line-clamp-1 transition-colors">
                       {entry.video.title}
                     </h3>
                   </Link>
@@ -247,27 +246,17 @@ export default function ContestPage() {
         </div>
 
         {/* How to Participate */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Come partecipare</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-              <li>
-                Pubblica un video con contenuti artistici nella tua categoria preferita
-              </li>
-              <li>
-                Vai alla pagina del contest e clicca "Candida il tuo video"
-              </li>
-              <li>Potresti candidare fino a 3 video al mese</li>
-              <li>Lascia che la community voti il tuo video</li>
-              <li>
-                I 3 video con più voti vincitori ricevono premi in denaro
-              </li>
-              <li>I vincitori vengono annunciati alla fine del periodo di contest</li>
-            </ol>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card p-6 mt-8 card-elevated">
+          <h3 className="text-lg font-semibold mb-4">Come partecipare</h3>
+          <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+            <li>Pubblica un video con contenuti artistici nella tua categoria preferita</li>
+            <li>Vai alla pagina del contest e clicca "Candida il tuo video"</li>
+            <li>Potresti candidare fino a 3 video al mese</li>
+            <li>Lascia che la community voti il tuo video</li>
+            <li>I 3 video con più voti vincitori ricevono premi in denaro</li>
+            <li>I vincitori vengono annunciati alla fine del periodo di contest</li>
+          </ol>
+        </div>
       </div>
     </div>
   );
