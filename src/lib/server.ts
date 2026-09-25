@@ -4,7 +4,6 @@
 
 import { prisma as prismaClient } from "@/lib/prisma";
 import { verify } from "jsonwebtoken";
-import { cookies } from "next/headers";
 import type { User, Video, Pagination } from "@/types";
 
 // Export from lazy proxy to prevent build-time Prisma instantiation
