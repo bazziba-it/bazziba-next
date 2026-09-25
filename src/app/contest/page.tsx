@@ -1,6 +1,6 @@
-"use client";
 
-import { useState } from "react";
+
+
 import { VideoCard } from "@/components/video/video-card";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
