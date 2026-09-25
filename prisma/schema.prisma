@@ -1,0 +1,415 @@
+/**
+ * Bazziba Next.js - Database Schema (Prisma)
+ * Migrated from WordPress MySQL to PostgreSQL (Neondatabase)
+ */
+
+generator client {
+  provider    = "prisma-client-js"
+  binaryTargets = ["debian-openssl-1.1.x", "debian-openssl-3.0.x", "linux-musl", "native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String   @unique
+  name        String?
+  bio         String?  @db.Text
+  image       String?
+  role        UserRole @default(USER)
+
+  // Stats
+  videoCount   Int      @default(0)
+  followerCount Int     @default(0)
+  viewCount     Int     @default(0)
+
+  // Contest points system
+  points       Int      @default(0)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastActive  DateTime @default(now())
+
+  // Relations
+  videos       Video[]
+  comments     Comment[]
+  commentLikes CommentLike[]
+  videoLikes   VideoLike[]
+  subscriptions Subscription[] @relation("UserSubscriptions")
+  subscribers  Subscription[] @relation("UserSubscribers")
+  contestEntries ContestEntry[]
+  contestVotes   ContestVote[]
+  messagesSent   Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
+  watchHistory   WatchHistory[]
+  playlists      Playlist[]
+  notifications  Notification[]
+  pointsTransactions PointsTransaction[]
+
+  @@index([username])
+  @@index([email])
+  @@index([lastActive])
+}
+
+enum UserRole {
+  USER
+  CREATOR
+  ADMIN
+  MODERATOR
+}
+
+model Video {
+  id            String      @id @default(cuid())
+  title         String
+  description   String?     @db.Text
+  slug          String      @unique
+  thumbnail     String?
+  videoUrl      String?
+  videoProvider String?
+  playbackId    String?
+
+  duration      Int?
+  viewCount     Int         @default(0)
+  likeCount     Int         @default(0)
+  commentCount  Int         @default(0)
+  width         Int?
+  height        Int?
+  size          BigInt?
+
+  status        VideoStatus @default(PUBLISHED)
+  visibility    Visibility  @default(PUBLIC)
+  allowComments Boolean     @default(true)
+
+  authorId      String
+  author        User        @relation(fields: [authorId], references: [id])
+
+  categoryId    String?
+  category      Category?   @relation(fields: [categoryId], references: [id])
+  tags          VideoTag[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  publishedAt   DateTime?
+
+  comments      Comment[]
+  likes         VideoLike[]
+  watchHistory  WatchHistory[]
+  playlistItems PlaylistItem[]
+  contestEntries ContestEntry[]
+  messages      Message[]
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([publishedAt])
+  @@index([viewCount])
+  @@index([status, visibility, publishedAt])
+}
+
+enum VideoStatus {
+  DRAFT
+  PROCESSING
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  color       String?
+  order       Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  videos      Video[]
+
+  @@index([slug])
+  @@index([order])
+}
+
+model VideoTag {
+  id        String   @id @default(cuid())
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag      @relation(fields: [tagId], references: [id])
+
+  @@unique([videoId, tagId])
+  @@index([videoId])
+  @@index([tagId])
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  videos    VideoTag[]
+
+  @@index([name])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  likes     CommentLike[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([videoId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, commentId])
+}
+
+model VideoLike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, videoId])
+  @@index([videoId])
+}
+
+model WatchHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id])
+  watchedAt DateTime @default(now())
+  duration  Int?     // seconds watched
+
+  @@unique([userId, videoId])
+  @@index([userId])
+}
+
+model Playlist {
+  id        String       @id @default(cuid())
+  title     String
+  slug      String       @unique
+  description String?    @db.Text
+  isPublic  Boolean      @default(true)
+  thumbnail String?
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  items     PlaylistItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([slug])
+}
+
+model PlaylistItem {
+  id        String   @id @default(cuid())
+  playlistId String
+  playlist  Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  position  Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([playlistId, videoId])
+  @@index([playlistId])
+  @@index([videoId])
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  subscriberId String
+  subscriber  User     @relation("UserSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
+  channelId   String
+  channel     User     @relation("UserSubscribers", fields: [channelId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([subscriberId, channelId])
+  @@index([subscriberId])
+  @@index([channelId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  SUBSCRIBER
+  CONTEST
+  SYSTEM
+}
+
+model Contest {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  startAt     DateTime
+  endAt       DateTime
+  prizePool   Int      @default(0)
+  status      ContestStatus @default(UPCOMING)
+
+  entries     ContestEntry[]
+  votes       ContestVote[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([startAt])
+  @@index([endAt])
+}
+
+enum ContestStatus {
+  UPCOMING
+  ACTIVE
+  ENDED
+  RESULTS_ANNOUNCED
+}
+
+model ContestEntry {
+  id         String   @id @default(cuid())
+  contestId  String
+  contest    Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  videoId    String
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  pointsEarned Int @default(0)
+  voteCount    Int @default(0)
+  status      ContestEntryStatus @default(PENDING)
+
+  createdAt  DateTime @default(now())
+
+  votes      ContestVote[]
+  @@unique([contestId, videoId])
+  @@index([contestId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum ContestEntryStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ContestVote {
+  id        String   @id @default(cuid())
+  contestId String
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entryId   String
+  entry     ContestEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([contestId, userId])
+  @@index([entryId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  senderId  String
+  sender    User     @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver  User     @relation("MessagesReceived", fields: [receiverId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  read      Boolean  @default(false)
+  videoId   String?
+  video     Video?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+model PointsTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int
+  type        PointsTransactionType
+  description String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum PointsTransactionType {
+  UPLOAD
+  LIKE
+  COMMENT
+  VIEW
+  CONTEST_ENTRY
+  CONTEST_WIN
+  REFERRAL
+  BONUS
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+
+  @@index([key])
+}

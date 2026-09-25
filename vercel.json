@@ -1,0 +1,34 @@
+{
+  "version": 3,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "(.*)",
+      "dest": "/"
+    }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "images": {
+    "sizes": [320, 640, 768, 1080, 1280, 1920]
+  },
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "https://bazziba.it",
+    "NEXT_PUBLIC_APP_NAME": "Bazziba!",
+    "NEXT_PUBLIC_ENABLE_CONTEST": "true",
+    "NEXT_PUBLIC_ENABLE_POINTS": "true",
+    "NEXT_PUBLIC_ENABLE_COMMENTS": "true"
+  }
+}
