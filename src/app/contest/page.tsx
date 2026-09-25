@@ -1,8 +1,8 @@
+"use client";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
 
 interface ContestEntry {
   id: string;
