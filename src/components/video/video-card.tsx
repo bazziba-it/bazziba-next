@@ -44,7 +44,8 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
       className={`group block ${sizeConfig[size]} ${className || ""}`}
       prefetch={false}
     >
-      <div className="space-y-2">
+      <div className="space-y-3">
+        {/* Thumbnail */}
         <div className="relative aspect-video rounded-xl overflow-hidden bg-muted shadow-md">
           <img
             src={getThumbnailUrl(video.thumbnail)}
@@ -53,16 +54,27 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
             loading="lazy"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw"
           />
+          {/* Play overlay */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Play className="h-5 w-5 text-foreground drop-shadow-lg" />
+            </div>
+          </div>
+          {/* Duration badge */}
           {video.duration && (
             <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-md font-mono">
               {formatDurationFromSeconds(video.duration)}
             </div>
           )}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
-            <Play className="h-10 w-10 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
-          </div>
+          {/* Category badge */}
+          {video.category && (
+            <div className="absolute top-1.5 left-1.5 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md">
+              {video.category.name}
+            </div>
+          )}
         </div>
 
+        {/* Video info */}
         <div className="flex gap-3">
           {showAuthor && (
             <>
@@ -88,15 +100,17 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
                       {video.author?.name || video.author?.username || "Unknown"}
                     </p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                      <span>{video.viewCount} visualizzazioni</span>
-                      <span>·</span>
-                      <span>{new Date(video.createdAt).toLocaleDateString("it-IT")}</span>
+                      <Clock className="h-3 w-3" />
+                      <span>{Math.round(video.duration / 60)} min</span>
+                      <span className="text-xs">·</span>
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                        {video.viewCount} visualizzazioni
+                      </Badge>
                     </div>
                   </>
                 )}
               </div>
-            </>
-          )}
+            </>}
           {!showAuthor && (
             <div className="min-w-0 flex-1">
               <h3 className={`font-medium leading-tight line-clamp-2 ${
@@ -161,7 +175,7 @@ interface CategoryGridProps {
 
 export function CategoryGrid({ categories }: CategoryGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-9">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
       {categories.map((category) => (
         <Link
           key={category.id}
@@ -171,8 +185,8 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
         >
           <div className="rounded-xl border bg-card p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02]">
             <div
-              className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg"
-              style={{ backgroundColor: category.color || "hsl(var(--primary))" }}
+              className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-yellow/10"
+              style={{ backgroundColor: category.color ? `${category.color}20` : undefined }}
             >
               <span className="text-lg font-bold text-white">
                 {category.name.charAt(0)}
@@ -186,7 +200,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
             )}
           </div>
         </Link>
-      ))}
+      )))}
     </div>
   );
 }

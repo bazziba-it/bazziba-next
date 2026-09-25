@@ -223,15 +223,25 @@ export default function SearchPage() {
         {!loading && query.length === 0 && (
           <div className="text-center py-16">
             <div className="inline-flex h-16 w-16 rounded-full bg-muted items-center justify-center mb-6">
-              <Clock className="h-8 w-8 text-muted-foreground" />
+              <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Cerca su Bazziba</h3>
-            <p className="text-muted-foreground">
-              Inserisci un termine di ricerca per iniziare
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <h3 className="text-xl font-semibold mb-4">Cerca su Bazziba</h3>
+            <p className="text-muted-foreground mb-8">
               Cerca video, utenti e categorie artistiche
             </p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
+              {["Pittura astrale", "Danza urbana", "Street art", "Poesia sonora", "DJ set", "Live painting"].map(
+                (term) => (
+                  <a
+                    key={term}
+                    href={`/search?q=${encodeURIComponent(term)}`}
+                    className="inline-flex items-center px-4 py-2 rounded-full bg-accent text-sm font-medium hover:bg-accent/80 transition-colors"
+                  >
+                    {term}
+                  </a>
+                )
+              )}
+            </div>
           </div>
         )}
       </div>

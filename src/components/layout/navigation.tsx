@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Menu, Search, Upload, Bell, User, Moon, Sun, LogIn, Home, TrendingUp, Trophy } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -79,7 +78,7 @@ export function Navigation() {
                   className={cn(
                     "flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200",
                     active
-                      ? "bg-accent text-accent-foreground shadow-sm"
+                      ? "bg-brand-yellow/10 text-brand-yellow shadow-sm"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   )}
                 >
@@ -96,7 +95,7 @@ export function Navigation() {
                 className={cn(
                   "text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap",
                   isActive(`/c/${cat.slug}`)
-                    ? "text-foreground bg-accent shadow-sm"
+                    ? "text-brand-yellow bg-brand-yellow/10 shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
@@ -125,7 +124,7 @@ export function Navigation() {
             <input
               type="search"
               placeholder="Cerca video, artisti, canzoni..."
-              className="w-full rounded-full border border-input pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background"
+              className="w-full rounded-full border border-input pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-background"
             />
           </div>
         </div>

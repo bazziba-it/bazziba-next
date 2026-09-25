@@ -1,108 +1,288 @@
 @reference "tailwindcss";
-
 @import "tailwindcss";
 
+/* ============================================================
+   BAZZIBA! — Design System v2.0 (2025)
+   Dark-mode first with gold (#FFD700) as single accent
+   ============================================================ */
+
+/* ===== Design Tokens ===== */
 @theme {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  /* Light theme: warm neutral background, dark text */
+  --background: 0 0% 98%;
+  --foreground: 220 20% 12%;
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card-foreground: 220 20% 14%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 222.2 47.4% 11.2%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 84% 4.9%;
+  --popover-foreground: 220 20% 12%;
+  --primary: 220 20% 12%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 220 10% 96%;
+  --secondary-foreground: 220 20% 12%;
+  --muted: 220 10% 96%;
+  --muted-foreground: 220 15% 45%;
+  --accent: 220 10% 94%;
+  --accent-foreground: 220 20% 12%;
   --destructive: 0 84.2% 60.9%;
-  --border: 210 30.1% 90.1%;
-  --input: 210 30.1% 90.1%;
-  --ring: 221.2 83.2% 53.3%;
+  --border: 220 20% 88%;
+  --input: 220 20% 88%;
+  --ring: 42 91% 50%;
   --radius: 0.5rem;
 
-  --brand-yellow: #FFD700;
-  --brand-yellow-hover: #FFC107;
-  --brand-yellow-dark: #FFA700;
+  /* Bazziba Gold — the ONLY accent color (used sparingly) */
+  --brand-gold: 216 40% 50%;      /* #FFD700 equivalent in HSL for tailwind */
+  --brand-gold-hex: #FFD700;      /* raw hex for direct use */
+  --brand-gold-hover: #E6C200;
+  --brand-gold-dark: #FFA700;
 
-  --background-dark: 222.2 84% 4.9%;
+  /* Dark theme tokens (refined, not pure black) */
+  --background-dark: 220 20% 6%;     /* #0F0F0F — near-black, not pure */
   --foreground-dark: 0 0% 93%;
-  --card-dark: 222.2 84% 8%;
-  --border-dark: 210 30.1% 20%;
-  --muted-dark: 210 30.1% 12%;
-  --muted-foreground-dark: 222.2 47.4% 60%;
+  --card-dark: 220 20% 10%;         /* #141414 — elevated surfaces */
+  --surface-dark: 220 20% 8%;
+  --border-dark: 220 10% 20%;
+  --muted-dark: 220 10% 15%;
+  --muted-foreground-dark: 0 0% 55%;
+  --accent-gold: 42 91% 50%;        /* gold in HSL for tailwind dark */
 }
 
+/* ===== Dark mode variant ===== */
 @custom-variant dark (&:where(.dark, [data-theme="dark"]));
 
+/* ===== Base styles ===== */
 @layer base {
-  * { border-color: hsl(var(--border)); }
+  * {
+    border-color: hsl(var(--border));
+    border-radius: var(--radius);
+  }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: "Inter", "SF Pro Display", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: radial-gradient(circle at 22% 17%, hsl(var(--muted) / 0.3) 0%, transparent 30%);
   }
-  html { scroll-behavior: smooth; }
-  ::selection { background: hsl(var(--primary) / 0.2); }
-  .dark ::selection { background: hsl(var(--primary) / 0.3); }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  ::selection {
+    background: hsl(var(--brand-gold) / 0.3);
+  }
+
+  .dark ::selection {
+    background: hsl(var(--brand-gold) / 0.4);
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-/* Brand colors */
-.brand-yellow { color: var(--brand-yellow); }
-.bg-brand-yellow { background-color: var(--brand-yellow); }
-.text-brand-yellow { color: var(--brand-yellow); }
-
-/* Video card hover */
-.video-card {
-  transition-property: transform, box-shadow;
-  transition-duration: 300ms;
-  transition-timing-function: ease-out;
-  transform: translateY(0);
-}
-.video-card:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-.card-hover {
-  transition-property: transform, box-shadow;
-  transition-duration: 300ms;
-  transition-timing-function: ease-out;
-}
-.card-hover:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+/* ===== Dark mode overrides ===== */
+.dark {
+  --background: var(--background-dark);
+  --foreground: var(--foreground-dark);
+  --card: var(--card-dark);
+  --card-foreground: var(--foreground-dark);
+  --popover: var(--surface-dark);
+  --popover-foreground: var(--foreground-dark);
+  --primary: var(--background-dark);
+  --primary-foreground: var(--foreground-dark);
+  --secondary: var(--surface-dark);
+  --secondary-foreground: var(--foreground-dark);
+  --muted: var(--muted-dark);
+  --muted-foreground: var(--muted-foreground-dark);
+  --accent: var(--muted-dark);
+  --accent-foreground: var(--foreground-dark);
+  --border: var(--border-dark);
+  --input: var(--border-dark);
+  --ring: var(--accent-gold);
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground)); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.7); }
+/* ===== Brand gold utilities ===== */
+.text-brand-gold {
+  color: var(--brand-gold-hex);
+}
+.bg-brand-gold {
+  background-color: var(--brand-gold-hex);
+}
+.border-brand-gold {
+  border-color: var(--brand-gold-hex);
+}
+.ring-brand-gold {
+  --ring-color: var(--brand-gold-hex);
+  border-color: var(--brand-gold-hex);
+}
 
-/* Animations */
-.animate-fade-in { animation: fadeIn 0.4s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+/* ===== Gradient utilities ===== */
+.bg-hero-gradient {
+  background: radial-gradient(ellipse at top right, hsl(var(--muted-dark) / 0.3) 0%, transparent 50%),
+              radial-gradient(ellipse at bottom left, hsl(var(--brand-gold) / 0.05) 0%, transparent 50%);
+}
 
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.animate-float { animation: float 3s ease-in-out infinite; }
-
-/* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #FFD700 0%, #FF8C00 50%, #FF6B6B 100%);
+  background: linear-gradient(135deg, var(--brand-gold-hex) 0%, #FF8C00 50%, #FF6B6B 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Glass effect */
+/* ===== Card elevations ===== */
+.card-elevated {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.06), 0 1px 2px hsl(var(--foreground) / 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-elevated:hover {
+  box-shadow: 0 10px 25px -5px hsl(var(--foreground) / 0.08), 0 4px 6px -2px hsl(var(--foreground) / 0.04);
+  transform: translateY(-1px);
+}
+
+/* ===== Glass effect ===== */
 .glass {
   background: hsl(var(--background) / 0.7);
   border: 1px solid hsl(var(--border) / 0.5);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ===== Custom scrollbar ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.4);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* ===== Animations ===== */
+@theme {
+  --animate-fade-in: fadeIn 0.4s ease-in-out;
+  --animate-slide-up: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-pulse-gold: pulseGold 2s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes pulseGold {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ===== Video card hover ===== */
+.video-card-container {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform: translateY(0);
+}
+.video-card-container:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.video-card-image {
+  position: relative;
+  overflow: hidden;
+}
+.video-card-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 40%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.video-card-container:hover .video-card-image::after {
+  opacity: 1;
+}
+
+/* ===== Thumbnail play button overlay ===== */
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  border: 1px solid hsl(var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+.video-card-container:hover .play-overlay {
+  opacity: 1;
+  transform: translate(-50%, -45%);
+}
+
+/* ===== Hero section ===== */
+.hero-section {
+  position: relative;
+  overflow: hidden;
+}
+.hero-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, hsl(var(--muted-dark) / 0.3) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ===== Content container ===== */
+.container-prose {
+  max-width: 64rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .container-prose {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .container-prose {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 }
