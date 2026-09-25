@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button, Input } from "@/components/ui";
-import { Google, GitHub } from "lucide-react";
+import { Github } from "lucide-react";
 import { signIn, getProviders } from "next-auth/react";
 
 export const dynamic = "force-dynamic";
@@ -85,7 +85,7 @@ function SignInContent() {
               className="w-full"
               onClick={() => signIn("google", { callbackUrl })}
             >
-              <Google className="mr-2 h-4 w-4" />
+              <span className="mr-2 h-4 w-4">🔷</span>
               Continua con Google
             </Button>
           )}
@@ -96,7 +96,7 @@ function SignInContent() {
               className="w-full"
               onClick={() => signIn("github", { callbackUrl })}
             >
-              <GitHub className="mr-2 h-4 w-4" />
+              <Github className="mr-2 h-4 w-4" />
               Continua con GitHub
             </Button>
           )}

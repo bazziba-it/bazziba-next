@@ -11,3 +11,5 @@ node_modules/
 /prisma/*.db
 /.vitepress/dist
 /node_modules/.cache/next
+.vercel
+.env*
