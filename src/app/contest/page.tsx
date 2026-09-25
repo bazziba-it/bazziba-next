@@ -1,7 +1,7 @@
 
 
 
-import { VideoCard } from "@/components/video/video-card";
+
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
 import Link from "next/link";
@@ -106,8 +106,8 @@ const mockContest = {
   ] as ContestEntry[],
 };
 
-const mockContestVideos: Video[] = mockContest.entries.reduce(
-  (acc: Video[], entry) => [
+const mockContestVideos] = mockContest.entries.reduce(
+  (acc], entry) => [
     ...acc,
     {
       id: entry.video.id,
