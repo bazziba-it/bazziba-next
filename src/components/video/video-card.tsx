@@ -110,7 +110,7 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
                   </>
                 )}
               </div>
-            </>)
+            </>
           )}
           {!showAuthor && (
             <div className="min-w-0 flex-1">
