@@ -1,11 +1,6 @@
-
-
-
-
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
 import Link from "next/link";
-import type { Video } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -105,30 +100,6 @@ const mockContest = {
     },
   ] as ContestEntry[],
 };
-
-const mockContestVideos] = mockContest.entries.reduce(
-  (acc], entry) => [
-    ...acc,
-    {
-      id: entry.video.id,
-      title: entry.video.title,
-      slug: entry.video.slug,
-      description: "",
-      thumbnail: entry.video.thumbnail,
-      duration: entry.video.duration,
-      viewCount: entry.video.viewCount,
-      status: "PUBLISHED",
-      visibility: "PUBLIC",
-      authorId: entry.video.author.id,
-      createdAt: entry.video.createdAt,
-      updatedAt: entry.video.createdAt,
-      author: entry.video.author,
-      category: { id: "cat-1", name: "Cantanti", slug: "cantanti", color: "#FFD700" },
-      tags: [],
-    },
-  ],
-  []
-);
 
 export default function ContestPage() {
   const contest = mockContest;
