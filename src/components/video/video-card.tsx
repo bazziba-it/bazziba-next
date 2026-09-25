@@ -89,9 +89,7 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className={`font-medium leading-tight line-clamp-2 ${
-                  isCompact ? "text-sm" : "text-base"
-                }`}>
+                <h3 className={`font-medium leading-tight line-clamp-2 ${isCompact ? "text-sm" : "text-base"}`}>
                   {video.title}
                 </h3>
                 {!isCompact && (
@@ -102,9 +100,9 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                       <Clock className="h-3 w-3" />
                       <span>{Math.round(video.duration / 60)} min</span>
-                      <span className="text-xs">·</span>
+                      <span className="text-xs">/</span>
                       <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                        {video.viewCount} visualizzazioni
+                        {video.viewCount} views
                       </Badge>
                     </div>
                   </>
@@ -114,9 +112,7 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
           )}
           {!showAuthor && (
             <div className="min-w-0 flex-1">
-              <h3 className={`font-medium leading-tight line-clamp-2 ${
-                isCompact ? "text-sm" : "text-base"
-              }`}>
+              <h3 className={`font-medium leading-tight line-clamp-2 ${isCompact ? "text-sm" : "text-base"}`}>
                 {video.title}
               </h3>
               {!isCompact && (
@@ -185,10 +181,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           prefetch={false}
         >
           <div className="rounded-xl border bg-card p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02]">
-            <div
-              className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-yellow/10"
-              style={{ backgroundColor: category.color ? `${category.color}20` : undefined }}
-            >
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-yellow/10">
               <span className="text-lg font-bold text-white">
                 {category.name.charAt(0)}
               </span>
@@ -201,7 +194,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
             )}
           </div>
         </Link>
-      )))}
+      ))}
     </div>
   );
 }
