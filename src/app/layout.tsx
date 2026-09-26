@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { Navigation } from "@/components/layout/navigation";
 import Footer from "@/components/layout/footer";
 import { Logo } from "@/components/ui/logo";
+import { ThemeProvider } from "next-themes";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const poppins = Poppins({
@@ -31,8 +32,7 @@ export const metadata = {
     url: "https://bazziba.it",
     siteName: "BAZZIBA!",
     title: "BAZZIBA! - La Nuova Piattaforma delle Arti",
-    description:
-      "Bazziba! è la Nuova Piattaforma digitale dedicata esclusivamente al mondo artistico.",
+    description: "Bazziba! è la Nuova Piattaforma digitale dedicata esclusivamente al mondo artistico.",
     images: [
       {
         url: "https://bazziba.it/og.png",
@@ -81,17 +81,24 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} min-h-screen bg-background text-foreground antialiased`}
       >
-        <div className="relative flex min-h-screen flex-col">
-          <Navigation />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-        <Toaster
-          closeButton
-          position="bottom-left"
-          theme="system"
-          richColors
-        />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="relative flex min-h-screen flex-col">
+            <Navigation />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+          <Toaster
+            closeButton
+            position="bottom-left"
+            theme="system"
+            richColors
+          />
+        </ThemeProvider>
       </body>
     </html>
   );
