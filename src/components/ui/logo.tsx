@@ -3,8 +3,10 @@
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
-export function Logo({ className }: { className?: string }) {
+// Fallback SVG logo (used when image fails to load)
+function FallbackLogo({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -18,6 +20,26 @@ export function Logo({ className }: { className?: string }) {
       <path d="M30 30 L30 70 L70 50 L30 30 Z" fill="#000000" />
       <circle cx="50" cy="50" r="8" fill="#000000" />
     </svg>
+  );
+}
+
+export function Logo({ className }: { className?: string }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (imgError) {
+    return <FallbackLogo className={className} />;
+  }
+
+  return (
+    <Image
+      src="/logo.png"
+      alt="BAZZIBA! Logo"
+      width={40}
+      height={40}
+      className={className}
+      onError={() => setImgError(true)}
+      priority
+    />
   );
 }
 

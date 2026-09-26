@@ -41,7 +41,7 @@ export const metadata = {
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 } },
   alternates: { canonical: "https://bazziba.it", languages: { "it-IT": "https://bazziba.it" } },
-  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
+  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png", other: { rel: "apple-touch-icon", url: "/logo.png" } },
 };
 
 function ThemeScript() {
