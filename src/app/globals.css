@@ -7,49 +7,49 @@
    ============================================================ */
 
 /* ===== Design Tokens ===== */
+/* Dark mode is the default; light mode is the override */
 @theme {
-  /* Light theme: warm neutral background, dark text */
-  --background: 0 0% 98%;
-  --foreground: 220 20% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 20% 14%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 20% 12%;
-  --primary: 220 20% 12%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 220 10% 96%;
-  --secondary-foreground: 220 20% 12%;
-  --muted: 220 10% 96%;
-  --muted-foreground: 220 15% 45%;
-  --accent: 220 10% 94%;
-  --accent-foreground: 220 20% 12%;
+  /* Dark theme (default) — refined dark surfaces */
+  --background: 220 20% 6%;     /* #0F0F0F — near-black, not pure */
+  --foreground: 0 0% 93%;
+  --card: 220 20% 10%;          /* #141414 — elevated surfaces */
+  --card-foreground: 0 0% 93%;
+  --popover: 220 20% 8%;
+  --popover-foreground: 0 0% 93%;
+  --primary: 220 20% 6%;
+  --primary-foreground: 0 0% 93%;
+  --secondary: 220 20% 8%;
+  --secondary-foreground: 0 0% 93%;
+  --muted: 220 10% 15%;
+  --muted-foreground: 0 0% 55%;
+  --accent: 220 10% 15%;
+  --accent-foreground: 0 0% 93%;
   --destructive: 0 84.2% 60.9%;
-  --border: 220 20% 88%;
-  --input: 220 20% 88%;
+  --border: 220 10% 20%;
+  --input: 220 10% 20%;
   --ring: 42 91% 50%;
   --radius: 0.5rem;
 
   /* Bazziba Gold — the ONLY accent color (used sparingly) */
-  --brand-gold: 216 40% 50%;      /* #FFD700 equivalent in HSL for tailwind */
-  --brand-gold-hex: #FFD700;      /* raw hex for direct use */
+  --brand-gold: 42 91% 50%;      /* #FFD700 in HSL */
+  --brand-gold-hex: #FFD700;
   --brand-gold-hover: #E6C200;
   --brand-gold-dark: #FFA700;
 
-  /* Dark theme tokens (refined, not pure black) */
-  --background-dark: 220 20% 6%;     /* #0F0F0F — near-black, not pure */
+  /* Dark theme tokens */
+  --background-dark: 220 20% 6%;
   --foreground-dark: 0 0% 93%;
-  --card-dark: 220 20% 10%;         /* #141414 — elevated surfaces */
+  --card-dark: 220 20% 10%;
   --surface-dark: 220 20% 8%;
   --border-dark: 220 10% 20%;
   --muted-dark: 220 10% 15%;
   --muted-foreground-dark: 0 0% 55%;
-  --accent-gold: 42 91% 50%;        /* gold in HSL for tailwind dark */
+  --accent-gold: 42 91% 50%;
 }
 
-/* ===== Dark mode variant ===== */
-@custom-variant dark (&:where(.dark, [data-theme="dark"]));
+/* ===== Light mode override ===== */
+@custom-variant light (&:where(.light, [data-theme="light"]));
 
-/* ===== Base styles ===== */
 @layer base {
   * {
     border-color: hsl(var(--border));
@@ -62,20 +62,17 @@
     font-family: "Inter", "SF Pro Display", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-image: radial-gradient(circle at 22% 17%, hsl(var(--muted) / 0.3) 0%, transparent 30%);
+    background-image: radial-gradient(circle at 22% 17%, hsl(var(--muted) / 0.3) 0%, transparent 50%);
   }
 
   html {
     scroll-behavior: smooth;
     font-size: 16px;
+    color-scheme: dark;
   }
 
   ::selection {
     background: hsl(var(--brand-gold) / 0.3);
-  }
-
-  .dark ::selection {
-    background: hsl(var(--brand-gold) / 0.4);
   }
 
   /* Reduced motion support */
@@ -91,8 +88,31 @@
   }
 }
 
-/* ===== Dark mode overrides ===== */
-.dark {
+/* ===== Light mode override ===== */
+.light,
+[data-theme="light"] {
+  --background: 0 0% 98%;
+  --foreground: 220 20% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 12%;
+  --primary: 220 20% 12%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 220 10% 96%;
+  --secondary-foreground: 220 20% 12%;
+  --muted: 220 10% 96%;
+  --muted-foreground: 220 15% 45%;
+  --accent: 220 10% 94%;
+  --accent-foreground: 220 20% 12%;
+  --border: 220 20% 88%;
+  --input: 220 20% 88%;
+  --ring: 42 91% 50%;
+}
+
+/* ===== Dark mode (also explicit for class-based toggle) ===== */
+.dark,
+[data-theme="dark"] {
   --background: var(--background-dark);
   --foreground: var(--foreground-dark);
   --card: var(--card-dark);
@@ -122,9 +142,14 @@
 .border-brand-gold {
   border-color: var(--brand-gold-hex);
 }
-.ring-brand-gold {
-  --ring-color: var(--brand-gold-hex);
-  border-color: var(--brand-gold-hex);
+.bg-brand-yellow\/10 {
+  background-color: hsl(var(--brand-gold) / 0.1);
+}
+.text-brand-yellow {
+  color: var(--brand-gold-hex);
+}
+.bg-brand-yellow\/5 {
+  background-color: hsl(var(--brand-gold) / 0.05);
 }
 
 /* ===== Gradient utilities ===== */
@@ -177,81 +202,17 @@
 }
 
 /* ===== Animations ===== */
-@theme {
-  --animate-fade-in: fadeIn 0.4s ease-in-out;
-  --animate-slide-up: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --animate-float: float 3s ease-in-out infinite;
-  --animate-pulse-gold: pulseGold 2s ease-in-out infinite;
-}
+.animate-fade-in { animation: fadeIn 0.4s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.animate-float { animation: float 3s ease-in-out infinite; }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-@keyframes pulseGold {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-/* ===== Video card hover ===== */
-.video-card-container {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  transform: translateY(0);
-}
-.video-card-container:hover {
-  transform: translateY(-2px) scale(1.02);
-}
-
-.video-card-image {
-  position: relative;
-  overflow: hidden;
-}
-.video-card-image::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 40%);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.video-card-container:hover .video-card-image::after {
-  opacity: 1;
-}
-
-/* ===== Thumbnail play button overlay ===== */
-.play-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
-  background: hsl(var(--background) / 0.8);
-  backdrop-filter: blur(4px);
-  border-radius: 50%;
-  border: 1px solid hsl(var(--border));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  pointer-events: none;
-}
-.video-card-container:hover .play-overlay {
-  opacity: 1;
-  transform: translate(-50%, -45%);
-}
+@keyframes pulseGold { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.animate-pulse-gold { animation: pulseGold 2s ease-in-out infinite; }
 
 /* ===== Hero section ===== */
 .hero-section {
@@ -262,27 +223,6 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at top right, hsl(var(--muted-dark) / 0.3) 0%, transparent 50%);
+  background: radial-gradient(ellipse at top right, hsl(var(--brand-gold) / 0.05) 0%, transparent 50%);
   pointer-events: none;
-}
-
-/* ===== Content container ===== */
-.container-prose {
-  max-width: 64rem;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-@media (min-width: 640px) {
-  .container-prose {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-}
-@media (min-width: 1024px) {
-  .container-prose {
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
 }
