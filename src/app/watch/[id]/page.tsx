@@ -1,11 +1,12 @@
-import { VideoGrid } from "@/components/video/video-card";
+"use client";
+
+
 import { Badge, Separator } from "@/components/ui";
 import { formatViews, formatDate } from "@/lib/utils";
 import type { Video } from "@/types";
 import { MessageCircle, ThumbsUp, ThumbsDown, Share2, Clock, Copy, Check, Download, Flag, Settings, Maximize, Play, Pause, Volume2, VolumeX } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 
-export const dynamic = "force-dynamic";
 
 // Mock video data for demonstration
 function getMockVideo(id: string): Video | null {
