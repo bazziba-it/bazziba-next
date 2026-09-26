@@ -71,6 +71,33 @@ export const metadata = {
   },
 };
 
+// Script to set initial theme before hydration (prevents FOUC)
+function ThemeScript() {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+        (function() {
+          try {
+            var theme = localStorage.getItem('theme');
+            var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var useDark = theme === 'dark' || (!theme && systemDark) || (theme === 'system' && systemDark);
+            var html = document.documentElement;
+            if (useDark) {
+              html.classList.add('dark');
+              html.style.colorScheme = 'dark';
+            } else {
+              html.classList.remove('dark');
+              html.style.colorScheme = 'light';
+            }
+          } catch (e) {}
+        })();
+        `,
+      }}
+    />
+  );
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -78,6 +105,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="it" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body
         className={`${inter.variable} ${poppins.variable} min-h-screen bg-background text-foreground antialiased`}
       >
