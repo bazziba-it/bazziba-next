@@ -3,9 +3,9 @@
 
 import { Badge, Separator } from "@/components/ui";
 import { CommentsSection } from "@/components/video/comments-section";
-import { formatDate } from "@/lib/utils";
+import { formatViews, formatDate } from "@/lib/utils";
 import type { Video } from "@/types";
-import { ThumbsUp, ThumbsDown, Share2, Clock, Copy, Check, Download, Flag, Settings, Maximize, Play } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Share2, Clock, Copy, Check, Download, Flag, Settings, Maximize, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { useState } from "react";
 
 
@@ -279,7 +279,15 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
             </div>
 
             {/* Comments Section */}
-            <CommentsSection videoId={video.id} commentCount={24} />
+            <div className="space-y-4 pt-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <MessageCircle className="h-5 w-5" />
+                Commenti (24)
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Accedi per commentare e interagire con la community.
+              </p>
+            </div>
           </div>
 
           {/* Sidebar - Suggested Videos */}
