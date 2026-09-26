@@ -17,7 +17,7 @@ function getMockVideo(id: string): Video | null {
       title: "Il Canto dell'Anima - Performance Live",
       slug: "il-canto-dellanima-performance-live",
       description: "Un'interpretazione emozionale di una canzone originale. Questo video cattura l'energia grezza di una performance live in un piccolo club di Milano. L'arte del canto come forma di espressione personale e condivisione emotiva.",
-      thumbnail: "https://images.unsplash.com/photo-1516204474435-7c6b6b7c8e9a?w=800&h=450&fit=crop",
+      thumbnail: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&h=450&fit=crop",
       duration: 342,
       viewCount: 1248,
       status: "PUBLISHED",
@@ -34,7 +34,7 @@ function getMockVideo(id: string): Video | null {
       title: "Pittura Astrale - Il Viaggio di un Artista",
       slug: "pittura-astrale-il-viaggio-di-un-artista",
       description: "Una panoramica del processo creativo dietro le opere astrali di Marco Bianchi. Dal bozzetto all'opera finale, scopri il metodo e l'ispirazione che muovono queste meravigliose creazioni.",
-      thumbnail: "https://images.unsplash.com/photo-1578301979-642908803e52?w=800&h=450&fit=crop",
+      thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=450&fit=crop",
       duration: 892,
       viewCount: 892,
       status: "PUBLISHED",
@@ -51,7 +51,7 @@ function getMockVideo(id: string): Video | null {
       title: "Danza Contemporanea - Spazio e Movimento",
       slug: "danza-contemporanea-spazio-e-movimento",
       description: "Un'esplorazione della danza moderna in uno spazio urbano. Sofia Marchetti e il suo colletivo esplorano la relazione tra corpo e architettura.",
-      thumbnail: "https://images.unsplash.com/photo-15188376950205-8d818a1a3175?w=800&h=450&fit=crop",
+      thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=450&fit=crop",
       duration: 456,
       viewCount: 2156,
       status: "PUBLISHED",
@@ -68,11 +68,11 @@ function getMockVideo(id: string): Video | null {
 }
 
 const mockSuggestedVideos: Video[] = [
-  { id: "vid-4", title: "Poesia Sonora - La Citta che Dorme", slug: "poesia-sonora", description: "Una poesia recitata con una partitura musicale originale.", thumbnail: "https://images.unsplash.com/photo-1521737606499-dead08582903?w=400&h=300&fit=crop", duration: 234, viewCount: 567, status: "PUBLISHED", visibility: "PUBLIC", authorId: "user-4", createdAt: "2025-09-03T09:15:00Z", updatedAt: "2025-09-03T09:15:00Z", author: { id: "user-4", username: "luca_poeta", name: "Luca Verdi", image: "https://i.pravatar.com/64?img=4" }, category: { id: "cat-5", name: "Poeti", slug: "poeti", color: "#0EA5E9" }, tags: [],
+  { id: "vid-4", title: "Poesia Sonora - La Citta che Dorme", slug: "poesia-sonora", description: "Una poesia recitata con una partitura musicale originale.", thumbnail: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=400&h=300&fit=crop", duration: 234, viewCount: 567, status: "PUBLISHED", visibility: "PUBLIC", authorId: "user-4", createdAt: "2025-09-03T09:15:00Z", updatedAt: "2025-09-03T09:15:00Z", author: { id: "user-4", username: "luca_poeta", name: "Luca Verdi", image: "https://i.pravatar.com/64?img=4" }, category: { id: "cat-5", name: "Poeti", slug: "poeti", color: "#0EA5E9" }, tags: [],
   },
-  { id: "vid-5", title: "Mix DJ - Vibrations of the Night", slug: "mix-dj-vibrations", description: "Un viaggio musicale attraverso le ombre della notte.", thumbnail: "https://images.unsplash.com/photo-1514826877100-6c79bae3de4c?w=400&h=300&fit=crop", duration: 678, viewCount: 3421, status: "PUBLISHED", visibility: "PUBLIC", authorId: "user-6", createdAt: "2025-09-01T20:00:00Z", updatedAt: "2025-09-01T20:00:00Z", author: { id: "user-6", username: "dj_alex", name: "Alex Sound", image: "https://i.pravatar.com/64?img=6" }, category: { id: "cat-6", name: "DJ", slug: "dj", color: "#8B5CF6" }, tags: [],
+  { id: "vid-5", title: "Mix DJ - Vibrations of the Night", slug: "mix-dj-vibrations", description: "Un viaggio musicale attraverso le ombre della notte.", thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop", duration: 678, viewCount: 3421, status: "PUBLISHED", visibility: "PUBLIC", authorId: "user-6", createdAt: "2025-09-01T20:00:00Z", updatedAt: "2025-09-01T20:00:00Z", author: { id: "user-6", username: "dj_alex", name: "Alex Sound", image: "https://i.pravatar.com/64?img=6" }, category: { id: "cat-6", name: "DJ", slug: "dj", color: "#8B5CF6" }, tags: [],
   },
-  { id: "vid-7", title: "Musa Urbana - Frammenti di Luce", slug: "musa-urbana", description: "Installazione artistica interattiva in un parco pubblico.", thumbnail: "https://images.unsplash.com/photo-1578301979-642908803e52?w=400&h=300&fit=crop", duration: 520, viewCount: 890, status: "PUBLISHED", visibility: "PUBLIC", authorId: "user-7", createdAt: "2025-09-15T12:00:00Z", updatedAt: "2025-09-15T12:00:00Z", author: { id: "user-7", username: "musa_urbana", name: "Musa Urbana", image: "https://i.pravatar.com/64?img=7" }, category: { id: "cat-4", name: "Artisti Di Strada", slug: "artisti-di-strada", color: "#10B981" }, tags: [],
+  { id: "vid-7", title: "Musa Urbana - Frammenti di Luce", slug: "musa-urbana", description: "Installazione artistica interattiva in un parco pubblico.", thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop", duration: 520, viewCount: 890, status: "PUBLISHED", visibility: "PUBLIC", authorId: "user-7", createdAt: "2025-09-15T12:00:00Z", updatedAt: "2025-09-15T12:00:00Z", author: { id: "user-7", username: "musa_urbana", name: "Musa Urbana", image: "https://i.pravatar.com/64?img=7" }, category: { id: "cat-4", name: "Artisti Di Strada", slug: "artisti-di-strada", color: "#10B981" }, tags: [],
   },
 ];
 
