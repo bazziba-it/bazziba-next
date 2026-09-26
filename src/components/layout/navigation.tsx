@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SearchAutocomplete } from "@/components/layout/search-autocomplete";
 
 const categories = [
   { name: "Cantanti", slug: "cantanti", icon: "🎤" },
@@ -29,7 +30,6 @@ const navItems = [
 
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
 
@@ -53,12 +53,7 @@ export function Navigation() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(true)}
-          >
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
 
@@ -72,16 +67,7 @@ export function Navigation() {
               const Icon = item.icon;
               const active = isActive(item.href);
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200",
-                    active
-                      ? "bg-brand-yellow/10 text-brand-yellow shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
+                <Link key={item.href} href={item.href} className={cn("flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200", active ? "bg-brand-yellow/10 text-brand-yellow shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-accent")}>
                   <Icon className="h-4 w-4" />
                   {item.name}
                 </Link>
@@ -89,48 +75,25 @@ export function Navigation() {
             })}
 
             {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/c/${cat.slug}`}
-                className={cn(
-                  "text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap",
-                  isActive(`/c/${cat.slug}`)
-                    ? "text-brand-yellow bg-brand-yellow/10 shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                )}
-              >
+              <Link key={cat.slug} href={`/c/${cat.slug}`} className={cn("text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap", isActive(`/c/${cat.slug}`) ? "text-brand-yellow bg-brand-yellow/10 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-accent")}>
                 {cat.name}
               </Link>
             ))}
 
-            <Link
-              href="/contest"
-              className={cn(
-                "flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200",
-                isActive("/contest")
-                  ? "bg-brand-yellow text-black shadow-md hover:shadow-lg"
-                  : "text-brand-yellow hover:bg-brand-yellow/10"
-              )}
-            >
+            <Link href="/contest" className={cn("flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200", isActive("/contest") ? "bg-brand-yellow text-black shadow-md hover:shadow-lg" : "text-brand-yellow hover:bg-brand-yellow/10")}>
               <Trophy className="h-4 w-4" />
               Contest
             </Link>
           </nav>
         </div>
 
-        <div className="flex-1 max-w-2xl mx-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Cerca video, artisti, canzoni..."
-              className="w-full rounded-full border border-input pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-background"
-            />
-          </div>
+        {/* Desktop Search */}
+        <div className="hidden md:block flex-1 max-w-2xl mx-4">
+          <SearchAutocomplete />
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className="md:hidden">
+          <Button variant="ghost" size="icon" className="md:hidden">
             <Search className="h-4 w-4" />
           </Button>
 
@@ -142,11 +105,7 @@ export function Navigation() {
             <Bell className="h-4 w-4" />
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
+          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
             <Sun className="h-4 w-4 dark:hidden" />
             <Moon className="h-4 w-4 hidden dark:block" />
           </Button>
@@ -158,6 +117,11 @@ export function Navigation() {
             </Link>
           </Button>
         </div>
+      </div>
+
+      {/* Mobile Search Row */}
+      <div className="md:hidden px-4 pb-2">
+        <SearchAutocomplete />
       </div>
     </header>
   );

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Inter, Poppins } from "next/font/google";
 import { Toaster } from "sonner";
 import { Navigation } from "@/components/layout/navigation";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider } from "next-themes";
 
@@ -52,14 +53,11 @@ function ThemeScript() {
         (function() {
           try {
             var theme = localStorage.getItem('theme');
-            var useDark = theme === 'dark' || (!theme) || (theme === 'system' && true);
+            var useDark = theme === 'dark' || (!theme);
             var html = document.documentElement;
             if (useDark) {
               html.classList.add('dark');
               html.setAttribute('data-theme', 'dark');
-            } else {
-              html.classList.remove('dark');
-              html.setAttribute('data-theme', 'light');
             }
           } catch(e) {}
         })();
@@ -79,8 +77,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <div className="relative flex min-h-screen flex-col">
             <Navigation />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 pb-16 md:pb-0">{children}</main>
             <Footer />
+            <MobileBottomNav />
           </div>
           <Toaster closeButton position="bottom-left" theme="system" richColors />
         </ThemeProvider>
