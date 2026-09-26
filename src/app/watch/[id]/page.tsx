@@ -219,7 +219,7 @@ export default function WatchPage({ params }: { params: Promise<{ id: string }> 
               </div>
 
               {/* Chapters */}
-              <div className="bg-card/50 rounded-lg p-3 border">
+              <div className="glass-card text-card-foreground p-3 border rounded-lg">
                 <p className="font-medium text-sm mb-2">Capitoli del video</p>
                 <div className="flex flex-wrap gap-2">
                   {chapters.map((ch, i) => (

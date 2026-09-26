@@ -200,7 +200,7 @@ export default function HomePage() {
   return (
     <div className="pb-12">
       {/* Hero Section */}
-      <section className="hero-section relative overflow-hidden rounded-2xl py-12 md:py-20 mb-12">
+      <section className="hero-section relative overflow-hidden rounded-2xl liquid-glass liquid-glass-hero py-12 md:py-20 mb-12">
         <div className="absolute inset-0 -z-10">
           <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>
           <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>

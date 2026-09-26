@@ -2,12 +2,11 @@
 @import "tailwindcss";
 
 /* ============================================================
-   BAZZIBA! — Design System v2.0 (2025)
-   Dark-mode first with gold (#FFD700) as single accent
+   BAZZIBA! — Design System v2.0 (2026)
+   Dark-mode first with gold (#FFD700) and Liquid Glass effects
    ============================================================ */
 
 /* ===== Design Tokens ===== */
-/* ALL variables defined in @theme so they're available as fallbacks */
 @theme {
   /* Dark theme (default) */
   --background: 220 20% 6%;
@@ -29,6 +28,9 @@
   --input: 220 10% 20%;
   --ring: 42 91% 50%;
   --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
 
   /* Bazziba Gold */
   --brand-gold: 42 91% 50%;
@@ -78,9 +80,25 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* ===== 2026 Liquid Glass: Accessibility-first ===== */
+  @media (prefers-reduced-transparency: reduce) {
+    .liquid-glass,
+    .glass-card {
+      background: rgba(10, 10, 10, 0.92);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .liquid-glass::before,
+    .liquid-glass::after,
+    .glass-card::before,
+    .glass-card::after {
+      display: none;
+    }
+  }
 }
 
-/* ===== Light mode override (explicit .light class) ===== */
+/* ===== Light mode override ===== */
 .light,
 [data-theme="light"] {
   --background: var(--background-light);
@@ -118,9 +136,90 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  color: transparent;
 }
 
-/* ===== Card elevations ===== */
+/* ===== 2026 Liquid Glass Components ===== */
+
+/* Liquid Glass Card — the 2026 standard */
+.liquid-glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px) saturate(180%) brightness(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.30);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Sheen overlay — diagonal gloss for wet/glassy look */
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.08) 28%,
+    transparent 58%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark variant for hero sections */
+.liquid-glass-dark {
+  background: rgba(0, 0, 0, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Glass card — lighter variant for overlays */
+.glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px) saturate(170%);
+  -webkit-backdrop-filter: blur(12px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.30) 0%,
+    rgba(255, 255, 255, 0.03) 40%,
+    transparent 70%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Glass navbar — ultra-light for headers */
+.glass-nav {
+  background: rgba(10, 10, 10, 0.70);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ===== Card elevations (non-glass fallback) ===== */
 .card-elevated {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -132,7 +231,7 @@
   transform: translateY(-1px);
 }
 
-/* ===== Glass effect ===== */
+/* ===== Original glass class (kept for compat) ===== */
 .glass {
   background: hsl(var(--background) / 0.7);
   border: 1px solid hsl(var(--border) / 0.5);
@@ -151,6 +250,18 @@
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes pulseGold { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* Liquid Glass morph animation (2026 trend — subtle border-radius pulse) */
+@keyframes liquidMorph {
+  0% { border-radius: 20px 24px 22px 18px / 22px 18px 26px 20px; }
+  25% { border-radius: 24px 16px 26px 22px / 18px 24px 20px 24px; }
+  50% { border-radius: 18px 26px 20px 24px / 24px 20px 22px 16px; }
+  75% { border-radius: 22px 20px 18px 26px / 20px 24px 18px 28px; }
+  100% { border-radius: 20px 24px 22px 18px / 22px 18px 26px 20px; }
+}
+.animate-liquid-morph {
+  animation: liquidMorph 12s ease-in-out infinite;
+}
 
 /* ===== Hero section ===== */
 .hero-section {
@@ -199,8 +310,9 @@
   height: 48px;
   background: hsl(var(--background) / 0.8);
   backdrop-filter: blur(4px);
-  border-radius: 50%;
+  -webkit-backdrop-filter: blur(4px);
   border: 1px solid hsl(var(--border));
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -223,3 +335,27 @@
 }
 @media (min-width: 640px) { .container-prose { padding-left: 1.5rem; padding-right: 1.5rem; } }
 @media (min-width: 1024px) { .container-prose { padding-left: 2rem; padding-right: 2rem; } }
+
+/* ===== Liquid Glass Hero (gold-tinted) ===== */
+.liquid-glass-hero {
+  background: rgba(255, 255, 255, 0.06) radial-gradient(ellipse at top right, hsla(42, 91%, 50%, 0.08), transparent 50%);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.30),
+    0 0 40px hsla(42, 91%, 50%, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 0 40px hsla(42, 91%, 50%, 0.03);
+}
+
+/* Animated sheen sweep */
+@keyframes goldSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ===== Liquid Glass Nav ===== */
+.liquid-glass-nav {
+  background: rgba(10, 10, 10, 0.70);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}

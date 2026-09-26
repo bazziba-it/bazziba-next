@@ -131,7 +131,7 @@ export default function ContestPage() {
 
             {/* Contest Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
+              <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
                 <Calendar className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Inizio</p>
@@ -141,7 +141,7 @@ export default function ContestPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
+              <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
                 <Clock className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Giorni Rimasti</p>
@@ -149,7 +149,7 @@ export default function ContestPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
+              <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
                 <Users className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Partecipanti</p>
@@ -157,7 +157,7 @@ export default function ContestPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-card border card-elevated">
+              <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
                 <Trophy className="h-5 w-5 text-brand-yellow flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Premio</p>
@@ -195,7 +195,7 @@ export default function ContestPage() {
             {contest.entries.map((entry, index) => (
               <div
                 key={entry.id}
-                className="flex items-center gap-4 p-4 rounded-xl bg-card border card-elevated"
+                className="flex items-center gap-4 p-4 rounded-xl glass-card text-card-foreground"
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-b from-brand-yellow to-amber-400 text-black font-bold flex-shrink-0">
                   {index < 3 ? (
@@ -246,7 +246,7 @@ export default function ContestPage() {
         </div>
 
         {/* How to Participate */}
-        <div className="rounded-xl border bg-card p-6 mt-8 card-elevated">
+        <div className="rounded-xl border glass-card text-card-foreground p-6 mt-8">
           <h3 className="text-lg font-semibold mb-4">Come partecipare</h3>
           <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
             <li>Pubblica un video con contenuti artistici nella tua categoria preferita</li>

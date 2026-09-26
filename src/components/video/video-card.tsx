@@ -180,7 +180,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           className="group block"
           prefetch={false}
         >
-          <div className="rounded-xl border bg-card p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02]">
+          <div className="rounded-xl glass-card text-card-foreground p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02]">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-yellow/10">
               <span className="text-lg font-bold text-white">
                 {category.name.charAt(0)}

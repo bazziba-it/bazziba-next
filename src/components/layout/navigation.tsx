@@ -50,7 +50,7 @@ export function Navigation() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full glass-nav liquid-glass-nav">
       <div className="container mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(true)}>
@@ -129,7 +129,7 @@ export function Navigation() {
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background">
+    <footer className="border-t glass-nav liquid-glass-nav">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>

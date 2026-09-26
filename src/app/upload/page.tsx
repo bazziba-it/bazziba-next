@@ -66,7 +66,7 @@ export default function UploadPage() {
 
         {/* Upload Zone */}
         <div
-          className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+          className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all liquid-glass ${
             dragActive
               ? "border-brand-yellow bg-brand-yellow/5 scale-[1.02]"
               : "border-border hover:border-brand-yellow/50"
@@ -97,7 +97,7 @@ export default function UploadPage() {
         </div>
 
         {videoFile && (
-          <div className="mt-4 p-4 bg-card rounded-lg border">
+          <div className="mt-4 p-4 glass-card text-card-foreground rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <FileVideo className="h-8 w-8 text-brand-yellow" />

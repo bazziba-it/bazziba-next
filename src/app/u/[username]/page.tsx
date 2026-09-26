@@ -142,7 +142,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ us
     <div className="py-6">
       <div className="container mx-auto px-4">
         {/* Profile Header */}
-        <div className="flex items-center gap-6 mb-8 p-6 rounded-xl bg-card border card-elevated">
+        <div className="flex items-center gap-6 mb-8 p-6 rounded-xl glass-card text-card-foreground">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-muted flex-shrink-0 ring-2 ring-brand-yellow/20">
             <img
               src={user.image}
