@@ -7,12 +7,12 @@
    ============================================================ */
 
 /* ===== Design Tokens ===== */
-/* Dark mode is the default; light mode is the override */
+/* ALL variables defined in @theme so they're available as fallbacks */
 @theme {
-  /* Dark theme (default) — refined dark surfaces */
-  --background: 220 20% 6%;     /* #0F0F0F — near-black, not pure */
+  /* Dark theme (default) */
+  --background: 220 20% 6%;
   --foreground: 0 0% 93%;
-  --card: 220 20% 10%;          /* #141414 — elevated surfaces */
+  --card: 220 20% 10%;
   --card-foreground: 0 0% 93%;
   --popover: 220 20% 8%;
   --popover-foreground: 0 0% 93%;
@@ -30,26 +30,21 @@
   --ring: 42 91% 50%;
   --radius: 0.5rem;
 
-  /* Bazziba Gold — the ONLY accent color (used sparingly) */
-  --brand-gold: 42 91% 50%;      /* #FFD700 in HSL */
+  /* Bazziba Gold */
+  --brand-gold: 42 91% 50%;
   --brand-gold-hex: #FFD700;
   --brand-gold-hover: #E6C200;
   --brand-gold-dark: #FFA700;
 
-  /* Dark theme tokens */
-  --background-dark: 220 20% 6%;
-  --foreground-dark: 0 0% 93%;
-  --card-dark: 220 20% 10%;
-  --surface-dark: 220 20% 8%;
-  --border-dark: 220 10% 20%;
-  --muted-dark: 220 10% 15%;
-  --muted-foreground-dark: 0 0% 55%;
-  --accent-gold: 42 91% 50%;
+  /* Light theme tokens (for .light override) */
+  --background-light: 0 0% 98%;
+  --foreground-light: 220 20% 12%;
+  --card-light: 0 0% 100%;
+  --border-light: 220 20% 88%;
+  --muted-light: 220 10% 96%;
 }
 
-/* ===== Light mode override ===== */
-@custom-variant light (&:where(.light, [data-theme="light"]));
-
+/* ===== Base styles ===== */
 @layer base {
   * {
     border-color: hsl(var(--border));
@@ -75,11 +70,8 @@
     background: hsl(var(--brand-gold) / 0.3);
   }
 
-  /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
+    html { scroll-behavior: auto; }
     * {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
@@ -88,73 +80,36 @@
   }
 }
 
-/* ===== Light mode override ===== */
+/* ===== Light mode override (explicit .light class) ===== */
 .light,
 [data-theme="light"] {
-  --background: 0 0% 98%;
-  --foreground: 220 20% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 20% 14%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 20% 12%;
-  --primary: 220 20% 12%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 220 10% 96%;
-  --secondary-foreground: 220 20% 12%;
-  --muted: 220 10% 96%;
+  --background: var(--background-light);
+  --foreground: var(--foreground-light);
+  --card: var(--card-light);
+  --card-foreground: var(--foreground-light);
+  --popover: var(--card-light);
+  --popover-foreground: var(--foreground-light);
+  --primary: var(--foreground-light);
+  --primary-foreground: var(--background-light);
+  --secondary: var(--muted-light);
+  --secondary-foreground: var(--foreground-light);
+  --muted: var(--muted-light);
   --muted-foreground: 220 15% 45%;
-  --accent: 220 10% 94%;
-  --accent-foreground: 220 20% 12%;
-  --border: 220 20% 88%;
-  --input: 220 20% 88%;
-  --ring: 42 91% 50%;
-}
-
-/* ===== Dark mode (also explicit for class-based toggle) ===== */
-.dark,
-[data-theme="dark"] {
-  --background: var(--background-dark);
-  --foreground: var(--foreground-dark);
-  --card: var(--card-dark);
-  --card-foreground: var(--foreground-dark);
-  --popover: var(--surface-dark);
-  --popover-foreground: var(--foreground-dark);
-  --primary: var(--background-dark);
-  --primary-foreground: var(--foreground-dark);
-  --secondary: var(--surface-dark);
-  --secondary-foreground: var(--foreground-dark);
-  --muted: var(--muted-dark);
-  --muted-foreground: var(--muted-foreground-dark);
-  --accent: var(--muted-dark);
-  --accent-foreground: var(--foreground-dark);
-  --border: var(--border-dark);
-  --input: var(--border-dark);
-  --ring: var(--accent-gold);
+  --accent: var(--muted-light);
+  --accent-foreground: var(--foreground-light);
+  --border: var(--border-light);
+  --input: var(--border-light);
 }
 
 /* ===== Brand gold utilities ===== */
-.text-brand-gold {
-  color: var(--brand-gold-hex);
-}
-.bg-brand-gold {
-  background-color: var(--brand-gold-hex);
-}
-.border-brand-gold {
-  border-color: var(--brand-gold-hex);
-}
-.bg-brand-yellow\/10 {
-  background-color: hsl(var(--brand-gold) / 0.1);
-}
-.text-brand-yellow {
-  color: var(--brand-gold-hex);
-}
-.bg-brand-yellow\/5 {
-  background-color: hsl(var(--brand-gold) / 0.05);
-}
+.text-brand-gold { color: var(--brand-gold-hex); }
+.bg-brand-gold { background-color: var(--brand-gold-hex); }
+.border-brand-gold { border-color: var(--brand-gold-hex); }
+.text-brand-yellow { color: var(--brand-gold-hex); }
 
 /* ===== Gradient utilities ===== */
 .bg-hero-gradient {
-  background: radial-gradient(ellipse at top right, hsl(var(--muted-dark) / 0.3) 0%, transparent 50%),
+  background: radial-gradient(ellipse at top right, hsl(var(--muted) / 0.3) 0%, transparent 50%),
               radial-gradient(ellipse at bottom left, hsl(var(--brand-gold) / 0.05) 0%, transparent 50%);
 }
 
@@ -186,33 +141,16 @@
 }
 
 /* ===== Custom scrollbar ===== */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.4);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.6);
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.4); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.6); }
 
 /* ===== Animations ===== */
-.animate-fade-in { animation: fadeIn 0.4s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.animate-float { animation: float 3s ease-in-out infinite; }
-
 @keyframes pulseGold { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-.animate-pulse-gold { animation: pulseGold 2s ease-in-out infinite; }
 
 /* ===== Hero section ===== */
 .hero-section {
@@ -226,3 +164,62 @@
   background: radial-gradient(ellipse at top right, hsl(var(--brand-gold) / 0.05) 0%, transparent 50%);
   pointer-events: none;
 }
+
+/* ===== Video card hover ===== */
+.video-card-container {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform: translateY(0);
+}
+.video-card-container:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.video-card-image {
+  position: relative;
+  overflow: hidden;
+}
+.video-card-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 40%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.video-card-container:hover .video-card-image::after {
+  opacity: 1;
+}
+
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  border: 1px solid hsl(var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+.video-card-container:hover .play-overlay {
+  opacity: 1;
+  transform: translate(-50%, -45%);
+}
+
+/* ===== Content container ===== */
+.container-prose {
+  max-width: 64rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) { .container-prose { padding-left: 1.5rem; padding-right: 1.5rem; } }
+@media (min-width: 1024px) { .container-prose { padding-left: 2rem; padding-right: 2rem; } }
