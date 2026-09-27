@@ -1,6 +1,8 @@
+/** @format */
+
 import { VideoGrid, CategoryGrid } from "@/components/video/video-card";
 import type { Video, Category } from "@/types";
-import { Trophy, Play, Upload } from "lucide-react";
+import { Trophy, Play, Upload, TrendingUp } from "lucide-react";
 
 // Mock data for demonstration
 const mockVideos: Video[] = [
@@ -200,10 +202,10 @@ export default function HomePage() {
   return (
     <div className="pb-12">
       {/* Hero Section */}
-      <section className="hero-section relative overflow-hidden rounded-2xl liquid-glass liquid-glass-hero py-12 md:py-20 mb-12">
+      <section className="hero-section relative overflow-hidden rounded-2xl liquid-glass liquid-glass-hero animate-liquid-morph py-12 md:py-20 mb-12">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>
+          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl" />
         </div>
 
         <div className="container mx-auto px-4">
@@ -224,7 +226,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/feed/latest"
-                className="inline-flex items-center justify-center rounded-lg bg-brand-yellow px-6 py-3 text-base font-semibold text-black transition-all duration-200 hover:bg-brand-yellow-hover hover:scale-105"
+                className="inline-flex items-center justify-center rounded-lg bg-brand-yellow px-6 py-3 text-base font-semibold text-black transition-all duration-200 hover:bg-brand-gold-hover hover:scale-105"
               >
                 <Play className="mr-2 h-5 w-5 fill-current" />
                 Esplora i video
@@ -239,6 +241,23 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Trending Section - prominent from bazziba.it */}
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-brand-yellow" />
+            <h2 className="text-2xl font-bold">Trending</h2>
+          </div>
+          <a
+            href="/feed/trending"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Vedi tutti
+          </a>
+        </div>
+        <VideoGrid videos={mockVideos.slice(0, 4)} showAuthor={false} emptyMessage="Nessun video trending" />
       </section>
 
       {/* Categories */}
@@ -260,9 +279,7 @@ export default function HomePage() {
         <div className="rounded-2xl bg-gradient-to-r from-brand-yellow/10 to-brand-yellow/5 p-8 border border-brand-yellow/20">
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="h-5 w-5 text-brand-yellow fill-current" />
-            <span className="text-sm font-medium text-brand-yellow">
-              CONTEST MENSILE BAZZIBA
-            </span>
+            <span className="text-sm font-medium text-brand-yellow">CONTEST MENSILE BAZZIBA</span>
           </div>
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Vinci premi per i tuoi video artistici</h2>
           <p className="text-muted-foreground mb-6 max-w-2xl">
@@ -315,20 +332,6 @@ export default function HomePage() {
           </a>
         </div>
         <VideoGrid videos={mockContestVideos} compact emptyMessage="Nessun video in contest" />
-      </section>
-
-      {/* Trending */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Trending</h2>
-          <a
-            href="/feed/trending"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Vedi tutti
-          </a>
-        </div>
-        <VideoGrid videos={mockVideos.slice(0, 4)} showAuthor={false} emptyMessage="Nessun video trending" />
       </section>
     </div>
   );

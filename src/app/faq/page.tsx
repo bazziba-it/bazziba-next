@@ -1,4 +1,5 @@
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export default async function FaqPage() {
   const faqs = [
@@ -24,7 +25,7 @@ export default async function FaqPage() {
     },
     {
       q: "Cosa non si può caricare su Bazziba?",
-      a: "Contenuti non artistici, violenti o pericolrosi, cyberbullismo, incitamento all'odio.",
+      a: "Contenuti non artistici, violenti o pericolosi, cyberbullismo, incitamento all'odio.",
     },
   ];
 
@@ -32,10 +33,8 @@ export default async function FaqPage() {
     <div className="py-8">
       <div className="container mx-auto px-4 max-w-3xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">
-            <span className="gradient-text">FAQ</span>
-          </h1>
+        <div className="text-center mb-12 animate-fade-in">
+          <h1 className="text-4xl font-bold mb-4 gradient-text">FAQ</h1>
           <p className="text-muted-foreground">
             Domande frequenti su Bazziba e il suo funzionamento
           </p>
@@ -46,15 +45,15 @@ export default async function FaqPage() {
           {faqs.map((faq, i) => (
             <details
               key={i}
-              className="group border rounded-xl p-4 bg-card transition-all duration-200 hover:shadow-md"
+              className="group border rounded-xl p-4 bg-card border-border transition-all duration-200 hover:shadow-md hover:border-brand-yellow/20"
             >
-              <summary className="flex items-center justify-between cursor-pointer font-semibold text-lg">
+              <summary className="flex items-center justify-between cursor-pointer font-semibold text-lg text-foreground list-none">
                 <span>{faq.q}</span>
-                <span className="text-muted-foreground group-hover:text-brand-yellow transition-colors">
-                  ▼
+                <span className="text-muted-foreground group-open:text-brand-yellow transition-colors text-xl leading-none ml-4">
+                  {Array(i + 1).fill("▶").join("")}
                 </span>
               </summary>
-              <div className="mt-3 text-muted-foreground leading-relaxed">
+              <div className="mt-3 text-muted-foreground leading-relaxed border-t border-border pt-3">
                 {faq.a}
               </div>
             </details>
@@ -68,7 +67,7 @@ export default async function FaqPage() {
             Contattaci all'indirizzo{" "}
             <a
               href="mailto:info@bazziba.it"
-              className="text-brand-yellow hover:underline"
+              className="text-brand-yellow hover:underline font-medium"
             >
               info@bazziba.it
             </a>

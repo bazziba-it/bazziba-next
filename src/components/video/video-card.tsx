@@ -1,7 +1,7 @@
-"use client";
+/** @format */
 
 import Link from "next/link";
-import { Play, Clock } from "lucide-react";
+import { Play, Clock, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui";
 import { getThumbnailUrl, getAvatarUrl } from "@/lib/server";
 import type { Video } from "@/types";
@@ -44,9 +44,9 @@ export function VideoCard({ video, showAuthor = true, size = "md", className }: 
       className={`group block ${sizeConfig[size]} ${className || ""}`}
       prefetch={false}
     >
-      <div className="space-y-3">
+      <div className="space-y-3 animate-fade-in">
         {/* Thumbnail */}
-        <div className="relative aspect-video rounded-xl overflow-hidden bg-muted shadow-md">
+        <div className="relative aspect-video rounded-xl overflow-hidden bg-muted shadow-lg group-hover:liquid-glass group-hover:shadow-2xl transition-all duration-300">
           <img
             src={getThumbnailUrl(video.thumbnail)}
             alt={video.title}
@@ -152,7 +152,7 @@ export function VideoGrid({ videos, title, emptyMessage = "No videos found", com
     <div className="space-y-4">
       {title && <h2 className="text-xl font-bold mb-4">{title}</h2>}
       <div className="grid gap-5 sm:gap-6 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
-        {videos.map((video) => (
+        {videos.map((video, index) => (
           <VideoCard
             key={video.id}
             video={video}
@@ -167,20 +167,27 @@ export function VideoGrid({ videos, title, emptyMessage = "No videos found", com
 }
 
 interface CategoryGridProps {
-  categories: Array<{ id: string; name: string; slug: string; videoCount?: number; color?: string | null }>;
+  categories: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    videoCount?: number;
+    color?: string | null;
+  }>;
 }
 
 export function CategoryGrid({ categories }: CategoryGridProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
-      {categories.map((category) => (
+      {categories.map((category, i) => (
         <Link
           key={category.id}
           href={`/c/${category.slug}`}
-          className="group block"
+          className="group block animate-fade-in"
+          style={{ animationDelay: `${i * 0.05}s` }}
           prefetch={false}
         >
-          <div className="rounded-xl glass-card text-card-foreground p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02]">
+          <div className="rounded-xl glass-card text-card-foreground p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02] group-hover:border-brand-yellow/20">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-yellow/10">
               <span className="text-lg font-bold text-white">
                 {category.name.charAt(0)}

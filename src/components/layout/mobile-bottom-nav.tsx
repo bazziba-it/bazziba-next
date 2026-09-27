@@ -8,7 +8,7 @@ import { Home, Search, Upload, Bell, User, TrendingUp, Trophy } from "lucide-rea
 const mobileMenuItems = [
   { name: "Home", href: "/", icon: Home },
   { name: "Trending", href: "/feed/trending", icon: TrendingUp },
-  { name: "Search", href: "/search", icon: Search },
+  { name: "Cerca", href: "/search", icon: Search },
   { name: "Contest", href: "/contest", icon: Trophy },
   { name: "Profilo", href: "/u", icon: User },
 ];
@@ -23,7 +23,7 @@ export function MobileBottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border">
       <div className="flex items-center justify-around h-16 px-2">
         {mobileMenuItems.map((item) => {
           const Icon = item.icon;
@@ -33,10 +33,10 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 text-xs font-medium transition-all duration-200 rounded-lg p-2",
+                "flex flex-col items-center justify-center gap-1 text-xs font-medium transition-all duration-200 rounded-lg p-2 min-w-0",
                 active
                   ? "text-brand-yellow bg-brand-yellow/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
             >
               <Icon className="h-5 w-5" />
@@ -46,9 +46,9 @@ export function MobileBottomNav() {
         })}
         <Link
           href="/upload"
-          className="flex flex-col items-center justify-center gap-1 text-xs font-medium text-white bg-brand-yellow rounded-full w-14 h-14 shadow-lg hover:scale-105 transition-transform"
+          className="flex flex-col items-center justify-center gap-0 text-xs font-medium text-black bg-brand-yellow rounded-full w-14 h-14 shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-200 active:scale-95"
         >
-          <Upload className="h-6 w-6" />
+          <Upload className="h-6 w-6 fill-current" />
         </Link>
       </div>
     </nav>

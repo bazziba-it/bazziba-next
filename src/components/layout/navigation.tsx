@@ -1,14 +1,15 @@
+/** @format */
+
 "use client";
 
-import { useState, useEffect } from "react";
-import { Menu, Search, Upload, Bell, User, Moon, Sun, LogIn, Home, TrendingUp, Trophy } from "lucide-react";
+import Link from "next/link";
+import { Logo, ThemeToggle } from "@/components/ui/logo";
 import { Button } from "@/components/ui";
-import { Logo } from "@/components/ui/logo";
+import { Search, Upload, Bell, User, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { SearchAutocomplete } from "@/components/layout/search-autocomplete";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { SearchAutocomplete } from "@/components/layout/search-autocomplete";
 
 const categories = [
   { name: "Cantanti", slug: "cantanti", icon: "🎤" },
@@ -22,106 +23,158 @@ const categories = [
   { name: "Pittori", slug: "pittori", icon: "🖼️" },
 ];
 
-const navItems = [
-  { name: "Home", href: "/", icon: Home },
-  { name: "Trending", href: "/feed/trending", icon: TrendingUp },
-  { name: "Contest", href: "/contest", icon: Trophy },
+const desktopNavItems = [
+  { name: "Home", href: "/", icon: null },
+  { name: "Trending", href: "/feed/trending", icon: null },
+  { name: "Contest", href: "/contest", icon: null },
 ];
 
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-  const pathname = usePathname();
-
-  const isActive = (href: string) => {
-    if (href === "/" && pathname === "/") return true;
-    if (href !== "/" && pathname.startsWith(href)) return true;
-    return false;
-  };
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setMobileMenuOpen(false);
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-nav liquid-glass-nav">
+    <header className="sticky top-0 z-50 w-full liquid-glass-nav">
       <div className="container mx-auto flex h-16 items-center justify-between">
+        {/* Left: logo + mobile menu toggle */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(true)}>
-            <Menu className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
 
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-9 w-9" />
             <span className="font-bold text-xl text-brand-yellow">Bazziba!</span>
           </Link>
+        </div>
 
-          <nav className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              return (
-                <Link key={item.href} href={item.href} className={cn("flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200", active ? "bg-brand-yellow/10 text-brand-yellow shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-accent")}>
-                  <Icon className="h-4 w-4" />
-                  {item.name}
-                </Link>
-              );
-            })}
-
-            {categories.map((cat) => (
-              <Link key={cat.slug} href={`/c/${cat.slug}`} className={cn("text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap", isActive(`/c/${cat.slug}`) ? "text-brand-yellow bg-brand-yellow/10 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-accent")}>
-                {cat.name}
-              </Link>
-            ))}
-
-            <Link href="/contest" className={cn("flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200", isActive("/contest") ? "bg-brand-yellow text-black shadow-md hover:shadow-lg" : "text-brand-yellow hover:bg-brand-yellow/10")}>
-              <Trophy className="h-4 w-4" />
-              Contest
+        {/* Center: desktop nav */}
+        <nav className="hidden md:flex items-center space-x-1">
+          {desktopNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200",
+                "text-muted-foreground hover:text-foreground hover:bg-accent",
+              )}
+            >
+              {item.name}
             </Link>
-          </nav>
-        </div>
+          ))}
 
-        {/* Desktop Search */}
-        <div className="hidden md:block flex-1 max-w-2xl mx-4">
-          <SearchAutocomplete />
-        </div>
+          {/* Category pills */}
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={`/c/${cat.slug}`}
+              className={cn(
+                "text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap",
+                "text-muted-foreground hover:text-foreground hover:bg-accent",
+              )}
+            >
+              {cat.icon} {cat.name}
+            </Link>
+          ))}
+        </nav>
 
+        {/* Right: search + actions */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Search className="h-4 w-4" />
+          {/* Desktop search */}
+          <div className="hidden md:block flex-1 max-w-md mx-4">
+            <SearchAutocomplete />
+          </div>
+
+          {/* Mobile search icon */}
+          <Button variant="ghost" size="icon" className="md:hidden" asChild>
+            <a href="/search">
+              <Search className="h-4 w-4" />
+            </a>
           </Button>
 
-          <Button variant="ghost" size="icon">
-            <Upload className="h-4 w-4" />
+          <Button variant="ghost" size="icon" asChild>
+            <a href="/upload">
+              <Upload className="h-4 w-4" />
+            </a>
           </Button>
 
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-4 w-4" />
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-brand-yellow" />
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-            <Sun className="h-4 w-4 dark:hidden" />
-            <Moon className="h-4 w-4 hidden dark:block" />
-          </Button>
+          <ThemeToggle />
 
-          <Button variant="ghost" size="sm" className="hidden sm:flex">
-            <Link href="/auth/signin" className="flex items-center">
-              <LogIn className="h-4 w-4 mr-2" />
+          <Button variant="ghost" size="sm" className="hidden sm:flex" asChild>
+            <a href="/auth/signin" className="flex items-center gap-1">
+              <User className="h-4 w-4" />
               Accedi
-            </Link>
+            </a>
           </Button>
         </div>
       </div>
 
-      {/* Mobile Search Row */}
+      {/* Mobile search row */}
       <div className="md:hidden px-4 pb-2">
         <SearchAutocomplete />
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 h-screen bg-background/95 backdrop-blur border-r transition-transform md:hidden",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex flex-col h-full p-4">
+          {/* Mobile nav items */}
+          <nav className="flex-1 space-y-1">
+            {desktopNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
+                  "text-muted-foreground hover:bg-accent hover:text-foreground",
+                )}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.name}
+              </Link>
+            ))}
+
+            <div className="border-t my-3" />
+
+            {categories.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/c/${cat.slug}`}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>{cat.icon}</span>
+                {cat.name}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="border-t pt-4 mt-auto space-y-2">
+            <Button variant="ghost" size="sm" className="w-full" asChild>
+              <a href="/auth/signin">Accedi</a>
+            </Button>
+            <Button className="w-full bg-brand-yellow text-black hover:bg-brand-gold-hover" asChild>
+              <a href="/upload">Carica video</a>
+            </Button>
+          </div>
+        </div>
       </div>
     </header>
   );
@@ -129,7 +182,7 @@ export function Navigation() {
 
 export function Footer() {
   return (
-    <footer className="border-t glass-nav liquid-glass-nav">
+    <footer className="border-t liquid-glass-nav bg-background/50">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>
@@ -149,30 +202,68 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-3 text-foreground">Esplora</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link></li>
-              <li><Link href="/feed/trending" className="text-muted-foreground hover:text-foreground transition-colors">Trending</Link></li>
-              <li><Link href="/feed/subscribed" className="text-muted-foreground hover:text-foreground transition-colors">Creatore</Link></li>
-              <li><Link href="/contest" className="text-muted-foreground hover:text-foreground transition-colors">Contest</Link></li>
-              <li><Link href="/search" className="text-muted-foreground hover:text-foreground transition-colors">Cerca</Link></li>
+              <li>
+                <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/feed/trending" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Trending
+                </Link>
+              </li>
+              <li>
+                <Link href="/contest" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Contest
+                </Link>
+              </li>
+              <li>
+                <Link href="/search" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Cerca
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold mb-3 text-foreground">Community</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/u" className="text-muted-foreground hover:text-foreground transition-colors">Membri</Link></li>
-              <li><Link href="/newsletter" className="text-muted-foreground hover:text-foreground transition-colors">Newsletter</Link></li>
-              <li><Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</Link></li>
+              <li>
+                <Link href="/u" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Membri
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/newsletter" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Newsletter
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold mb-3 text-foreground">Legale</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/privacy-policy" className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">Termini</Link></li>
-              <li><Link href="/cookie-policy" className="text-muted-foreground hover:text-foreground transition-colors">Cookie Policy</Link></li>
-              <li><Link href="/contattaci" className="text-muted-foreground hover:text-foreground transition-colors">Contatti</Link></li>
+              <li>
+                <Link href="/privacy-policy" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Termini
+                </Link>
+              </li>
+              <li>
+                <Link href="/contattaci" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Contatti
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

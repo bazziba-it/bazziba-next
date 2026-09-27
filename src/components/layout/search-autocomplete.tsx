@@ -1,8 +1,9 @@
-"use client";
+/** @format */
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Search, Clock, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { Input } from "@/components/ui";
 
 const popularSearches = [
   "Musa Urbana",
@@ -29,24 +30,10 @@ export function SearchAutocomplete() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [results, setResults] = useState<typeof mockResults>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (query.length > 1) {
-      // Simulate search results
-      const filtered = mockResults.filter(
-        (r) => r.title.toLowerCase().includes(query.toLowerCase())
-      );
-      setResults(filtered.length > 0 ? filtered : mockResults.slice(0, 3));
-    } else {
-      setResults([]);
-    }
-  }, [query]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(query)}`;
+  const handleSearch = (value: string) => {
+    if (value.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(value.trim())}`;
     }
   };
 
@@ -57,14 +44,22 @@ export function SearchAutocomplete() {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
-      <form onSubmit={handleSearch} className="relative">
+    <div className="relative w-full">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSearch(query);
+        }}
+        className="relative"
+      >
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
-          ref={inputRef}
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+          }}
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           placeholder="Cerca video, canali, categorie..."
@@ -73,7 +68,7 @@ export function SearchAutocomplete() {
       </form>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 w-full rounded-xl border bg-popover shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full mt-1 w-full rounded-xl border bg-popover shadow-lg z-50 overflow-hidden animate-fade-in">
           {query.length > 1 && results.length > 0 ? (
             <div className="py-1">
               {results.map((result) => (
@@ -107,16 +102,14 @@ export function SearchAutocomplete() {
                 </button>
               ))}
 
-              {query && (
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleSearch({ preventDefault: () => {} } as any)}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-accent transition-colors border-t"
-                >
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Cerca "{query}"</span>
-                </button>
-              )}
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSearch(query)}
+                className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-accent transition-colors border-t"
+              >
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Cerca "{query}"</span>
+              </button>
             </div>
           ) : query.length === 0 ? (
             <div className="py-2">
@@ -125,10 +118,7 @@ export function SearchAutocomplete() {
                 <button
                   key={search}
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    setQuery(search);
-                    handleSearch({ preventDefault: () => {} } as any);
-                  }}
+                  onClick={() => handleSearch(search)}
                   className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-accent transition-colors"
                 >
                   <Clock className="h-4 w-4 text-muted-foreground" />

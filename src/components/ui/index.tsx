@@ -41,7 +41,12 @@ export function Button({
   const Classes = cn(baseClasses, variants[variant], sizes[size], className);
   
   if (asChild) {
-    return <Link className={Classes} {...props as any} />;
+    const { className: classNameProp, children, ...rest } = props as any;
+    return (
+      <a href="/" className={cn(baseClasses, variants[variant], sizes[size], classNameProp)} {...rest}>
+        {children}
+      </a>
+    );
   }
   
   return <button className={Classes} {...props} />;

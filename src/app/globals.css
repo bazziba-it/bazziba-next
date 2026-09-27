@@ -2,26 +2,25 @@
 @import "tailwindcss";
 
 /* ============================================================
-   BAZZIBA! — Design System v2.0 (2026)
-   Dark-mode first with gold (#FFD700) and Liquid Glass effects
+   BAZZIBA! Design System v2.0 (2026)
+   Dark-mode-first with gold (#FFD700) and Liquid Glass
    ============================================================ */
 
 /* ===== Design Tokens ===== */
 @theme {
-  /* Dark theme (default) */
   --background: 220 20% 6%;
   --foreground: 0 0% 93%;
   --card: 220 20% 10%;
   --card-foreground: 0 0% 93%;
   --popover: 220 20% 8%;
   --popover-foreground: 0 0% 93%;
-  --primary: 220 20% 6%;
-  --primary-foreground: 0 0% 93%;
+  --primary: 42 91% 50%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 220 20% 8%;
   --secondary-foreground: 0 0% 93%;
   --muted: 220 10% 15%;
   --muted-foreground: 0 0% 55%;
-  --accent: 220 10% 15%;
+  --accent: 220 10% 18%;
   --accent-foreground: 0 0% 93%;
   --destructive: 0 84.2% 60.9%;
   --border: 220 10% 20%;
@@ -31,14 +30,13 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
 
-  /* Bazziba Gold */
   --brand-gold: 42 91% 50%;
   --brand-gold-hex: #FFD700;
   --brand-gold-hover: #E6C200;
   --brand-gold-dark: #FFA700;
 
-  /* Light theme tokens (for .light override) */
   --background-light: 0 0% 98%;
   --foreground-light: 220 20% 12%;
   --card-light: 0 0% 100%;
@@ -46,11 +44,18 @@
   --muted-light: 220 10% 96%;
 }
 
-/* ===== Base styles ===== */
+/* ===== Base ===== */
 @layer base {
   * {
     border-color: hsl(var(--border));
     border-radius: var(--radius);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+    color-scheme: dark;
+    background-color: hsl(var(--background));
   }
 
   body {
@@ -60,17 +65,19 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-image: radial-gradient(circle at 22% 17%, hsl(var(--muted) / 0.3) 0%, transparent 50%);
-  }
-
-  html {
-    scroll-behavior: smooth;
-    font-size: 16px;
-    color-scheme: dark;
+    min-height: 100vh;
   }
 
   ::selection {
     background: hsl(var(--brand-gold) / 0.3);
+    color: hsl(var(--foreground));
   }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.4); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.6); }
 
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -81,24 +88,26 @@
     }
   }
 
-  /* ===== 2026 Liquid Glass: Accessibility-first ===== */
   @media (prefers-reduced-transparency: reduce) {
     .liquid-glass,
-    .glass-card {
-      background: rgba(10, 10, 10, 0.92);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+    .glass-card,
+    .liquid-glass-nav {
+      background: rgba(10, 10, 10, 0.92) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
     .liquid-glass::before,
     .liquid-glass::after,
     .glass-card::before,
-    .glass-card::after {
-      display: none;
+    .glass-card::after,
+    .liquid-glass-nav::before,
+    .liquid-glass-nav::after {
+      display: none !important;
     }
   }
 }
 
-/* ===== Light mode override ===== */
+/* ===== Light mode ===== */
 .light,
 [data-theme="light"] {
   --background: var(--background-light);
@@ -119,18 +128,13 @@
   --input: var(--border-light);
 }
 
-/* ===== Brand gold utilities ===== */
-.text-brand-gold { color: var(--brand-gold-hex); }
-.bg-brand-gold { background-color: var(--brand-gold-hex); }
-.border-brand-gold { border-color: var(--brand-gold-hex); }
+/* ===== Brand Gold ===== */
 .text-brand-yellow { color: var(--brand-gold-hex); }
+.bg-brand-yellow { background-color: var(--brand-gold-hex); }
+.border-brand-yellow { border-color: var(--brand-gold-hex); }
+.bg-brand-gold-hover { background-color: var(--brand-gold-hover); }
 
-/* ===== Gradient utilities ===== */
-.bg-hero-gradient {
-  background: radial-gradient(ellipse at top right, hsl(var(--muted) / 0.3) 0%, transparent 50%),
-              radial-gradient(ellipse at bottom left, hsl(var(--brand-gold) / 0.05) 0%, transparent 50%);
-}
-
+/* ===== Gradient Text ===== */
 .gradient-text {
   background: linear-gradient(135deg, var(--brand-gold-hex) 0%, #FF8C00 50%, #FF6B6B 100%);
   -webkit-background-clip: text;
@@ -139,9 +143,7 @@
   color: transparent;
 }
 
-/* ===== 2026 Liquid Glass Components ===== */
-
-/* Liquid Glass Card — the 2026 standard */
+/* ===== Liquid Glass ===== */
 .liquid-glass {
   position: relative;
   background: rgba(255, 255, 255, 0.08);
@@ -149,39 +151,28 @@
   -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.1);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 20px;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.25),
-    inset 0 1px 1px rgba(255, 255, 255, 0.55),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.30);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.55);
   isolation: isolate;
   overflow: hidden;
 }
 
-/* Sheen overlay — diagonal gloss for wet/glassy look */
 .liquid-glass::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.08) 28%,
-    transparent 58%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 28%, transparent 58%);
   mix-blend-mode: screen;
   pointer-events: none;
   z-index: 1;
 }
 
-/* Dark variant for hero sections */
 .liquid-glass-dark {
   background: rgba(0, 0, 0, 0.30);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.40),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-/* Glass card — lighter variant for overlays */
 .glass-card {
   position: relative;
   background: rgba(255, 255, 255, 0.06);
@@ -189,11 +180,10 @@
   -webkit-backdrop-filter: blur(12px) saturate(170%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   isolation: isolate;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .glass-card::before {
@@ -201,17 +191,20 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.30) 0%,
-    rgba(255, 255, 255, 0.03) 40%,
-    transparent 70%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 70%);
   mix-blend-mode: screen;
   pointer-events: none;
   z-index: 1;
 }
 
-/* Glass navbar — ultra-light for headers */
-.glass-nav {
+.glass-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.40), 0 0 20px hsla(42, 91%, 50%, 0.10);
+  transform: translateY(-2px);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+/* Glass navbar */
+.liquid-glass-nav {
   background: rgba(10, 10, 10, 0.70);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -219,31 +212,19 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* ===== Card elevations (non-glass fallback) ===== */
-.card-elevated {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.06), 0 1px 2px hsl(var(--foreground) / 0.04);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-.card-elevated:hover {
-  box-shadow: 0 10px 25px -5px hsl(var(--foreground) / 0.08), 0 4px 6px -2px hsl(var(--foreground) / 0.04);
-  transform: translateY(-1px);
+/* ===== Hero ===== */
+.hero-section {
+  position: relative;
+  overflow: hidden;
 }
 
-/* ===== Original glass class (kept for compat) ===== */
-.glass {
-  background: hsl(var(--background) / 0.7);
-  border: 1px solid hsl(var(--border) / 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, hsl(var(--brand-gold) / 0.05) 0%, transparent 50%);
+  pointer-events: none;
 }
-
-/* ===== Custom scrollbar ===== */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.4); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.6); }
 
 /* ===== Animations ===== */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -251,7 +232,6 @@
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes pulseGold { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-/* Liquid Glass morph animation (2026 trend — subtle border-radius pulse) */
 @keyframes liquidMorph {
   0% { border-radius: 20px 24px 22px 18px / 22px 18px 26px 20px; }
   25% { border-radius: 24px 16px 26px 22px / 18px 24px 20px 24px; }
@@ -259,24 +239,12 @@
   75% { border-radius: 22px 20px 18px 26px / 20px 24px 18px 28px; }
   100% { border-radius: 20px 24px 22px 18px / 22px 18px 26px 20px; }
 }
-.animate-liquid-morph {
-  animation: liquidMorph 12s ease-in-out infinite;
-}
 
-/* ===== Hero section ===== */
-.hero-section {
-  position: relative;
-  overflow: hidden;
-}
-.hero-section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at top right, hsl(var(--brand-gold) / 0.05) 0%, transparent 50%);
-  pointer-events: none;
-}
+.animate-liquid-morph { animation: liquidMorph 12s ease-in-out infinite; }
+.animate-fade-in { animation: fadeIn 0.4s ease-out; }
+.animate-slide-up { animation: slideUp 0.5s ease-out; }
 
-/* ===== Video card hover ===== */
+/* ===== Video CardStyles ===== */
 .video-card-container {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   transform: translateY(0);
@@ -290,16 +258,14 @@
   overflow: hidden;
 }
 .video-card-image::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 40%);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-.video-card-container:hover .video-card-image::after {
-  opacity: 1;
-}
+.video-card-container:hover .video-card-image::after { opacity: 1; }
 
 .play-overlay {
   position: absolute;
@@ -325,7 +291,7 @@
   transform: translate(-50%, -45%);
 }
 
-/* ===== Content container ===== */
+/* ===== Content Utilities ===== */
 .container-prose {
   max-width: 64rem;
   margin-left: auto;
@@ -336,26 +302,10 @@
 @media (min-width: 640px) { .container-prose { padding-left: 1.5rem; padding-right: 1.5rem; } }
 @media (min-width: 1024px) { .container-prose { padding-left: 2rem; padding-right: 2rem; } }
 
-/* ===== Liquid Glass Hero (gold-tinted) ===== */
-.liquid-glass-hero {
-  background: rgba(255, 255, 255, 0.06) radial-gradient(ellipse at top right, hsla(42, 91%, 50%, 0.08), transparent 50%);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.30),
-    0 0 40px hsla(42, 91%, 50%, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 0 40px hsla(42, 91%, 50%, 0.03);
-}
-
-/* Animated sheen sweep */
-@keyframes goldSweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* ===== Liquid Glass Nav ===== */
-.liquid-glass-nav {
-  background: rgba(10, 10, 10, 0.70);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
+/* ===== Stagger animation helper ===== */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
