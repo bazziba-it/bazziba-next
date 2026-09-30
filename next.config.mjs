@@ -60,6 +60,19 @@ const nextConfig = {
     // Disable PPR which can cause prerender issues on non-standard platforms
     // Use static export to avoid runtime URL parsing during prerender
   },
+
+  // Fix hls.js ESM/CJS dual package resolution for @mux/mux-player
+  // The CJS dist doesn't export named classes like CapLevelController;
+  // the ESM dist does. Force ESM resolution for hls.js imports.
+  webpack: (config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.fullySpecified = false;
+    // Alias hls.js to the ESM dist to get named exports (CapLevelController etc.)
+    config.resolve.alias = config.resolve.alias || {};
+    config.resolve.alias["hls.js"] = "hls.js/dist/hls.mjs";
+    config.resolve.alias["hls.js/dist/hls.js"] = "hls.js/dist/hls.mjs";
+    return config;
+  },
 };
 
 export default nextConfig;
