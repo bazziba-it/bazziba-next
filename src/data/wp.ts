@@ -91,7 +91,7 @@ async function wpFetch<T>(path: string, params: Record<string, string> = {}): Pr
 export async function fetchWpVideos(perPage = 20): Promise<WpVideo[]> {
   return wpFetch<WpVideo[]>("/video", {
     per_page: String(perPage),
-    _fields: "id,slug,title,featured_media,categories,author,date,status",
+    _embed: "true",
     orderby: "date",
     order: "desc",
   });
@@ -169,21 +169,23 @@ function seededRand(seed: number): () => number {
 /** Map WP video to Bazziba frontend video shape */
 export function mapWpVideo(
   wp: WpVideo,
-  mediaUrl?: string,
-  author?: WpUser,
-  _categories?: WpCategory[]
+  _mediaUrl?: string,
+  author?: WpUser
 ): BazzibaVideo {
   const title = cleanTitle(wp.title);
 
-  // Thumbnail: prefer actual media URL, fallback to CDN-derived, then picsum
+  // Get media URL from _embed data (preferred) or CDN fallback
+  const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
+  const mediaUrlFromEmbed = embeddedMedia?.source_url || embeddedMedia?.guid || "";
+
   const thumbnail =
-    mediaUrl ||
+    mediaUrlFromEmbed ||
     (wp.featuredMedia
-      ? `${CDN_BASE}/${wp.featuredMedia}.webp`
+      ? `${CDN_BASE}/${wp.featuredMedia}.jpg`
       : `https://picsum.photos/seed/vid-${wp.id}/400/225`);
 
-  // Category from WP categories (default to first available or "Viral Videos")
-  const cats = wp.categories;
+  // Category from WP categories (default to "Viral Videos")
+  const cats = wp.categories || [];
   const catName = cats.length > 0 ? cats[0].name : "Viral Videos";
   const catSlug = cats.length > 0 ? cats[0].slug : "viral-videos";
 
@@ -222,28 +224,23 @@ export function mapWpVideo(
 
 /** Fetch all WP data and map to frontend videos in one call */
 export async function fetchBazzibaVideos(): Promise<BazzibaVideo[]> {
-  // Fetch videos + categories in parallel (single source of truth for author IDs)
-  const [wpVideos, wpCategories] = await Promise.all([
-    fetchWpVideos(30),
-    fetchWpCategories(),
-  ]);
+  // Fetch videos (with _embed for media URLs in single call)
+  const wpVideos = await fetchWpVideos(30);
 
-  // Extract unique author IDs from the videos we just fetched
-  const authorIds = [...new Set(wpVideos.map((v) => v.author))];
+  // Extract unique author IDs (no longer need media IDs separately)
+  const authorIds = [...new Set(wpVideos.map((v) => v.author).filter(Boolean))];
 
-  // Fetch authors in parallel batches
+  // Fetch authors
   const wpUsers = await fetchWpAuthors(authorIds);
 
-  // Map each video: fetch media in parallel, then map
+  // Map each video — media URLs come from _embedded data
   const results: BazzibaVideo[] = [];
   for (const wp of wpVideos) {
     if (wp.status !== "publish") continue;
     try {
-      const media = wp.featuredMedia ? await fetchWpMedia(wp.featuredMedia) : undefined;
       const author = wp.author in wpUsers ? wpUsers[wp.author] : undefined;
-      results.push(mapWpVideo(wp, media?.url, author, wpCategories));
+      results.push(mapWpVideo(wp, undefined, author));
     } catch {
-      // Skip videos whose media fails to load — don't break the whole list
       continue;
     }
   }
