@@ -126,36 +126,7 @@ async function fetchBazzibaVideos(): Promise<any[]> {
     order: "desc",
   });
 
-  const mediaPromises: Promise<any>[] = [];
-  const mediaIds = new Set<number>();
-
-  for (const v of videos) {
-    if (v.featuredMedia) {
-      const id = Number(v.featuredMedia);
-      if (!mediaIds.has(id)) {
-        mediaIds.add(id);
-        mediaPromises.push(wpFetch(`/media/${id}`, { _fields: "source_url,guid" }));
-      }
-    }
-  }
-  const mediaResults = await Promise.all(mediaPromises);
-  const mediaMap = new Map<number, string>();
-  let mi = 0;
-  for (const v of videos) {
-    if (v.featuredMedia) {
-      const id = Number(v.featuredMedia);
-      if (mediaIds.has(id)) {
-        const m = mediaResults[mi];
-        if (m) {
-          const url = (m as any).source_url || (m as any).guid || "";
-          if (url) mediaMap.set(id, url);
-        }
-        mi++;
-      }
-    }
-  }
-
-  return videos.map((v) => mapWpVideo(v, mediaMap));
+  return videos.map((v) => mapWpVideo(v, new Map()));
 }
 
 /* ---- types ---- */
