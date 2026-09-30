@@ -77,28 +77,22 @@ function getAvatarUrl(authorId: number | null, avatarUrls: Record<string, string
   return "https://bazziba.it/wp-content/uploads/2026/06/default-avatar.png";
 }
 
-function mapWpVideo(wp: any, mediaMap: Map<number, string>): any {
+function mapWpVideo(wp: any): any {
   const title = (wp.title?.rendered || "Video").replace(/<[^>]+>/g, "").trim();
   const slug = wp.slug || title.toLowerCase().replace(/\s+/g, "-");
   const authorData = wp._embedded?.author?.[0] || wp.author_data || null;
   const authorName = authorData?.name || "Bazziba";
   const authorAvatar = getAvatarUrl(wp.author, authorData?.avatar_urls);
-  const cat = wp.categories?.[0];
-  let category = cat ? cat.name : "Viral Videos";
-  let categorySlug = cat ? cat.slug : "viral-videos";
+  const cat = wp._embedded?.["wp:term"]?.[0]?.[0] || wp.categories?.[0];
+  let category = cat?.name || "Viral Videos";
+  let categorySlug = cat?.slug || "viral-videos";
 
   let thumbnail = "";
-  if (wp.featuredMedia) {
-    const mediaUrl = mediaMap.get(Number(wp.featuredMedia));
-    if (mediaUrl) {
-      thumbnail = mediaUrl;
-    } else if (wp._embedded?.["wp:featuredmedia"]?.[0]) {
-      const m = wp._embedded["wp:featuredmedia"][0];
-      thumbnail = m.source_url || m.guid || "";
-    } else {
-      thumbnail = `https://picsum.photos/seed/${slug}/400/225`;
-    }
-  } else {
+  const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
+  if (embeddedMedia) {
+    thumbnail = embeddedMedia.source_url || embeddedMedia.guid || "";
+  }
+  if (!thumbnail) {
     thumbnail = `https://picsum.photos/seed/${slug}/400/225`;
   }
 
@@ -121,12 +115,11 @@ function mapWpVideo(wp: any, mediaMap: Map<number, string>): any {
 async function fetchBazzibaVideos(): Promise<any[]> {
   const videos = await wpFetch("/video", {
     per_page: "50",
-    _embed: "true",
+    _embed: "1",
     status: "publish",
     order: "desc",
   });
-
-  return videos.map((v) => mapWpVideo(v, new Map()));
+  return videos.map((v) => mapWpVideo(v));
 }
 
 /* ---- types ---- */
