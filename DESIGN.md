@@ -1,10 +1,27 @@
-# BAZZIBA! Design System v2.0
+# BAZZIBA! Design System v3.0
 
 > A vibrant, community-driven contest and video platform celebrating Italian entertainment, music, and creative talent with an energetic, playful brand voice.
 
-**Version:** 2.0 (2026)  
-**Status:** Production  
-**Last Updated:** September 2026
+**Version:** 3.0 (2026-11-05)
+**Status:** Production
+**Last Updated:** November 2026
+
+---
+
+## Normative Specs
+
+Glass material, motion language, glass primitives and the layering model are owned by
+**ADR-0001 — Liquid Glass 2026** (`docs/adr/0001-liquid-glass-2026.md`). Where this document and
+ADR-0001 disagree, **ADR-0001 wins**. Outside the sections explicitly marked *superseded*, this
+file never restates a token value that ADR-0001 owns — it points at the section instead.
+
+| Domain | Authoritative source |
+|---|---|
+| Glass material tokens (blur, fill, specular, edge, refraction, elevation) | ADR-0001 §4 |
+| Motion language (durations, easings, springs, stagger) | ADR-0001 §5 |
+| Glass component architecture (`GlassSurface`, `GlassCard`, `GlassButton`, `GlassNav`) | ADR-0001 §6 |
+| Layering over `#050a14`, z-scale, performance budget | ADR-0001 §7, §8 |
+| Contrast floors, scrim rule, reduced-motion / reduced-transparency | ADR-0001 §9 |
 
 ---
 
@@ -29,23 +46,27 @@
 | `--card` | `#0c1220` | 225 45% 8% | Card surfaces |
 | `--card-foreground` | `#E8E8E8` | 0 0% 93% | Card text |
 | `--muted` | `#111827` | 225 30% 12% | Secondary surfaces |
-| `--muted-foreground` | `#7d8a9a` | 215 10% 48% | Secondary text |
+| `--muted-foreground` | `#9aa7b8` | 214 17% 66% | Secondary text — contrast floor governed by ADR-0001 §9.1 |
 | `--border` | `#1e2a3a` | 220 25% 20% | Borders, dividers |
-| `--border-bright` | `rgba(0, 242, 255, 0.15)` | - | Cyan-tinted border on glass |
+| `--border-bright` | `rgba(0, 242, 255, 0.15)` | - | Cyan-tinted border on glass — v2 value retired; not defined in code. Glass edge tokens live in ADR-0001 §4.3 |
 | `--input` | `#1e2a3a` | 220 25% 20% | Input borders |
+
+**Governance:** the semantic rows above mirror the Phase 0 token set of ADR-0001 §3. Contrast
+floors and the measured ratios are ADR-0001 §9.1 — `#6b7280` is banned there (it fails 4.5:1 as
+small text) and must not be reintroduced. `--muted-foreground` must not be lightened past
+`#9aa7b8`.
 
 ### Light Mode Overrides
 When `.light` or `[data-theme="light"]` is active:
-- `--background`: `#FAFAFA` (0 0% 98%)
+- `--background`: stays `#050a14` in **both** themes — the page base is not theme-switched (ADR-0001 §7)
 - `--foreground`: `#1F2937` (220 20% 12%)
 - `--card`: `#FFFFFF` (0 0% 100%)
 - `--border`: `#E5E7EB` (220 20% 88%)
 
 ### Background Gradient
-Subtle radial gradient on body:
-```css
-background-image: radial-gradient(circle at 22% 17%, hsl(var(--muted) / 0.3) 0%, transparent 50%);
-```
+The body base is a layered radial gradient over `#050a14` (cyan + teal washes) with two ambient
+`blur-3xl` cyan blobs as layer 1 — see the layering model in ADR-0001 §7 and the live `body`
+rule in `src/app/globals.css`. Values are owned by ADR-0001 §7 and are not repeated here.
 
 ---
 
@@ -69,15 +90,9 @@ background-image: radial-gradient(circle at 22% 17%, hsl(var(--muted) / 0.3) 0%,
 | Label SM | Poppins | 12px | 600 | 16px | 0.05em | Badges, captions |
 
 ### Gradient Text
-Gold-to-orange-to-red gradient for hero headlines:
-```css
-.gradient-text {
-  background: linear-gradient(135deg, #FFD700 0%, #FF8C00 50%, #FF6B6B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-```
+Hero headlines use the cyan accent gradient — the exact stops live in the `.gradient-text` rule
+in `src/app/globals.css`, drawn from the `brand.cyan` scale (ADR-0001 §3). The v2
+gold→orange→red gradient is superseded by the 2026 cyan accent.
 
 ---
 
@@ -92,7 +107,7 @@ Gold-to-orange-to-red gradient for hero headlines:
 | `lg` | 40px | Section gaps |
 | `xl` | 64px | Hero sections |
 | `gutter` | 24px | Container padding |
-| `container-max` | 1280px | Max content width |
+| `container-max` | 1280px | Max content width — canonical `max-w-7xl` per ADR-0001 §8 (D8) |
 
 ### Border Radius
 | Token | Value | Usage |
@@ -101,8 +116,8 @@ Gold-to-orange-to-red gradient for hero headlines:
 | `DEFAULT` | 0.5rem | Inputs, buttons |
 | `md` | 0.75rem | Cards, modals |
 | `lg` | 1rem | Panels, dropdowns |
-| `xl` | 1.5rem | Hero sections, large cards |
-| `2xl` | 20px | Liquid glass cards |
+| `xl` | 1.5rem | Glass `raised`/`overlay` tier radius — ADR-0001 §4.5 |
+| `2xl` | 20px | Glass `card` tier radius — ADR-0001 §4.5 |
 | `full` | 9999px | Pills, avatars, FAB |
 
 ### Responsive Breakpoints
@@ -115,7 +130,14 @@ Gold-to-orange-to-red gradient for hero headlines:
 
 ---
 
-## 2026 Liquid Glass Design Language
+## 2026 Liquid Glass Design Language (v2 — SUPERSEDED)
+
+> **SUPERSEDED — historical record only, not normative.**
+> This is the DESIGN.md v2 glass spec, kept as history. The Liquid Glass material, motion,
+> component and layering specs now live in **ADR-0001** (`docs/adr/0001-liquid-glass-2026.md`):
+> material → §4, motion → §5, components → §6, layering → §7, budget → §8, a11y → §9.
+> Every value below is superseded; where a recipe here disagrees with ADR-0001, ADR-0001 wins.
+> Do not implement from this section — read the ADR instead.
 
 ### Core Concept
 Frosted glass surfaces with specular edge lighting, refraction effects, and dynamic sheen overlays. Applied to hero sections, cards, modals, and nav bars over image/textured backgrounds.
@@ -212,6 +234,11 @@ Diagonal gloss at 135deg with screen blend:
 
 ## Components
 
+Motion values (durations, easings, springs) and glass surface behaviour are governed by
+ADR-0001 §5 and §6 and are not restated below — where a value in this section disagrees with
+those sections, the ADR wins. Palette, sizes, radii from the scale above and focus behaviour
+remain this document's domain.
+
 ### Button — Primary (Gold)
 ```
 background: #FFD700
@@ -220,8 +247,8 @@ font: Poppins 600, 14px
 rounded: full (9999px)
 padding: 8px 24px
 height: 40px
-transition: all 0.15s ease-in-out
-hover: background #E6C200, scale 1.02
+transition: ADR-0001 §5 tokens (hover `--dur-fast`, press `--dur-instant`)
+hover: background #E6C200, scale per ADR-0001 §5.3 (MOTION.hover)
 ```
 
 ### Button — Ghost
@@ -231,7 +258,7 @@ text: #FFD700 (gold)
 border: 1px solid #FFD700
 rounded: lg (1rem)
 height: 48px
-hover: bg-accent
+hover: bg-accent (ADR-0001 §5 timing)
 ```
 
 ### Button — Outline
@@ -240,7 +267,7 @@ background: transparent
 text: foreground color
 border: 1px solid var(--border)
 rounded: md (0.75rem)
-hover: border-brand-yellow
+hover: border-brand-yellow (ADR-0001 §5 timing)
 ```
 
 ### Badge
@@ -259,19 +286,17 @@ size variants: h-8/w-8 (small), h-10/w-10 (medium), h-12/w-12 (large)
 ```
 
 ### Card (Glass)
-```
-rounded-xl border bg-card text-card-foreground
-p-4 or p-6 depending on context
-hover: shadow-lg + translateY(-2px) + border-brand-yellow/20
-transition: all 0.3s ease
-```
+Superseded as a recipe — new work uses `GlassSurface` / `GlassCard` (ADR-0001 §6.1–§6.2). Radius,
+fill, shadow and the hover lift come from the elevation scale (ADR-0001 §4.5) and the motion
+language (ADR-0001 §5 — hover lift is `--dur-fast` at `--ease-glass-out`, **not** the v2
+`0.3s ease`). Only padding stays a call-site choice: `p-4` dense, `p-6` roomy.
 
 ### Input
 ```
 w-full rounded-lg border border-input bg-background
 px-4 py-2.5 text-sm
 focus: ring-2 ring-brand-yellow
-transition: all duration-200
+transition: ADR-0001 §5 tokens
 placeholder: text-muted-foreground
 ```
 
@@ -280,6 +305,7 @@ placeholder: text-muted-foreground
 w-full rounded-lg border border-input bg-background
 px-4 py-2.5 text-sm resize-y
 focus: ring-2 ring-brand-yellow
+transition: ADR-0001 §5 tokens
 ```
 
 ### Separator
@@ -305,7 +331,7 @@ animate-pulse rounded-md bg-muted
 - **Category badge:** Top-left, black/60 bg, white text
 - **Author:** 32x32 avatar (left), name + view count (right)
 - **Title:** 2-line clamp, font-medium
-- **Hover:** scale 1.02, shadow-xl, glass overlay on image
+- **Hover:** lift/scale per ADR-0001 §4.5 + §5.3; any glass over the thumbnail applies the scrim (ADR-0001 §9.2)
 - **Sizes:** sm (200px), md (280px), lg (320px), compact (160px)
 
 ### Video Player (Watch Page)
@@ -327,7 +353,7 @@ animate-pulse rounded-md bg-muted
 ### Mobile Bottom Navigation
 - **Position:** fixed bottom-0, z-50, hidden on md+
 - **Height:** 64px (h-16)
-- **Background:** bg-background/95 + backdrop-blur + border-t
+- **Background:** docked glass tier via `GlassNav` — blur/fill owned by ADR-0001 §4.1–§4.2, scroll response §6.4, z-layer §7
 - **Items:** 5 tabs (Home, Trending, Search, Contest, Profile) + Upload FAB
 - **FAB:** w-14 h-14, bg-brand-yellow, rounded-full, shadow-lg, Upload icon
 - **Active state:** text-brand-yellow + bg-brand-yellow/10
@@ -372,25 +398,23 @@ animate-pulse rounded-md bg-muted
 
 ## Animations
 
-| Animation | Class | Duration | Usage |
-|-----------|-------|----------|-------|
-| Fade in | `.animate-fade-in` | 0.4s ease-out | Page elements, cards on mount |
-| Slide up | `.animate-slide-up` | 0.5s ease-out | Hero content |
-| Liquid morph | `.animate-liquid-morph` | 12s infinite | Hero section border-radius pulse |
-| Float | (custom) | 2s ease-in-out | Optional decorative elements |
-| Pulse gold | (custom) | 2s ease-in-out | Shine effects |
-| Card hover lift | `.glass-card:hover` | 0.3s ease | All glass cards |
-| Video card hover | `.video-card-container:hover` | 0.2s ease | Scale + shadow |
+Durations and easings are owned by ADR-0001 §5. The v2 table below is kept as history; its
+`0.4s` / `0.5s` / `0.3s ease` values are **not** current tokens and are not repeated here.
 
-### Stagger Delays
-```
-.stagger-1: 0.05s
-.stagger-2: 0.10s
-.stagger-3: 0.15s
-.stagger-4: 0.20s
-.stagger-5: 0.25s
-.stagger-6: 0.30s
-```
+| Animation | Class | Timing | Usage |
+|-----------|-------|--------|-------|
+| Fade in | `.animate-fade-in` | ADR-0001 §5.1 (`--dur-base` / `--dur-slow`) | Page elements, cards on mount |
+| Slide up | `.animate-slide-up` | ADR-0001 §5.1 | Hero content |
+| Liquid morph | `.animate-liquid-morph` | **Superseded** — ADR-0001 §8 restricts animated properties to `transform`/`opacity`; a border-radius pulse is not permitted | (v2 hero effect) |
+| Float | (custom) | ADR-0001 §5.2 | Optional decorative elements |
+| Pulse gold | (custom) | ADR-0001 §5.2 | Shine effects |
+| Card hover lift | `.glass-card:hover` | ADR-0001 §6.2 (`--dur-fast`, `--ease-glass-out`) | All glass cards |
+| Video card hover | `.video-card-container:hover` | ADR-0001 §5.1 | Scale + shadow |
+
+### Stagger
+Stagger is index-based, computed in JS and capped in code — ADR-0001 §5.4. The v2 CSS
+`.stagger-1`…`.stagger-6` `animation-delay` chain (`globals.css:333-338`) is superseded: CSS
+delays cannot be capped or cancelled by reduced-motion at runtime.
 
 ---
 
@@ -426,7 +450,9 @@ HTML tag has `class="dark"` and `data-theme="dark"` for SSR consistency.
 ## Accessibility
 
 ### WCAG 2.1 AA Compliance
-- Color contrast: brand gold (#FFD700) on dark background (#0A0A0A) = 10.5:1 ✓
+- Contrast floors and measured ratios: ADR-0001 §9.1 (body text ≥ 4.5:1, muted text ≥ 4.5:1 — `#6b7280` is banned there, it fails as small text)
+- Glass over media requires the `--glass-scrim-media` scrim before text: ADR-0001 §9.2
+- Reduced motion: ADR-0001 §9.3 — reduced transparency: ADR-0001 §9.4
 - Focus-visible rings on all interactive elements
 - Reduced motion support (`prefers-reduced-motion`)
 - Reduced transparency support (`prefers-reduced-transparency`)
@@ -525,6 +551,9 @@ HTML tag has `class="dark"` and `data-theme="dark"` for SSR consistency.
 bazziba-next/
 ├── DESIGN.md                    # This file
 ├── STREAMTUBE_ANALYSIS.md       # StreamTube feature gap analysis
+├── docs/
+│   └── adr/
+│       └── 0001-liquid-glass-2026.md  # Liquid Glass 2026 normative spec (material/motion/components/layering)
 ├── src/
 │   ├── app/
 │   │   ├── globals.css          # Design system CSS (tokens, glass, animations)
@@ -587,5 +616,6 @@ bazziba-next/
 - **Live site (brand reference):** https://bazziba.it
 - **StreamTube documentation:** https://phpface.gitbook.io/streamtube
 - **StreamTube analysis:** STREAMTUBE_ANALYSIS.md
+- **ADR-0001 — Liquid Glass 2026 (normative):** docs/adr/0001-liquid-glass-2026.md
 - **Deployment:** https://bazziba-next.vercel.app
 - **GitHub:** https://github.com/bazziba-it/bazziba-next
