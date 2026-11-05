@@ -26,13 +26,23 @@ Numbers are reproducible with the recipe in §11.
 | C5 | `@custom-variant dark (&:where(.dark, .dark *))` works and emits `.dark\:…:where(.dark, .dark *)` | compile probe | class-based dark mode must be declared explicitly; `darkMode:"class"` in a legacy config is not the v4 mechanism |
 | C6 | `.liquid-glass` and `.glass-card` are **referenced 13× across 8 files but defined nowhere** | `src/components/ui/index.tsx:72`, `src/app/upload/page.tsx:69,100`, `src/app/contest/page.tsx:134,144,152,160,198,249`, `src/app/contattaci/page.tsx:21`, `src/app/contattaci/contact-form.tsx:11`, `src/app/watch/[id]/page.tsx:295`, `src/components/homepage/featured-hero.tsx:179` | all "glass" surfaces today are flat and border-less |
 | C7 | `container-max`, `hero-ambient`, `text-headline-lg` are used in `src/components/homepage/featured-hero.tsx` and defined nowhere | grep over `src/` and `public/` | hero layout is silently un-sized/un-styled |
-| C8 | **No** `backdrop-filter`, `will-change`, `prefers-reduced-motion`, `prefers-reduced-transparency` anywhere in `src/` | grep over `src/` | no glass, no motion policy, no a11y fallbacks exist today |
+| C8 | **No** raw `backdrop-filter`, `will-change`, `prefers-reduced-motion`, `prefers-reduced-transparency` anywhere in `src/` — but Tailwind `backdrop-blur*` utilities are live at 10 sites (sticky headers on `feed`, `feed/[type]`, `search`, `c/[slug]`, `u/[username]`, plus `navigation.tsx:8`, `mobile-bottom-nav.tsx:26`, `featured-hero.tsx:19`, `wp-homepage-content.tsx:122,129`) | grep over `src/` | no authored glass, no motion policy, no a11y fallbacks exist today; the live ad-hoc blurs are unbudgeted — they spend the §8 viewport budget before any glass is built |
 | C9 | `framer-motion@13.4.0`, `class-variance-authority@0.7.1` are installed with **zero** usage | grep over `src/` | the motion + variant tooling is already on the bundle manifest; use it, add nothing |
 | C10 | `Card`, `CardHeader`, `CardContent` from `src/components/ui/index.tsx` have **no call sites** | grep over `src/` | `Card` is dead weight — it is the migration lever, not a risk |
 
 **Reading:** the app is mid-way through a v2→v3 migration that stopped at markup. Every glass
 class name and every themed colour was written against tokens that were never actually emitted.
 Nothing below is aesthetic preference — it is the completion of C3–C7.
+
+**Re-verified 2026-11-05 against HEAD `6bd52ca`** ("FEAT: 2026 Liquid Glass migration + fix
+Termux/Vercel production build", devops): C1–C10 were re-checked after that commit and all still
+hold — it landed markup (hero/feed/search/watch/profile/footer/nav) without defining a single
+token, glass class or primitive. It made C3 worse: `src/components/ui/index.tsx` gained 8 Button
+variants whose `bg-brand-cyan` / `hover:bg-brand-cyan-hover` / cyan-glow shadow classes cannot
+compile until Phase 0 lands. C5 is demonstrated with an `@apply` probe rather than a live class —
+the only `dark:` call site (`about/page.tsx:19`) uses `prose-invert`, which needs the uninstalled
+`@tailwindcss/typography`, so no `dark:` utility compiles today. §9.1 ratios were recomputed from
+the WCAG 2.1 relative-luminance formula and match to two decimals.
 
 ---
 
@@ -356,9 +366,13 @@ container. On the feed (`/feed/[type]`, `/`) with N glass cards the cost is N bl
 3. **N > 40** — flat cards with `content-visibility: auto` and `contain-intrinsic-size`, no glass at
    all; glass is reserved for the framing panel.
 
-The feed currently renders a plain `streamtube-card` grid (`src/components/video/video-card.tsx`,
-`src/app/feed/page.tsx`) — rule 1 applies there, and the existing `streamtube-card` transition
-(`0.3s`, `translateY(-2px)`) already matches this spec.
+Current state after `6bd52ca`: `.streamtube-card` — still defined at `globals.css:65-77` with the
+spec-matching `0.3s` / `translateY(-2px)` transition — survives only in `globals.css` and
+`src/components/homepage/wp-homepage-content.tsx`. `video-card.tsx` and the feed pages were
+rewritten with ad-hoc arbitrary values (`bg-[#0a0e1a] border-white/5 rounded-xl`, no transition
+token); rule 1 applies to them and the migration card replaces those values with `GlassCard`. Note
+that the 10 live `backdrop-blur*` surfaces from C8 are already spending this budget before any
+glass exists.
 
 ---
 
@@ -373,7 +387,7 @@ the `#050a14` page base:
 |---|---|---|---|---|
 | body `#f0f0f0` | 17.38 | 17.18 | 17.38 | AA ✓ |
 | muted `#9aa7b8` | 8.11 | 8.01 | 8.11 | AA ✓ |
-| muted `#6b7280` (v2 value) | 4.10 | 4.05 | 4.10 | **fails 4.5:1** |
+| muted `#6b7280` (gray-500 — still live at `globals.css:189,288`) | 4.10 | 4.05 | 4.10 | **fails 4.5:1** |
 | accent `#00f2ff` | 14.29 | 14.12 | 14.29 | AA ✓ |
 | `#050a14` on `#00f2ff` (button label) | 14.29 | — | — | AA ✓ |
 | focus ring `#00f2ff` vs surface | — | 14.12 | 14.29 | AA ✓ |
@@ -381,7 +395,10 @@ the `#050a14` page base:
 **Floors:** body text ≥ 4.5:1 (use `#f0f0f0`, 17:1); secondary/muted ≥ 4.5:1 (use `#9aa7b8`,
 8.0:1 — **`#6b7280` is banned**); large text and UI components ≥ 3:1; non-text (focus ring, accent
 border) ≥ 3:1. Do not lighten `--muted-foreground` further than `#9aa7b8` — the margin to 4.5:1 is
-already the safety net for the bright-backdrop case below.
+already the safety net for the bright-backdrop case below. `#6b7280` is not a hypothetical: it is
+live today at `globals.css:189` (`.streamtube-card .meta .author`, 12px) and `globals.css:288`
+(`.section-header .count`, ~13px) — both are small-text AA failures that the token commit must
+delete, not merely avoid in new work.
 
 ### 9.2 The scrim rule (glass over media)
 
@@ -391,7 +408,7 @@ Measured against a blown-out thumbnail behind glass (`#c9d6e2` photo, 45% tint o
 |---|---|---|---|
 | 0.00 | 2.18 | 1.02 | 1.79 |
 | 0.55 | 7.17 | 3.34 | 5.89 |
-| **0.75** | **10.9** | **5.1** | **9.0** |
+| **0.75** | **11.50** | **5.36** | **9.45** |
 | 0.88 | 14.84 | 6.92 | 12.20 |
 
 So: **any `GlassSurface media` (or any glass whose backdrop contains an image) must apply
@@ -452,7 +469,7 @@ never starts. (There is currently **no** `prefers-reduced-motion` handling anywh
 | per-surface `bg-white/5`/`border-white/10` on new work | `GlassSurface` tiers — no new ad-hoc glass |
 
 In scope for the migration card: home hero + video cards on `GlassSurface`/`GlassButton`/`GlassNav`,
-spring entrances with cushaped stagger, reduced-motion honoured. Out of scope: any change to data
+spring entrances with capped stagger, reduced-motion honoured. Out of scope: any change to data
 fetching, any new route, any rename of existing utilities.
 
 ---
@@ -463,16 +480,47 @@ The token claims in §1 and the acceptance criteria in §3 are checkable without
 compile the real stylesheet through the project's own PostCSS plugin and assert on the output:
 
 ```js
-// one-off probe; runs in seconds on Termux
-const postcss = require("<repo>/node_modules/postcss/lib/postcss");
-const tw = require("<repo>/node_modules/@tailwindcss/postcss/dist/index.js");
-postcss([tw()]).process(fs.readFileSync("<repo>/src/app/globals.css", "utf8"), { from: css, to: out })
-  .then(r => { fs.writeFileSync(out, r.css); /* assert: r.css includes "bg-brand-cyan",
-     "text-muted-foreground", "border-border", "backdrop-blur-glass-md", ".glass-card" */ });
+// one-off probe; runs in seconds on Termux. cwd MUST be the repo root
+// (v4 source detection follows the process CWD — elsewhere it emits preflight only).
+const fs = require("fs"), path = require("path");
+const REPO = process.cwd();                       // ~/projects/bazziba-next
+const postcss = require(path.join(REPO, "node_modules/postcss/lib/postcss"));
+const tw = require(path.join(REPO, "node_modules/@tailwindcss/postcss/dist/index.js"));
+const css = fs.readFileSync(path.join(REPO, "src/app/globals.css"), "utf8");
+
+async function compile(label, source) {
+  const r = await postcss([tw()]).process(source, { from: path.join(REPO, "src/app/globals.css") });
+  const has = (s) => r.css.includes(s);
+  console.log(label, {
+    "bg-brand-cyan": has("bg-brand-cyan"),
+    "text-muted-foreground": has("text-muted-foreground"),
+    "border-border": has(".border-border"),
+    "bg-card": has(".bg-card"),
+    "backdrop-blur-glass-md": has("backdrop-blur-glass-md"),
+    ".glass-card": has(".glass-card"),
+    "dark-variant-selector": has("where(.dark"),
+  });
+}
+(async () => {
+  await compile("A as-is:            ", css);
+  await compile("B +@config:         ", '@config "../../tailwind.config.js";\n' + css);
+  await compile("C +@config+darkvar: ", '@config "../../tailwind.config.js";\n@custom-variant dark (&:where(.dark, .dark *));\n' + css);
+})();
 ```
 
-Run it with `cwd` = repo root (v4 source detection follows the process CWD — running it elsewhere
-emits preflight only, which is a useful negative control). Then the real build gate:
+**Executed 2026-11-05 against HEAD `6bd52ca`** — actual output (every acceptance token ✗ before
+Phase 0, which is the point of the probe):
+
+| Probe | bg-brand-cyan | text-muted-foreground | border-border | bg-card | backdrop-blur-glass-md | .glass-card | dark selector |
+|---|---|---|---|---|---|---|---|
+| A (as-is) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| B (+`@config`) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| C (+`@config` + dark variant) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+
+B additionally compiles `bg-brand-yellow` — that is C4, proven. The dark-variant selector in C is
+demonstrated via `@apply dark:bg-white` (no live `dark:` utility exists today — §1 re-verification
+note). After Phase 0 lands, the same probe must show ✓ on every acceptance column. Then the real
+build gate:
 
 ```
 cd ~/projects/bazziba-next && rm -rf .next && NODE_ENV=production node node_modules/next/dist/bin/next build --webpack
@@ -503,12 +551,14 @@ Pass criteria: build clean, and the compiled CSS contains `.glass-card`, `bg-bra
   delete the JS config. Blocked on Phase 0 landing; do it as its own ADR so the diff stays reviewable.
 - **Follow-up (new card):** unify the container — `navigation.tsx:9` uses `max-w-[1600px]`, six pages
   use `max-w-7xl`. Decide 1280 vs 1440 as a single `container-max`.
-- **Hotspot — `src/app/globals.css`:** already modified in the working tree and now touched by this
-  ADR's Phase 0 as well. Phase 0 and the glass class definitions should land in the same commit to
-  avoid a window where either half is broken.
-- **Hotspot — `DESIGN.md`:** has uncommitted modifications in the working tree. This ADR deliberately
-  does **not** edit it; the v3 restructure (renaming v2 "Liquid Glass" section → "superseded by
-  ADR-0001") should land as a dedicated doc card so the two do not collide.
+- **Hotspot — `src/app/globals.css`:** clean at HEAD `6bd52ca`, and it is the single file where
+  Phase 0 tokens, the `.glass-*` classes, the body-gradient layering (§7) and the two failing
+  `#6b7280` rules (§9.1) all land. Both halves must ship in **one** commit on top of `6bd52ca` so
+  there is no window where either half is broken.
+- **Hotspot — `DESIGN.md`:** clean at HEAD `6bd52ca` (its v2 edits landed in that commit). This ADR
+  deliberately does **not** edit it; the v3 restructure (renaming the v2 "Liquid Glass Design
+  Language" section → "superseded by ADR-0001") should land as a dedicated doc card so the two do
+  not collide.
 - **Note:** `dark:` variant support is only needed by `src/app/about/page.tsx:19`
   (`prose dark:prose-invert`, which also needs `@tailwindcss/typography` — not installed, so that
   class is currently inert regardless). Not blocking for this ADR.
