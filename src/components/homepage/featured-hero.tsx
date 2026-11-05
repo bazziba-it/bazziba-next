@@ -28,7 +28,30 @@ export default function FeaturedHero({
   contestCards = [],
   featuredArtists = [],
 }: FeaturedHeroProps) {
-  const referenceStats = [
+  // Compute duration display from featured video
+  const featuredDuration = featuredVideo ? featuredVideo.duration : 147;
+  const durationStr = `${Math.floor(featuredDuration / 60)}:${(featuredDuration % 60)
+    .toString()
+    .padStart(2, "0")}`;
+  const isPlaying = false;
+
+  const viewCountNum = featuredVideo ? parseInt(featuredVideo.viewCount.replace(/\D/g, "")) || 0 : 0;
+  const likesNum = featuredVideo ? parseInt(featuredVideo.likes.replace(/\D/g, "")) || 0 : 0;
+  const formattedViews = viewCountNum >= 1_000_000
+    ? (viewCountNum / 1_000_000).toFixed(1) + "M"
+    : viewCountNum >= 1_000
+      ? (viewCountNum / 1_000).toFixed(1) + "K"
+      : String(viewCountNum);
+  const formattedLikes = likesNum >= 1_000
+    ? (likesNum / 1_000).toFixed(1) + "K"
+    : String(likesNum);
+
+  const heroStats = featuredVideo ? [
+    { icon: <TrendingUp className="h-3 w-3 text-brand-cyan" />, label: formattedViews },
+    { icon: <Eye className="h-3 w-3 text-brand-cyan" />, label: formattedViews },
+    { icon: <Heart className="h-3 w-3 text-brand-cyan" />, label: formattedLikes || "0" },
+  ] : [
+    // fallback when no featured video
     { icon: <TrendingUp className="h-3 w-3 text-brand-cyan" />, label: "2.4K" },
     { icon: <Eye className="h-3 w-3 text-brand-cyan" />, label: "1.2M" },
     { icon: <Heart className="h-3 w-3 text-brand-cyan" />, label: "245K" },
@@ -52,7 +75,7 @@ export default function FeaturedHero({
     <section className="relative pt-[72px] pb-6 overflow-hidden hero-ambient">
       {/* Ambient glow blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-80px] right-[-60px] w-[500px] h-[500px] rounded-full bg-brand-cyan/5 blur-3xl animate-pulse-cyan" />
+        <div className="absolute top-[-80px] right-[-60px] w-[500px] h-[500px] rounded-full bg-brand-cyan/5 blur-3xl animate-pulse" />
         <div className="absolute bottom-[-40px] left-[-40px] w-[400px] h-[400px] rounded-full bg-brand-cyan/3 blur-3xl" />
       </div>
 
@@ -91,9 +114,9 @@ export default function FeaturedHero({
               </h2>
             </div>
 
-            {/* Stats row — hardcoded reference values */}
+            {/* Stats row — from real video data */}
             <div className="absolute top-20 left-4 right-4 md:left-auto md:right-4 flex flex-wrap gap-3 text-xs text-slate-300">
-              {referenceStats.map((stat, i) => (
+              {heroStats.map((stat, i) => (
                 <StatBadge key={i} icon={stat.icon} label={stat.label} />
               ))}
             </div>
@@ -120,10 +143,13 @@ export default function FeaturedHero({
                   <Play className="h-4 w-4 text-black ml-0.5" />
                 </button>
                 <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                  <div className="w-1/3 h-full bg-brand-cyan rounded-full" />
+                  <div
+                    className="h-full bg-brand-cyan rounded-full transition-all duration-300"
+                    style={{ width: isPlaying ? "35%" : "15%" }}
+                  />
                 </div>
                 <button className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center hover:bg-slate-700 transition-colors">
-                  <span className="text-xs font-mono">2:27</span>
+                  <span className="text-xs font-mono">{durationStr}</span>
                 </button>
                 <button className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center hover:bg-slate-700 transition-colors">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>

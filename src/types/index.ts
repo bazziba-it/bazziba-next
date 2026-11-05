@@ -29,8 +29,9 @@ export interface Video {
   thumbnail?: string;
   videoUrl?: string;
   duration?: number;
-  viewCount?: number;
+  viewCount?: string;
   likeCount?: number;
+  likes?: string | number;
   dislikeCount?: number;
   status: "DRAFT" | "PUBLISHED" | "PRIVATE" | "DELETED";
   visibility: "PUBLIC" | "UNLISTED" | "PRIVATE";

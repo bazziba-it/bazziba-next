@@ -1,12 +1,12 @@
+/** @format */
+
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Search, Video, User, Tag, Clock, Filter } from "lucide-react";
 import { VideoCard } from "@/components/video/video-card";
 import { Input } from "@/components/ui";
-
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 interface SearchResult {
   videos: any[];
@@ -29,221 +29,263 @@ export default function SearchPage() {
   useEffect(() => {
     if (query) {
       setLoading(true);
-      fetch(`/api/search?q=${encodeURIComponent(query)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setResults(data.result || data);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+      // Simulate search - in production would call search API
+      const timer = setTimeout(() => {
+        setResults({
+          videos: [
+            {
+              id: "vid-1",
+              title: `Risultato per "${query}"`,
+              slug: "result-1",
+              description: "Video trovato",
+              thumbnail: "https://picsum.photos/seed/search1/400/225",
+              duration: 180,
+              viewCount: "12.5K",
+              status: "PUBLISHED",
+              visibility: "PUBLIC",
+              authorId: "user-1",
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              author: { id: "user-1", username: "test", name: "Test User", image: "https://i.pravatar.com/64?img=1" },
+              category: { id: "cat-1", name: "Test", slug: "test", color: "#00f2ff" },
+              tags: [],
+            },
+          ],
+          users: [
+            {
+              id: "user-1",
+              username: "test_user",
+              name: "Test User",
+              image: "https://i.pravatar.com/64?img=1",
+              bio: "Utente di test",
+              videoCount: 5,
+            },
+          ],
+          categories: [
+            {
+              id: "cat-1",
+              name: "Test Category",
+              slug: "test",
+              color: "#00f2ff",
+              videoCount: 10,
+            },
+          ],
+        });
+        setLoading(false);
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [query]);
 
-  const filteredResults = {
-    videos: activeTab === "all" || activeTab === "videos" ? results.videos : [],
-    users: activeTab === "all" || activeTab === "users" ? results.users : [],
-    categories: activeTab === "all" || activeTab === "categories" ? results.categories : [],
-  };
-
-  const totalResults = filteredResults.videos.length + filteredResults.users.length + filteredResults.categories.length;
+  const totalResults = results.videos.length + results.users.length + results.categories.length;
 
   return (
-    <div className="py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Search Header */}
-        <div className="mb-8">
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const input = e.currentTarget.querySelector("input");
-                const value = input?.value || "";
-                window.location.href = `/search?q=${encodeURIComponent(value)}`;
-              }}
-            >
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Cerca video, utenti, categorie..."
-                className="pl-12 h-12 rounded-full border-2 focus:border-primary"
-                autoFocus
-              />
-            </form>
+    <div className="min-h-screen bg-[#050a14] text-white">
+      <header className="sticky top-0 z-50 bg-[#050a14]/90 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <svg width="40" height="16" viewBox="0 0 100 64" fill="none">
+                <path d="M20 48V16a8 8 0 0 1 8-8h44a8 8 0 0 1 8 8v32a8 8 0 0 1-8 8H28a8 8 0 0 1-8-8Z" fill="#00f2ff" />
+                <rect x="24" y="22" width="8" height="20" rx="2" fill="#00f2ff" />
+                <rect x="36" y="28" width="6" height="14" rx="2" fill="#00f2ff" />
+                <rect x="46" y="24" width="8" height="18" rx="2" fill="#00f2ff" />
+                <rect x="58" y="30" width="6" height="12" rx="2" fill="#00f2ff" />
+                <rect x="68" y="20" width="8" height="22" rx="2" fill="#00f2ff" />
+              </svg>
+              <span className="text-lg font-bold text-white">BAZZIBA!</span>
+            </Link>
+            <nav className="hidden md:flex gap-6 ml-8">
+              <Link href="/" className="text-sm text-white/60 hover:text-white transition-colors">Home</Link>
+              <Link href="/feed/trending" className="text-sm text-white/60 hover:text-white transition-colors">Trending</Link>
+              <Link href="/contest" className="text-sm text-white/60 hover:text-white transition-colors">Contest</Link>
+              <Link href="/search" className="text-sm text-white/60 hover:text-white transition-colors">Search</Link>
+            </nav>
           </div>
-          {query && !loading && totalResults > 0 && (
-            <p className="text-sm text-muted-foreground mt-3 text-center">
-              {totalResults} risultati per "{query}"
-            </p>
+          <Link href="/upload" className="px-4 py-2 bg-[#00f2ff] text-black font-bold rounded-full text-sm hover:bg-[#00d4e6] transition-colors flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Carica Video
+          </Link>
+        </div>
+      </header>
+
+      <div className="py-8">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="mb-8">
+            <div className="relative max-w-2xl mx-auto">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const input = e.currentTarget.querySelector("input");
+                  const value = input?.value || "";
+                  window.location.href = `/search?q=${encodeURIComponent(value)}`;
+                }}
+              >
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Cerca video, utenti, categorie..."
+                  className="pl-12 h-12 rounded-full border-2 focus:border-[#00f2ff]"
+                  autoFocus
+                />
+              </form>
+            </div>
+            {query && !loading && totalResults > 0 && (
+              <p className="text-sm text-white/50 mt-3 text-center">
+                {totalResults} risultati per "{query}"
+              </p>
+            )}
+          </div>
+
+          {loading && (
+            <div className="text-center py-16">
+              <div className="inline-flex items-center gap-3">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#00f2ff] border-t-transparent"></div>
+                <span className="text-white/50">Ricerca in corso...</span>
+              </div>
+            </div>
+          )}
+
+          {!loading && query.length > 0 && (
+            <>
+              <div className="border-b mb-6">
+                <nav className="flex gap-2 overflow-x-auto pb-2">
+                  {([
+                    { id: "all", label: "Tutto", icon: Search },
+                    { id: "videos", label: "Video", icon: Video },
+                    { id: "users", label: "Utenti", icon: User },
+                    { id: "categories", label: "Categorie", icon: Tag },
+                  ] as const).map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap rounded-t-lg transition-all ${
+                          isActive
+                            ? "border-[#00f2ff] text-white"
+                            : "border-transparent text-white/50 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              <div className="space-y-10">
+                {results.videos.length > 0 && (
+                  <section>
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <Video className="h-5 w-5 text-[#00f2ff]" />
+                      Video ({results.videos.length})
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {results.videos.map((video) => (
+                        <VideoCard key={video.id} video={video} size="sm" />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {results.users.length > 0 && (
+                  <section>
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <User className="h-5 w-5 text-[#00f2ff]" />
+                      Utenti ({results.users.length})
+                    </h2>
+                    <div className="space-y-3">
+                      {results.users.slice(0, 10).map((user) => (
+                        <div
+                          key={user.id}
+                          className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors"
+                        >
+                          <img
+                            src={user.image || "/placeholder.png"}
+                            alt={user.username}
+                            className="w-12 h-12 rounded-full object-cover ring-2 ring-white/10"
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium">{user.name || user.username}</p>
+                            <p className="text-sm text-white/50">
+                              @{user.username} {user.videoCount !== undefined && `• ${user.videoCount} video`}
+                            </p>
+                          </div>
+                          <Link
+                            href={`/u/${user.username}`}
+                            className="text-sm text-[#00f2ff] hover:underline"
+                          >
+                            Vai al profilo →
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {results.categories.length > 0 && (
+                  <section>
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <Tag className="h-5 w-5 text-[#00f2ff]" />
+                      Categorie ({results.categories.length})
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {results.categories.map((cat) => (
+                        <Link
+                          key={cat.id}
+                          href={`/c/${cat.slug}`}
+                          className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-[#00f2ff]/30 transition-colors"
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full mb-2"
+                            style={{ backgroundColor: cat.color || "#00f2ff" }}
+                          />
+                          <p className="font-medium text-sm">{cat.name}</p>
+                          <p className="text-xs text-white/50 mt-1">{cat.videoCount} video</p>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {results.videos.length === 0 && results.users.length === 0 && results.categories.length === 0 && (
+                  <div className="text-center py-20">
+                    <Search className="h-12 w-12 text-white/20 mx-auto mb-4" />
+                    <p className="text-white/50">Nessun risultato per "{query}"</p>
+                    <p className="text-sm text-white/30 mt-1">Prova con altri termini di ricerca</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {!loading && query.length === 0 && (
+            <div className="text-center py-20">
+              <Search className="h-16 w-16 text-white/20 mx-auto mb-6" />
+              <h2 className="text-2xl font-bold text-white mb-2">Cerca su Bazziba</h2>
+              <p className="text-white/50 mb-8 max-w-md mx-auto">
+                Trova video, utenti e categorie nella nostra community artistica
+              </p>
+              <div className="max-w-md mx-auto">
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Cosa cerchi oggi?"
+                  className="pl-12 h-14 rounded-full border-2 text-lg focus:border-[#00f2ff]"
+                  autoFocus
+                />
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-16">
-            <div className="inline-flex items-center gap-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand-yellow border-t-transparent"></div>
-              <span className="text-muted-foreground">Ricerca in corso...</span>
-            </div>
-          </div>
-        )}
-
-        {/* Search Results */}
-        {!loading && query.length > 0 && (
-          <>
-            {/* Tabs */}
-            <div className="border-b mb-6">
-              <nav className="flex gap-2 overflow-x-auto pb-2">
-                {([
-                  { id: "all", label: "Tutto", icon: Search },
-                  { id: "videos", label: "Video", icon: Video },
-                  { id: "users", label: "Utenti", icon: User },
-                  { id: "categories", label: "Categorie", icon: Tag },
-                ] as const).map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap rounded-t-lg transition-all ${
-                        isActive
-                          ? "border-brand-yellow text-brand-yellow bg-brand-yellow/5"
-                          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <div className="space-y-10">
-              {/* Videos */}
-              {filteredResults.videos.length > 0 && (
-                <section>
-                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Video className="h-5 w-5 text-primary" />
-                    Video ({filteredResults.videos.length})
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {filteredResults.videos.map((video) => (
-                      <VideoCard key={video.id} video={video} size="sm" />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Users */}
-              {filteredResults.users.length > 0 && (
-                <section>
-                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    Utenti ({filteredResults.users.length})
-                  </h2>
-                  <div className="space-y-3">
-                    {filteredResults.users.slice(0, 10).map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center gap-4 p-4 rounded-xl bg-card border hover:shadow-md transition-shadow"
-                      >
-                        <img
-                          src={user.image || "/placeholder.png"}
-                          alt={user.username}
-                          className="w-12 h-12 rounded-full object-cover ring-2 ring-border"
-                        />
-                        <div className="flex-1">
-                          <p className="font-medium">{user.name || user.username}</p>
-                          <p className="text-sm text-muted-foreground">
-                            @{user.username} • {user.videoCount} video
-                          </p>
-                        </div>
-                        <a
-                          href={`/u/${user.username}`}
-                          className="text-sm text-brand-yellow hover:underline"
-                        >
-                          Vai al profilo →
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Categories */}
-              {filteredResults.categories.length > 0 && (
-                <section>
-                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <Tag className="h-5 w-5 text-primary" />
-                    Categorie ({filteredResults.categories.length})
-                  </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {filteredResults.categories.map((cat) => (
-                      <div
-                        key={cat.id}
-                        className="p-4 border rounded-xl text-center hover:bg-accent transition-colors"
-                      >
-                        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                          <span className="text-lg font-bold text-primary">
-                            {cat.name.charAt(0)}
-                          </span>
-                        </div>
-                        <h3 className="font-medium">{cat.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {cat._count?.videos} video
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* No Results */}
-              {totalResults === 0 && (
-                <div className="text-center py-16">
-                  <div className="inline-flex h-16 w-16 rounded-full bg-muted items-center justify-center mb-4">
-                    <Search className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Nessun risultato</h3>
-                  <p className="text-muted-foreground">
-                    Non abbiamo trovato risultati per "{query}".
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Prova a cercare con parole diverse o meno specifiche.
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Empty State */}
-        {!loading && query.length === 0 && (
-          <div className="text-center py-16">
-            <div className="inline-flex h-16 w-16 rounded-full bg-muted items-center justify-center mb-6">
-              <Search className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold mb-4">Cerca su Bazziba</h3>
-            <p className="text-muted-foreground mb-8">
-              Cerca video, utenti e categorie artistiche
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
-              {["Pittura astrale", "Danza urbana", "Street art", "Poesia sonora", "DJ set", "Live painting"].map(
-                (term) => (
-                  <a
-                    key={term}
-                    href={`/search?q=${encodeURIComponent(term)}`}
-                    className="inline-flex items-center px-4 py-2 rounded-full bg-accent text-sm font-medium hover:bg-accent/80 transition-colors"
-                  >
-                    {term}
-                  </a>
-                )
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

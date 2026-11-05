@@ -1,207 +1,135 @@
-/** @format */
+import type { Video, Category } from "@/types";
 
-import Link from "next/link";
-import { Play, Clock, TrendingUp } from "lucide-react";
-import { Badge } from "@/components/ui";
-import { getThumbnailUrl, getAvatarUrl } from "@/lib/server";
-import type { Video } from "@/types";
-
-function formatDurationFromSeconds(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-interface VideoCardProps {
-  video: Video & {
-    author?: {
-      id: string;
-      username: string;
-      name?: string;
-      image?: string;
-    };
-  };
+interface VideoProps {
+  video: Video;
   showAuthor?: boolean;
-  size?: "sm" | "md" | "lg" | "compact";
-  className?: string;
 }
 
-export function VideoCard({ video, showAuthor = true, size = "md", className }: VideoCardProps) {
-  const sizeConfig = {
-    sm: "max-w-[200px]",
-    md: "max-w-[280px]",
-    lg: "max-w-[320px]",
-    compact: "max-w-[160px]",
-  };
-
-  const isCompact = size === "compact";
+export function VideoCard({ video, showAuthor }: VideoProps) {
+  const thumb = video.thumbnail || "https://picsum.photos/seed/fallback/400/225";
+  const dur = video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, "0")}` : "--:--";
 
   return (
-    <Link
+    <a
       href={`/watch/${video.id}`}
-      className={`group block ${sizeConfig[size]} ${className || ""}`}
-      prefetch={false}
+      className="group block bg-[#0a0e1a] border border-white/5 rounded-xl overflow-hidden hover:border-[#00f2ff]/20 transition-all hover:shadow-lg hover:shadow-black/30"
     >
-      <div className="space-y-3 animate-fade-in">
-        {/* Thumbnail */}
-        <div className="relative aspect-video rounded-xl overflow-hidden bg-muted shadow-lg group-hover:liquid-glass group-hover:shadow-2xl transition-all duration-300">
-          <img
-            src={getThumbnailUrl(video.thumbnail)}
-            alt={video.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw"
-          />
-          {/* Play overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Play className="h-5 w-5 text-foreground drop-shadow-lg" />
-            </div>
-          </div>
-          {/* Duration badge */}
-          {video.duration && (
-            <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-md font-mono">
-              {formatDurationFromSeconds(video.duration)}
-            </div>
-          )}
-          {/* Category badge */}
-          {video.category && (
-            <div className="absolute top-1.5 left-1.5 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md">
-              {video.category.name}
-            </div>
-          )}
+      <div className="relative aspect-video overflow-hidden">
+        <img
+          src={thumb}
+          alt={video.title}
+          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+        />
+        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
+          {dur}
         </div>
-
-        {/* Video info */}
-        <div className="flex gap-3">
-          {showAuthor && (
-            <>
-              <div className="flex-shrink-0">
-                <img
-                  src={getAvatarUrl(video.author?.image, video.author?.username)}
-                  alt={video.author?.username || "Author"}
-                  className="h-8 w-8 rounded-full object-cover ring-1 ring-border"
-                  loading="lazy"
-                  width={32}
-                  height={32}
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className={`font-medium leading-tight line-clamp-2 ${isCompact ? "text-sm" : "text-base"}`}>
-                  {video.title}
-                </h3>
-                {!isCompact && (
-                  <>
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {video.author?.name || video.author?.username || "Unknown"}
-                    </p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                      <Clock className="h-3 w-3" />
-                      <span>{Math.round(video.duration / 60)} min</span>
-                      <span className="text-xs">/</span>
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                        {video.viewCount} views
-                      </Badge>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
-          )}
-          {!showAuthor && (
-            <div className="min-w-0 flex-1">
-              <h3 className={`font-medium leading-tight line-clamp-2 ${isCompact ? "text-sm" : "text-base"}`}>
-                {video.title}
-              </h3>
-              {!isCompact && (
-                <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
-                  {video.author?.name || video.author?.username || "Unknown"}
-                </p>
-              )}
-            </div>
-          )}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-[0] group-hover:opacity-[1] transition-opacity">
+          <div className="w-12 h-12 rounded-full bg-[#00f2ff]/90 flex items-center justify-center">
+            <svg className="w-6 h-6 text-black ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
         </div>
       </div>
-    </Link>
+      <div className="p-3">
+        <h3 className="font-semibold text-sm line-clamp-2 text-white group-hover:text-[#00f2ff] transition-colors">
+          {video.title}
+        </h3>
+        {showAuthor && video.author && (
+          <p className="text-xs text-white/40 mt-1">{video.author.name}</p>
+        )}
+        {video.category && (
+          <span className="inline-block mt-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#00f2ff]/10 text-[#00f2ff]">
+            {video.category.name}
+          </span>
+        )}
+      </div>
+    </a>
   );
 }
 
 interface VideoGridProps {
   videos: Video[];
   title?: string;
-  emptyMessage?: string;
-  compact?: boolean;
   showAuthor?: boolean;
+  emptyMessage?: string;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 }
 
-export function VideoGrid({ videos, title, emptyMessage = "No videos found", compact = false, showAuthor = true }: VideoGridProps) {
-  if (videos.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="inline-flex h-10 w-10 rounded-full bg-muted items-center justify-center mb-3">
-          <Play className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <p className="text-muted-foreground">{emptyMessage}</p>
-      </div>
-    );
-  }
-
+export function VideoGrid({
+  videos,
+  title,
+  showAuthor,
+  emptyMessage = "Nessun video disponibile",
+  onLoadMore,
+  hasMore,
+}: VideoGridProps) {
   return (
-    <div className="space-y-4">
-      {title && <h2 className="text-xl font-bold mb-4">{title}</h2>}
-      <div className="grid gap-5 sm:gap-6 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
-        {videos.map((video, index) => (
-          <VideoCard
-            key={video.id}
-            video={video}
-            size={compact ? "compact" : "md"}
-            showAuthor={showAuthor}
-            className="hover:shadow-xl transition-shadow"
-          />
-        ))}
-      </div>
+    <div>
+      {title && (
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00f2ff]" />
+          {title}
+        </h2>
+      )}
+      {videos.length === 0 ? (
+        <p className="text-center py-12 text-white/40">{emptyMessage}</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {videos.map((video) => (
+            <VideoCard key={video.id} video={video} showAuthor={showAuthor} />
+          ))}
+        </div>
+      )}
+      {hasMore && onLoadMore && (
+        <div className="text-center py-8 mt-8">
+          <button
+            onClick={onLoadMore}
+            className="px-6 py-3 bg-[#00f2ff]/10 text-[#00f2ff] font-medium rounded-full hover:bg-[#00f2ff]/20 transition-colors text-sm"
+          >
+            Carica altri video
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 interface CategoryGridProps {
-  categories: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    videoCount?: number;
-    color?: string | null;
-  }>;
+  categories: Category[];
+  activeCategory?: string;
+  onSelect?: (slug: string) => void;
 }
 
-export function CategoryGrid({ categories }: CategoryGridProps) {
+export function CategoryGrid({ categories, activeCategory, onSelect }: CategoryGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
-      {categories.map((category, i) => (
-        <Link
-          key={category.id}
-          href={`/c/${category.slug}`}
-          className="group block animate-fade-in"
-          style={{ animationDelay: `${i * 0.05}s` }}
-          prefetch={false}
+    <div className="sticky top-24">
+      <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wider mb-3 px-2">Categorie</h3>
+      <div className="space-y-1">
+        <button
+          onClick={() => onSelect?.("all")}
+          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+            activeCategory === "all" ? "bg-[#00f2ff]/10 text-[#00f2ff]" : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
         >
-          <div className="rounded-xl glass-card text-card-foreground p-4 text-center transition-all duration-300 group-hover:shadow-md group-hover:scale-[1.02] group-hover:border-brand-yellow/20">
-            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-yellow/10">
-              <span className="text-lg font-bold text-white">
-                {category.name.charAt(0)}
-              </span>
-            </div>
-            <h3 className="text-sm font-medium">{category.name}</h3>
-            {category.videoCount && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {category.videoCount} video
-              </p>
-            )}
-          </div>
-        </Link>
-      ))}
+          Tutti
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => onSelect?.(cat.slug)}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+              activeCategory === cat.slug ? "bg-[#00f2ff]/10 text-[#00f2ff]" : "text-white/60 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color || "#00f2ff" }} />
+            {cat.name}
+            <span className="ml-auto text-xs text-white/30">{cat.videoCount}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

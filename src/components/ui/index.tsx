@@ -1,6 +1,4 @@
-/**
- * Bazziba Next.js - UI Component Library
- */
+/** @format */
 
 import type { ReactNode, ButtonHTMLAttributes, HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
@@ -8,7 +6,7 @@ import Link from "next/link";
 
 // ============= Button =============
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "gold" | "goldOutline" | "goldGhost" | "cyan" | "purple" | "blue" | "guarda";
   size?: "default" | "sm" | "lg" | "icon";
   asChild?: boolean;
 }
@@ -20,8 +18,8 @@ export function Button({
   asChild = false,
   ...props
 }: ButtonProps) {
-  const baseClasses = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
-  
+  const baseClasses = "inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+
   const variants = {
     default: "bg-primary text-primary-foreground hover:bg-primary/90",
     destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
@@ -29,17 +27,31 @@ export function Button({
     secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
     ghost: "hover:bg-accent hover:text-accent-foreground",
     link: "text-primary underline-offset-4 hover:underline",
+    gold:
+      "relative isolate inline-flex items-center justify-center font-['Poppins'] font-semibold text-black bg-brand-yellow rounded-full h-10 px-6 shadow-[0_4px_14px_0_rgba(255,215,0,0.35)] hover:shadow-[0_6px_24px_0_rgba(255,215,0,0.55)] hover:bg-brand-gold-hover active:scale-[0.97] active:shadow-[0_2px_8px_0_rgba(255,215,0,0.40)] transition-all duration-200 ease-out",
+    goldOutline:
+      "border-2 border-brand-yellow text-brand-yellow font-['Poppins'] font-semibold rounded-lg h-10 px-4 hover:bg-brand-yellow/10 hover:border-opacity-80 transition-all",
+    goldGhost:
+      "bg-transparent text-brand-yellow border border-brand-yellow font-['Poppins'] font-semibold rounded-lg hover:bg-brand-yellow/10 hover:border-opacity-80 transition-all",
+    cyan:
+      "inline-flex items-center justify-center font-['Poppins'] font-semibold text-black bg-brand-cyan rounded-full h-8 px-4 shadow-[0_0_16px_-2px_rgba(0,242,255,0.4)] hover:shadow-[0_0_24px_-2px_rgba(0,242,255,0.55)] hover:bg-brand-cyan-hover active:scale-[0.97] transition-all duration-200 ease-out",
+    purple:
+      "inline-flex items-center justify-center font-['Poppins'] font-semibold text-white bg-purple-600 rounded-full h-8 px-4 shadow-[0_0_12px_-2px_rgba(139,92,246,0.4)] hover:shadow-[0_0_20px_-2px_rgba(139,92,246,0.55)] hover:bg-purple-500 active:scale-[0.97] transition-all duration-200 ease-out",
+    blue:
+      "inline-flex items-center justify-center font-['Poppins'] font-semibold text-white bg-blue-600 rounded-full h-8 px-4 shadow-[0_0_12px_-2px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_-2px_rgba(37,99,235,0.55)] hover:bg-blue-500 active:scale-[0.97] transition-all duration-200 ease-out",
+    guarda:
+      "inline-flex items-center justify-center font-['Poppins'] font-semibold text-white bg-white/10 rounded-full h-8 px-4 border border-white/20 hover:bg-white/20 hover:border-white/30 active:scale-[0.97] transition-all duration-200 ease-out",
   };
-  
+
   const sizes = {
     default: "h-9 px-4 py-2",
-    sm: "h-8 rounded-md px-3 text-xs",
+    sm: "h-8 rounded-full px-3 text-xs",
     lg: "h-10 rounded-md px-6 font-semibold",
     icon: "h-9 w-9",
   };
-  
+
   const Classes = cn(baseClasses, variants[variant], sizes[size], className);
-  
+
   if (asChild) {
     const { className: classNameProp, children, ...rest } = props as any;
     return (
@@ -48,7 +60,7 @@ export function Button({
       </a>
     );
   }
-  
+
   return <button className={Classes} {...props} />;
 }
 
@@ -57,7 +69,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow-sm",
+        "liquid-glass rounded-xl border border-border/40 bg-card/60 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-xl hover:border-brand-yellow/25 hover:-translate-y-0.5",
         className
       )}
       {...props}
@@ -90,10 +102,10 @@ export function Badge({ className, variant = "default", ...props }: {
   variant?: "default" | "secondary" | "outline" | "destructive";
 } & HTMLAttributes<HTMLSpanElement>) {
   const variants = {
-    default: "border-transparent bg-primary text-primary-foreground",
-    secondary: "border-transparent bg-secondary text-secondary-foreground",
-    outline: "text-foreground",
-    destructive: "border-transparent bg-destructive text-destructive-foreground",
+    default: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-brand-yellow text-black font-['Poppins']",
+    secondary: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground",
+    outline: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-foreground border border-border",
+    destructive: "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-destructive text-destructive-foreground",
   };
   
   return (

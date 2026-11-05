@@ -7,17 +7,170 @@ import FeaturedHero from "@/components/homepage/featured-hero";
 import Footer from "@/components/layout/footer";
 import { Navigation } from "@/components/layout/navigation";
 import { fetchBazzibaVideos, type BazzibaVideo } from "@/data/wp";
-import React from "react";
+import {
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Eye,
+  Heart,
+  Share2,
+  Clock,
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
+/* ===== StreamTube Eye-Catching Slider — real WP data ===== */
+function StreamTubeSlider({ videos }: { videos: BazzibaVideo[] }) {
+  // Use first 3 published videos for the slider
+  const sliderVideos = videos.slice(0, 3).map((v) => ({
+    id: `slider-${v.id}`,
+    title: v.title,
+    thumbnail: v.thumbnail,
+    views: v.viewCount,
+    duration: v.duration,
+    videoUrl: v.videoUrl,
+  }));
+
+  const [current, setCurrent] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % sliderVideos.length);
+    }, 6000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [sliderVideos.length]);
+
+  const next = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setCurrent((prev) => (prev + 1) % sliderVideos.length);
+    intervalRef.current = setInterval(() => {
+      setCurrent((p) => (p + 1) % sliderVideos.length);
+    }, 6000);
+  };
+
+  const prev = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setCurrent((prev) => (prev - 1 + sliderVideos.length) % sliderVideos.length);
+    intervalRef.current = setInterval(() => {
+      setCurrent((p) => (p + 1) % sliderVideos.length);
+    }, 6000);
+  };
+
+  if (sliderVideos.length === 0) return null;
+
+  return (
+    <section className="relative w-full h-[420px] md:h-[500px] overflow-hidden bg-black rounded-2xl mb-6 shadow-2xl">
+      {/* Slider items */}
+      {sliderVideos.map((video, i) => (
+        <div
+          key={video.id}
+          className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-700 ${
+            i === current ? "opacity-[1] z-10" : "opacity-[0] z-0"
+          }`}
+        >
+          <div className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl group">
+            {/* Video background */}
+            <div className="absolute inset-0 bg-black">
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            {/* Gradient overlays */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+
+            {/* Play button center */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-brand-cyan/90 flex items-center justify-center shadow-2xl shadow-brand-cyan-glow hover:scale-110 transition-transform cursor-pointer">
+                <Play className="h-10 w-10 text-black ml-0.5" />
+              </div>
+            </div>
+
+            {/* Video info */}
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <h3 className="text-xl font-bold text-white font-['Poppins'] drop-shadow-lg mb-2">
+                {video.title}
+              </h3>
+              <div className="flex items-center gap-4 text-sm text-white/70">
+                <span className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  {video.views} visualizzazioni
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {video.duration}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Share2 className="h-3 w-3" />
+                  Condividi
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Navigation arrows */}
+      <button
+        onClick={prev}
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors text-white z-20"
+        aria-label="Precedente"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+      <button
+        onClick={next}
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors text-white z-20"
+        aria-label="Successivo"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+
+      {/* Dots indicator */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+        {sliderVideos.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => {
+              if (intervalRef.current) clearInterval(intervalRef.current);
+              setCurrent(i);
+              intervalRef.current = setInterval(() => {
+                setCurrent((p) => (p + 1) % sliderVideos.length);
+              }, 6000);
+            }}
+            className={`w-2 h-2 rounded-full transition-all ${
+              i === current ? "bg-brand-cyan w-6" : "bg-white/30 hover:bg-white/50"
+            }`}
+            aria-label={`Slide ${i + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* "Eye Catching Slider" label */}
+      <div className="absolute top-4 left-4">
+        <span className="text-[11px] uppercase tracking-widest text-brand-cyan font-semibold bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
+          Eye Catching Slider
+        </span>
+      </div>
+    </section>
+  );
+}
+
+/* ===== Main homepage content ===== */
 function WpFetchedContent() {
-  const [videos, setVideos] = React.useState<BazzibaVideo[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const [videos, setVideos] = useState<BazzibaVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let mounted = true;
     setLoading(true);
-    setError(null);
     fetchBazzibaVideos()
       .then((data) => {
         if (mounted) {
@@ -32,7 +185,9 @@ function WpFetchedContent() {
           setLoading(false);
         }
       });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading) {
@@ -94,6 +249,11 @@ function WpFetchedContent() {
       <Navigation />
 
       <main className="flex-1 pt-[64px] lg:pt-[64px]">
+        {/* ===== StreamTube Eye-Catching Slider (real WP data) ===== */}
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+          <StreamTubeSlider videos={videos} />
+        </div>
+
         {/* ===== StreamTube-style: fullwidth hero strip ===== */}
         <div className="max-w-full">
           <FeaturedHero

@@ -19,16 +19,20 @@
 
 | Token | Hex | HSL | Usage |
 |-------|-----|-----|-------|
-| `--brand-gold` | `#FFD700` | 42 91% 50% | Primary accent, CTAs, active states, branding |
+| `--brand-cyan` | `#00f2ff` | 189 100% 49% | Primary accent, CTAs, active states, branding |
+| `--brand-cyan-hover` | `#00d4e6` | 189 100% 45% | Hover state for cyan elements |
+| `--brand-cyan-glow` | `rgba(0, 242, 255, 0.4)` | - | Glow shadows |
+| `--brand-gold` | `#FFD700` | 42 91% 50% | Secondary accent (contest prizes, premium CTAs) |
 | `--brand-gold-hover` | `#E6C200` | 42 85% 48% | Hover state for gold elements |
-| `--brand-gold-dark` | `#FFA700` | 42 100% 50% | Pressed/active state |
-| `--background` | `#0A0A0A` | 220 20% 6% | Page background (dark default) |
-| `--card` | `#121212` | 220 20% 10% | Card surfaces |
+| `--background` | `#050a14` | 225 65% 4% | Page background (deep navy, dark default) |
+| `--background-alt` | `#080e1a` | 225 55% 6% | Card/section surfaces |
+| `--card` | `#0c1220` | 225 45% 8% | Card surfaces |
 | `--card-foreground` | `#E8E8E8` | 0 0% 93% | Card text |
-| `--muted` | `#1A1A1A` | 220 10% 15% | Secondary surfaces |
-| `--muted-foreground` | `#888888` | 0 0% 55% | Secondary text |
-| `--border` | `#2A2A2A` | 220 10% 20% | Borders, dividers |
-| `--input` | `#2A2A2A` | 220 10% 20% | Input borders |
+| `--muted` | `#111827` | 225 30% 12% | Secondary surfaces |
+| `--muted-foreground` | `#7d8a9a` | 215 10% 48% | Secondary text |
+| `--border` | `#1e2a3a` | 220 25% 20% | Borders, dividers |
+| `--border-bright` | `rgba(0, 242, 255, 0.15)` | - | Cyan-tinted border on glass |
+| `--input` | `#1e2a3a` | 220 25% 20% | Input borders |
 
 ### Light Mode Overrides
 When `.light` or `[data-theme="light"]` is active:

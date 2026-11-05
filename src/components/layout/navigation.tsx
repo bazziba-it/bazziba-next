@@ -1,273 +1,134 @@
-/** @format */
-
 "use client";
 
 import Link from "next/link";
-import { Logo, ThemeToggle } from "@/components/ui/logo";
-import { Button } from "@/components/ui";
-import { Search, Upload, Bell, User, Menu, X } from "lucide-react";
-import { useState } from "react";
-import { SearchAutocomplete } from "@/components/layout/search-autocomplete";
-import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
-
-const categories = [
-  { name: "Cantanti", slug: "cantanti", icon: "🎤" },
-  { name: "Musicisti", slug: "musicisti", icon: "🎸" },
-  { name: "Arti Varie", slug: "arti-varie", icon: "🎨" },
-  { name: "Artisti Di Strada", slug: "artisti-di-strada", icon: "🎭" },
-  { name: "Poeti", slug: "poeti", icon: "📜" },
-  { name: "DJ", slug: "dj", icon: "🎧" },
-  { name: "Ballerini", slug: "ballerini", icon: "💃" },
-  { name: "Cinema", slug: "cinema", icon: "🎬" },
-  { name: "Pittori", slug: "pittori", icon: "🖼️" },
-];
-
-const desktopNavItems = [
-  { name: "Home", href: "/", icon: null },
-  { name: "Trending", href: "/feed/trending", icon: null },
-  { name: "Contest", href: "/contest", icon: null },
-];
 
 export function Navigation() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
-
   return (
-    <header className="sticky top-0 z-50 w-full liquid-glass-nav">
-      <div className="container mx-auto flex h-16 items-center justify-between">
-        {/* Left: logo + mobile menu toggle */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-
-          <Link href="/" className="flex items-center gap-2">
-            <Logo className="h-9 w-9" />
-            <span className="font-bold text-xl text-brand-yellow">Bazziba!</span>
-          </Link>
-        </div>
-
-        {/* Center: desktop nav */}
-        <nav className="hidden md:flex items-center space-x-1">
-          {desktopNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200",
-                "text-muted-foreground hover:text-foreground hover:bg-accent",
-              )}
-            >
-              {item.name}
+    <>
+      <header className="sticky top-0 z-50 bg-[#0a0e1a] backdrop-blur-md border-b border-white/5">
+        <div className="flex items-center justify-between px-5 max-w-[1600px] mx-auto h-16">
+          {/* Brand */}
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
+              <svg width="32" height="32" viewBox="0 0 100 32" fill="none">
+                <rect width="100" height="32" rx="6" fill="#00f2ff"/>
+                <rect x="10" y="6" width="8" height="20" rx="2" fill="#050a14"/>
+                <rect x="22" y="10" width="6" height="12" rx="2" fill="#050a14"/>
+                <rect x="32" y="4" width="8" height="24" rx="2" fill="#050a14"/>
+                <rect x="44" y="8" width="6" height="16" rx="2" fill="#050a14"/>
+                <rect x="54" y="2" width="8" height="28" rx="2" fill="#050a14"/>
+                <rect x="66" y="12" width="6" height="8" rx="2" fill="#050a14"/>
+                <rect x="76" y="14" width="6" height="4" rx="1" fill="#050a14"/>
+                <rect x="86" y="8" width="8" height="16" rx="2" fill="#050a14"/>
+              </svg>
+              <span className="text-lg font-bold text-white tracking-tight">BAZZIBA!</span>
             </Link>
-          ))}
-
-          {/* Category pills */}
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/c/${cat.slug}`}
-              className={cn(
-                "text-sm font-medium px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap",
-                "text-muted-foreground hover:text-foreground hover:bg-accent",
-              )}
-            >
-              {cat.icon} {cat.name}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Right: search + actions */}
-        <div className="flex items-center gap-2">
-          {/* Desktop search */}
-          <div className="hidden md:block flex-1 max-w-md mx-4">
-            <SearchAutocomplete />
           </div>
 
-          {/* Mobile search icon */}
-          <Button variant="ghost" size="icon" className="md:hidden" asChild>
-            <a href="/search">
-              <Search className="h-4 w-4" />
-            </a>
-          </Button>
-
-          <Button variant="ghost" size="icon" asChild>
-            <a href="/upload">
-              <Upload className="h-4 w-4" />
-            </a>
-          </Button>
-
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-brand-yellow" />
-          </Button>
-
-          <ThemeToggle />
-
-          <Button variant="ghost" size="sm" className="hidden sm:flex" asChild>
-            <a href="/auth/signin" className="flex items-center gap-1">
-              <User className="h-4 w-4" />
-              Accedi
-            </a>
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile search row */}
-      <div className="md:hidden px-4 pb-2">
-        <SearchAutocomplete />
-      </div>
-
-      {/* Mobile drawer overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile drawer */}
-      <div
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 h-screen bg-background/95 backdrop-blur border-r transition-transform md:hidden",
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex flex-col h-full p-4">
-          {/* Mobile nav items */}
-          <nav className="flex-1 space-y-1">
-            {desktopNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
-                  "text-muted-foreground hover:bg-accent hover:text-foreground",
-                )}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
-
-            <div className="border-t my-3" />
-
-            {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/c/${cat.slug}`}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>{cat.icon}</span>
-                {cat.name}
-              </Link>
-            ))}
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-0.5">
+            <Link href="/" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Home</Link>
+            <Link href="/feed/trending" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Trending</Link>
+            <Link href="/contest" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Contest</Link>
+            <Link href="/search" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Cerca</Link>
           </nav>
 
-          <div className="border-t pt-4 mt-auto space-y-2">
-            <Button variant="ghost" size="sm" className="w-full" asChild>
-              <a href="/auth/signin">Accedi</a>
-            </Button>
-            <Button className="w-full bg-brand-yellow text-black hover:bg-brand-gold-hover" asChild>
-              <a href="/upload">Carica video</a>
-            </Button>
+          {/* Category pills — horizontal scroll */}
+          <div className="hidden lg:flex items-center gap-1">
+            <Link href="/c/tutti" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Tutti
+            </Link>
+            <Link href="/c/cantanti" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              Cantanti
+            </Link>
+            <Link href="/c/cinema" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20"/><path d="M17 2v20"/><path d="M2 12h20"/></svg>
+              Cinema
+            </Link>
+            <Link href="/c/pittori" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L18 13z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+              Pittori
+            </Link>
+            <Link href="/c/danzatori" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="4" r="2"/><path d="M12 6v6l-2 4h4l-2-4V6z"/><path d="M8 14c0 3.314 2.686 6 6 6s6-2.686 6-6"/></svg>
+              Danzatori
+            </Link>
+            <Link href="/c/musicisti" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              Musicisti
+            </Link>
+            <Link href="/c/community" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+              Community
+            </Link>
           </div>
-        </div>
-      </div>
-    </header>
-  );
-}
 
-export function Footer() {
-  return (
-    <footer className="border-t liquid-glass-nav bg-background/50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Logo className="h-7 w-7" />
-              <span className="font-bold text-xl text-brand-yellow">Bazziba!</span>
+          {/* Search + user */}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-sm text-white/40 w-[200px]">
+              <svg className="w-4 h-4 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.34-4.34"/></svg>
+              <input type="text" placeholder="Cerca..." className="bg-transparent border-none outline-none text-sm text-white placeholder-white/40 w-full" />
             </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              La piattaforma digitale dedicata al mondo artistico.
-              Condividi e scopri contenuti video con carattere e interesse artistico.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              © 2025 Bazziba S.r.l. - REA: RM-1722388 - P.IVA 17497291009
-            </p>
+            <Link href="/upload" className="px-4 py-2 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg hover:bg-[#00d4e6] transition-colors flex items-center gap-1.5">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
+              Carica
+            </Link>
+            <Link href="/auth/signin" className="px-4 py-2 text-sm font-semibold text-[#00f2ff] bg-white/5 rounded-full hover:bg-white/10 transition-colors border border-white/10">
+              ACCEDI
+            </Link>
+            <Link href="/auth/signup" className="px-4 py-2 text-sm font-semibold text-black bg-[#00f2ff] rounded-full hover:bg-[#00d4e6] transition-colors">
+              REGISTRATI
+            </Link>
           </div>
 
-          <div>
-            <h4 className="font-semibold mb-3 text-foreground">Esplora</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/feed/trending" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Trending
-                </Link>
-              </li>
-              <li>
-                <Link href="/contest" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Contest
-                </Link>
-              </li>
-              <li>
-                <Link href="/search" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Cerca
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-3 text-foreground">Community</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/u" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Membri
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/newsletter" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Newsletter
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-3 text-foreground">Legale</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/privacy-policy" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Termini
-                </Link>
-              </li>
-              <li>
-                <Link href="/contattaci" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Contatti
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Mobile hamburger */}
+          <button className="md:hidden p-2 text-white/60 hover:text-white">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </button>
         </div>
+      </header>
+
+      {/* Mobile nav drawer */}
+      <div className="md:hidden hidden bg-[#0a0e1a] border-b border-white/5">
+        <div className="flex items-center justify-between px-4 py-2">
+          <svg width="24" height="24" viewBox="0 0 100 32" fill="none">
+            <rect width="100" height="32" rx="6" fill="#00f2ff"/>
+            <rect x="10" y="6" width="8" height="20" rx="2" fill="#050a14"/>
+            <rect x="22" y="10" width="6" height="12" rx="2" fill="#050a14"/>
+            <rect x="32" y="4" width="8" height="24" rx="2" fill="#050a14"/>
+            <rect x="44" y="8" width="6" height="16" rx="2" fill="#050a14"/>
+            <rect x="54" y="2" width="8" height="28" rx="2" fill="#050a14"/>
+            <rect x="66" y="12" width="6" height="8" rx="2" fill="#050a14"/>
+            <rect x="76" y="14" width="6" height="4" rx="1" fill="#050a14"/>
+            <rect x="86" y="8" width="8" height="16" rx="2" fill="#050a14"/>
+          </svg>
+          <span className="text-base font-bold text-white">BAZZIBA!</span>
+          <button className="p-2 text-white/60">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div className="flex items-center gap-1 px-3 overflow-x-auto py-2">
+          <Link href="/c/tutti" className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">Tutti</Link>
+          <Link href="/c/cantanti" className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">Cantanti</Link>
+          <Link href="/c/cinema" className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">Cinema</Link>
+          <Link href="/c/pittori" className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">Pittori</Link>
+          <Link href="/c/danzatori" className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">Danzatori</Link>
+          <Link href="/c/musicisti" className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">Musicisti</Link>
+          <Link href="/c/community" className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">Community</Link>
+        </div>
+        <nav className="flex flex-col gap-1 px-4 py-2">
+          <Link href="/" className="px-4 py-2 text-sm text-white/60 hover:text-white">Home</Link>
+          <Link href="/feed/trending" className="px-4 py-2 text-sm text-white/60 hover:text-white">Trending</Link>
+          <Link href="/contest" className="px-4 py-2 text-sm text-white/60 hover:text-white">Contest</Link>
+          <Link href="/search" className="px-4 py-2 text-sm text-white/60 hover:text-white">Cerca</Link>
+          <Link href="/upload" className="mt-2 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
+            Carica video
+          </Link>
+        </nav>
       </div>
-    </footer>
+    </>
   );
 }
