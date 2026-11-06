@@ -259,5 +259,5 @@ export function ScrollArea({ children, className }: {
 // glass.tsx; client half (GlassCard/GlassNav) from glass-motion.tsx.
 export { GlassSurface, GlassButton, glassVariants, MOTION, STAGGER } from "./glass";
 export type { GlassSurfaceProps, GlassButtonProps, GlassTier } from "./glass";
-export { GlassCard, GlassNav } from "./glass-motion";
+export { GlassCard, GlassNav, FadeIn } from "./glass-motion";
 export type { GlassCardProps, GlassNavProps } from "./glass-motion";

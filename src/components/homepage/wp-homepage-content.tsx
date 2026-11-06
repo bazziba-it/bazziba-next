@@ -5,7 +5,7 @@
 import Link from "next/link";
 import FeaturedHero from "@/components/homepage/featured-hero";
 import Footer from "@/components/layout/footer";
-import { GlassCard } from "@/components/ui";
+import { GlassCard, FadeIn } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
 import { Play, ChevronLeft, ChevronRight, Share2, User } from "lucide-react";
@@ -196,7 +196,7 @@ export default function WpHomepageContent({
           </aside>
 
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-4 px-2">
+            <FadeIn className="flex items-center justify-between mb-4 px-2">
               <h2 className="text-xl font-bold text-white font-['Poppins']">
                 Ultime pubblicazioni
                 <span className="ml-2 text-sm font-normal text-white/30">
@@ -212,7 +212,7 @@ export default function WpHomepageContent({
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </Link>
-            </div>
+            </FadeIn>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 xl:gap-5">
               {videos.map((vid, index) => (

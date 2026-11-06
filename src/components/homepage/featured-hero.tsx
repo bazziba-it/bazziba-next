@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TrendingUp, Play, Gift, Calendar } from "lucide-react";
 import { Button, GlassSurface, GlassCard } from "@/components/ui";
 import { RealAvatar, ThumbPlaceholder } from "@/components/ui/media";
+import { HeroParallax, AnimatedHeadline } from "@/components/homepage/hero-motion";
 import type { BazzibaVideo } from "@/data/wp";
 
 interface FeaturedHeroProps {
@@ -40,17 +41,20 @@ export default function FeaturedHero({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* ===== LEFT: Featured Video (lg:col-span-2) ===== */}
           <GlassSurface tier="raised" className="lg:col-span-2 relative rounded-2xl overflow-hidden bg-black group min-h-[420px]">
-            {featuredVideo?.thumbnail ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={featuredVideo.thumbnail}
-                alt={featuredVideo.title}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="eager"
-              />
-            ) : (
-              <ThumbPlaceholder title={featuredVideo?.title ?? "Bazziba"} className="absolute inset-0" />
-            )}
+            {/* Parallax media layer (ADR-0003 hero FX) */}
+            <HeroParallax>
+              {featuredVideo?.thumbnail ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={featuredVideo.thumbnail}
+                  alt={featuredVideo.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="eager"
+                />
+              ) : (
+                <ThumbPlaceholder title={featuredVideo?.title ?? "Bazziba"} className="absolute inset-0" />
+              )}
+            </HeroParallax>
 
             {/* Gradient overlays */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
@@ -64,11 +68,12 @@ export default function FeaturedHero({
               </div>
             </div>
 
-            {/* Title */}
+            {/* Title — word-stagger entrance (ADR-0003 hero FX) */}
             <div className="absolute top-4 right-4 left-4 md:left-auto md:right-4">
-              <h2 className="font-display text-headline-lg text-white drop-shadow-lg line-clamp-2 max-w-[70%] md:max-w-[80%]">
-                {featuredVideo?.title ?? "BAZZIBA! — La piattaforma degli artisti"}
-              </h2>
+              <AnimatedHeadline
+                text={featuredVideo?.title ?? "BAZZIBA! — La piattaforma degli artisti"}
+                className="font-display text-headline-lg text-white drop-shadow-lg line-clamp-2 max-w-[70%] md:max-w-[80%]"
+              />
             </div>
 
             {/* Real meta: author + publish date */}

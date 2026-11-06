@@ -7,6 +7,8 @@ import { CommentsSection } from "@/components/video/comments-section";
 import VideoPlayer from "@/components/video/video-player";
 import { RealAvatar, ThumbPlaceholder } from "@/components/ui/media";
 import type { BazzibaVideo, WpComment } from "@/data/wp";
+import { motion } from "framer-motion";
+import { MOTION } from "@/components/ui/glass";
 import {
   ThumbsUp,
   Share2,
@@ -98,17 +100,28 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
 
             {/* Action row — like is local UI state (real counts aren't exposed by the API) */}
             <div className="flex items-center gap-3">
-              <button
+              <motion.button
                 onClick={() => setIsLiked(!isLiked)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                whileTap={{ scale: 0.92 }}
+                transition={MOTION.press}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   isLiked
                     ? "bg-red-500/10 text-red-500 border border-red-500/20"
                     : "bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
               >
-                <ThumbsUp className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                {/* heart pop micro-interaction (ADR-0003) */}
+                <motion.span
+                  key={String(isLiked)}
+                  initial={{ scale: isLiked ? 0.5 : 1 }}
+                  animate={{ scale: 1 }}
+                  transition={MOTION.press}
+                  className="flex"
+                >
+                  <ThumbsUp className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                </motion.span>
                 Mi piace
-              </button>
+              </motion.button>
 
               <button
                 onClick={copyToClipboard}

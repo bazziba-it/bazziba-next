@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { GlassNav } from "@/components/ui";
+import { MOTION } from "@/components/ui/glass";
 
 const brandMark = (
   <svg width="32" height="32" viewBox="0 0 100 32" fill="none">
@@ -27,17 +30,30 @@ const pillIcons: Record<string, React.ReactNode> = {
   community: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
 };
 
+/** Real video_category slugs (ADR-0003 — no fabricated categories). */
 const pills: [string, string][] = [
-  ["tutti", "Tutti"],
   ["cantanti", "Cantanti"],
+  ["musicisti", "Musicisti"],
+  ["arti-varie", "Arti Varie"],
+  ["artisti-di-strada", "Artisti di Strada"],
+  ["poeti", "Poeti"],
+  ["dj", "DJ"],
+  ["ballerini", "Ballerini"],
   ["cinema", "Cinema"],
   ["pittori", "Pittori"],
-  ["danzatori", "Danzatori"],
-  ["musicisti", "Musicisti"],
-  ["community", "Community"],
+];
+
+const mainLinks: [string, string][] = [
+  ["/", "Home"],
+  ["/feed/trending", "Trending"],
+  ["/contest", "Contest"],
+  ["/search", "Cerca"],
 ];
 
 export function Navigation() {
+  const pathname = usePathname();
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
   return (
     <>
       {/* ADR-0001 §6.4 — docked glass nav; the single passive scroll listener
@@ -55,10 +71,25 @@ export function Navigation() {
         }
         links={
           <div className="hidden md:flex items-center gap-0.5">
-            <Link href="/" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Home</Link>
-            <Link href="/feed/trending" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Trending</Link>
-            <Link href="/contest" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Contest</Link>
-            <Link href="/search" className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors">Cerca</Link>
+            {mainLinks.map(([href, label]) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative px-4 py-2 text-sm transition-colors ${active ? "text-white" : "text-white/60 hover:text-white"}`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="nav-active-pill"
+                      className="absolute inset-0 bg-white/10 rounded-lg"
+                      transition={MOTION.page}
+                    />
+                  )}
+                  <span className="relative">{label}</span>
+                </Link>
+              );
+            })}
           </div>
         }
         actions={
@@ -128,10 +159,9 @@ export function Navigation() {
           ))}
         </div>
         <nav className="flex flex-col gap-1 px-4 py-2" aria-label="Mobile">
-          <Link href="/" className="px-4 py-2 text-sm text-white/60 hover:text-white">Home</Link>
-          <Link href="/feed/trending" className="px-4 py-2 text-sm text-white/60 hover:text-white">Trending</Link>
-          <Link href="/contest" className="px-4 py-2 text-sm text-white/60 hover:text-white">Contest</Link>
-          <Link href="/search" className="px-4 py-2 text-sm text-white/60 hover:text-white">Cerca</Link>
+          {mainLinks.map(([href, label]) => (
+            <Link key={href} href={href} className="px-4 py-2 text-sm text-white/60 hover:text-white">{label}</Link>
+          ))}
           <Link href="/upload" className="mt-2 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
             Carica video

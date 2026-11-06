@@ -2,7 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { MOTION } from "@/components/ui/glass";
 import { Home, Search, Upload, Bell, User, TrendingUp, Trophy } from "lucide-react";
 
 const mobileMenuItems = [
@@ -31,19 +33,27 @@ export function MobileBottomNav() {
           const Icon = item.icon;
           const active = isActive(item.href);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 text-xs font-medium transition-all duration-200 rounded-lg p-2 min-w-0",
-                active
-                  ? "text-brand-yellow bg-brand-yellow/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {item.name}
-            </Link>
+            <motion.span key={item.href} whileTap={{ scale: 0.92 }} transition={MOTION.press}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-1 text-xs font-medium transition-all duration-200 rounded-lg p-2 min-w-0",
+                  active
+                    ? "text-brand-yellow bg-brand-yellow/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                )}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="mbn-active-dot"
+                    className="absolute -top-0.5 w-1 h-1 rounded-full bg-brand-yellow"
+                    transition={MOTION.page}
+                  />
+                )}
+                <Icon className="h-5 w-5" />
+                {item.name}
+              </Link>
+            </motion.span>
           );
         })}
         <Link

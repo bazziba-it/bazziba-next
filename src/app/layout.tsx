@@ -6,6 +6,7 @@ import { Navigation } from "@/components/layout/navigation";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider } from "next-themes";
+import { MotionProvider } from "@/components/ui/motion-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const poppins = Poppins({
@@ -75,13 +76,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className={`${inter.variable} ${poppins.variable} min-h-screen bg-background text-foreground antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <div className="relative flex min-h-screen flex-col">
-            <Navigation />
-            <main className="flex-1 pb-16 md:pb-0">{children}</main>
-            <Footer />
-            <MobileBottomNav />
-          </div>
-          <Toaster closeButton position="bottom-left" theme="system" richColors />
+          <MotionProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <Navigation />
+              <main className="flex-1 pb-16 md:pb-0">{children}</main>
+              <Footer />
+              <MobileBottomNav />
+            </div>
+            <Toaster closeButton position="bottom-left" theme="system" richColors />
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

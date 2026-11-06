@@ -4,6 +4,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Tag } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { MOTION } from "@/components/ui/glass";
 import { searchVideos, searchUsers, fetchVideoCategories, type BazzibaVideo, type WpUser, type WpTerm } from "@/data/wp";
 import { RealAvatar } from "@/components/ui/media";
 
@@ -88,8 +90,15 @@ export function SearchAutocomplete() {
         />
       </form>
 
+      <AnimatePresence>
       {isOpen && (
-        <div className="absolute top-full mt-1 w-full rounded-xl border bg-popover shadow-lg z-50 overflow-hidden animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, y: -6, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -6, scale: 0.98, transition: { duration: 0.12 } }}
+          transition={MOTION.enter}
+          className="absolute top-full mt-1 w-full rounded-xl border bg-popover shadow-lg z-50 overflow-hidden origin-top"
+        >
           {query.trim().length >= 2 ? (
             <div className="py-1">
               {searching && (
@@ -157,8 +166,9 @@ export function SearchAutocomplete() {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

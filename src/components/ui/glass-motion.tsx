@@ -106,12 +106,41 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(function Gla
       whileInView={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
       viewport={STAGGER.viewport}
       transition={reduceMotion ? { duration: 0 } : { ...MOTION.enter, delay: enterDelay }}
+      whileTap={interactive && !reduceMotion ? { scale: 0.97, transition: MOTION.press } : undefined}
       {...props}
     >
       {children}
     </motion.div>
   );
 });
+
+/**
+ * FadeIn — scroll-driven section reveal (ADR-0003): opacity + 10px rise on
+ * the shared MOTION.enter spring, whileInView once. For headers/panels that
+ * aren't GlassCards.
+ */
+export function FadeIn({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+      whileInView={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      viewport={STAGGER.viewport}
+      transition={reduceMotion ? { duration: 0 } : { ...MOTION.enter, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export interface GlassNavProps extends HTMLAttributes<HTMLElement> {
   brand?: ReactNode;
