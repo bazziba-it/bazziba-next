@@ -87,5 +87,8 @@
   },
   "engines": {
     "node": ">=20.x"
+  },
+  "optionalDependencies": {
+    "@img/sharp-wasm32": "^0.35.5"
   }
 }

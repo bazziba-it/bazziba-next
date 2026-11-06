@@ -1,6 +1,7 @@
 /** @format */
 
 import Link from "next/link";
+import Image from "next/image";
 import FeaturedHero from "@/components/homepage/featured-hero";
 import { GlassCard, FadeIn } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
@@ -124,12 +125,12 @@ export default function WpHomepageContent({
                   <Link href={`/watch/${vid.id}`} className="group block" prefetch={false}>
                     <div className="relative aspect-video overflow-hidden bg-black">
                       {vid.thumbnail ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={vid.thumbnail}
                           alt={vid.title}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-                          loading="lazy"
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                         />
                       ) : (
                         <ThumbPlaceholder title={vid.title} className="h-full w-full" />

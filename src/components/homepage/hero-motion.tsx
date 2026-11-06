@@ -6,6 +6,7 @@
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, Play, Gift, Calendar, TrendingUp } from "lucide-react";
 import { MOTION, STAGGER } from "@/components/ui/glass";
 import { RealAvatar, ThumbPlaceholder } from "@/components/ui/media";
@@ -48,24 +49,27 @@ function formatDateIT(iso?: string): string {
 export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
   const slides = videos.slice(0, 5);
   const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (slides.length < 2) return;
+    if (slides.length < 2 || paused) return;
     intervalRef.current = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length);
     }, 6500);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [slides.length]);
+  }, [slides.length, paused]);
 
   const restart = (next: (p: number) => number) => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setCurrent(next);
-    intervalRef.current = setInterval(() => {
-      setCurrent((p) => (p + 1) % slides.length);
-    }, 6500);
+    if (!paused) {
+      intervalRef.current = setInterval(() => {
+        setCurrent((p) => (p + 1) % slides.length);
+      }, 6500);
+    }
   };
 
   if (slides.length === 0) return null;
@@ -86,20 +90,22 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
               <>
                 {/* Blurred backdrop fill — portrait posters get a soft side fill
                     instead of hard crops (landscape fully covers it anyway) */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={video.thumbnail}
                   alt=""
                   aria-hidden
-                  className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-40"
-                  loading={i === 0 ? "eager" : "lazy"}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  priority={i === 0}
+                  className="object-cover scale-125 blur-2xl opacity-40"
                 />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={video.thumbnail}
                   alt={video.title}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  loading={i === 0 ? "eager" : "lazy"}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  priority={i === 0}
+                  className="object-cover"
                 />
               </>
             ) : (
@@ -179,30 +185,49 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
         <>
           <button
             onClick={() => restart((p) => (p - 1 + slides.length) % slides.length)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-30"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan"
             aria-label="Slide precedente"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={() => restart((p) => (p + 1) % slides.length)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-30"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan"
             aria-label="Slide successiva"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute bottom-6 right-4 flex gap-1.5 z-30">
+          <div className="absolute bottom-6 right-4 flex items-center gap-1.5 z-30" role="tablist" aria-label="Slide del video in evidenza">
+            {/* WCAG 2.2.2: pause/play for the auto-rotation */}
+            <button
+              onClick={() => setPaused((v) => !v)}
+              className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 mr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan"
+              aria-label={paused ? "Riprendi la rotazione automatica" : "Metti in pausa la rotazione"}
+              aria-pressed={paused}
+            >
+              {paused ? (
+                <Play className="h-3 w-3 ml-px" />
+              ) : (
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+              )}
+            </button>
             {slides.map((_, i) => (
               <button
                 key={i}
+                role="tab"
+                aria-selected={i === current}
                 onClick={() => restart(() => i)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan ${
                   i === current ? "bg-brand-cyan w-6" : "bg-white/30 w-3 hover:bg-white/50"
                 }`}
-                aria-label={`Vai alla slide ${i + 1}`}
+                aria-label={`Vai alla slide ${i + 1} di ${slides.length}`}
               />
             ))}
           </div>
+          {/* Screen-reader slide announcement */}
+          <span className="sr-only" aria-live="polite">
+            {`Slide ${current + 1} di ${slides.length}: ${slides[current]?.title ?? ""}`}
+          </span>
         </>
       )}
     </>

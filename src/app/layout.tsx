@@ -86,6 +86,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="it" className="dark" data-theme="dark" suppressHydrationWarning>
       <head>
+        {/* Early connections for the WP content + avatar CDNs */}
+        <link rel="preconnect" href="https://bazziba.it" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://bazziba.it" />
+        <link rel="preconnect" href="https://www.gravatar.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.gravatar.com" />
         <ThemeScript />
       </head>
       <body className={`${inter.variable} ${poppins.variable} min-h-screen bg-background text-foreground antialiased`}>

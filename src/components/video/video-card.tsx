@@ -1,7 +1,11 @@
+import Image from "next/image";
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
 import { GlassCard } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
 import { formatDurationSec, timeAgoIT } from "@/lib/format";
+
+/** Responsive sizes for grid cards (1→5 columns across breakpoints). */
+const GRID_SIZES = "(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw";
 
 interface VideoCardProps {
   video: BazzibaVideo;
@@ -17,21 +21,21 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
         <div className="relative aspect-video overflow-hidden bg-black">
           {video.thumbnail ? (
             <>
-              {/* Blurred fill behind portrait thumbnails */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              {/* Blurred fill behind portrait thumbnails (same optimized URL) */}
+              <Image
                 src={video.thumbnail}
                 alt=""
                 aria-hidden
-                className="absolute inset-0 h-full w-full object-cover scale-125 blur-xl opacity-30"
-                loading="lazy"
+                fill
+                sizes={GRID_SIZES}
+                className="object-cover scale-125 blur-xl opacity-30"
               />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={video.thumbnail}
                 alt={video.title}
-                className="relative h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
+                fill
+                sizes={GRID_SIZES}
+                className="relative object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </>
           ) : (

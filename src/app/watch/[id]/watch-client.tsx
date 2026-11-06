@@ -2,6 +2,8 @@
 
 "use client";
 
+import Image from "next/image";
+
 import { Badge, Separator, GlassCard, GlassSurface } from "@/components/ui";
 import { CommentsSection } from "@/components/video/comments-section";
 import VideoPlayer from "@/components/video/video-player";
@@ -227,12 +229,12 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
                   <Link key={v.id} href={`/watch/${v.id}`} className="flex gap-3 group">
                     <div className="relative flex-shrink-0 w-40 aspect-video bg-muted rounded-lg overflow-hidden transition-shadow group-hover:shadow-md">
                       {v.thumbnail ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={v.thumbnail}
                           alt={v.title}
-                          className="h-full w-full object-cover group-hover:brightness-110 transition-brightness"
-                          loading="lazy"
+                          fill
+                          sizes="160px"
+                          className="object-cover group-hover:brightness-110 transition-brightness"
                         />
                       ) : (
                         <ThumbPlaceholder title={v.title} className="h-full w-full" />

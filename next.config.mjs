@@ -21,7 +21,9 @@ const nextConfig = {
 
   images: {
     remotePatterns: [
+      { protocol: "https", hostname: "bazziba.it" },
       { protocol: "https", hostname: "**.bazziba.it" },
+      { protocol: "https", hostname: "www.gravatar.com" },
       { protocol: "https", hostname: "*.cloudflare.com" },
       { protocol: "https", hostname: "*.b-cdn.net" },
       { protocol: "https", hostname: "images.unsplash.com" },
