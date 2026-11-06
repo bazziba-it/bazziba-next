@@ -1,22 +1,41 @@
 /**
- * VideoPlayer — React wrapper using react-player (already installed)
- * Gold-dark themed player for Bazziba, with poster, controls, and
- * a branded overlay. Supports YouTube, direct MP4, HLS, etc.
+ * BazzibaPlayer — custom HTML5 video player (replaces react-player, whose v3
+ * API dropped `url` and silently never played). Real controls per the design
+ * language: glass control bar, cyan accent, auto-hide, keyboard shortcuts,
+ * PiP, playback speed, fullscreen, volume, seek bar with buffered display.
  */
 
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import ReactPlayer from "react-player";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Play, Pause, Volume2, VolumeX, Maximize, Minimize,
+  PictureInPicture2, Gauge, ExternalLink, Loader2,
+} from "lucide-react";
+import { MOTION } from "@/components/ui/glass";
 
 interface VideoPlayerProps {
   url: string;
-  poster?: string;
+  poster?: string | null;
   title?: string;
   autoPlay?: boolean;
   className?: string;
   width?: string | number;
   height?: string | number;
+}
+
+const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+function fmt(sec: number): string {
+  if (!Number.isFinite(sec) || sec < 0) return "0:00";
+  const s = Math.floor(sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`
+    : `${m}:${String(r).padStart(2, "0")}`;
 }
 
 export default function VideoPlayer({
@@ -25,135 +44,307 @@ export default function VideoPlayer({
   title = "",
   autoPlay = false,
   className = "",
-  width = "100%",
-  height = "100%",
 }: VideoPlayerProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playerRef = useRef<ReactPlayer>(null);
-  const [playing, setPlaying] = useState(autoPlay);
-  const [played, setPlayed] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [playing, setPlaying] = useState(false);
+  const [started, setStarted] = useState(false); // user started playback at least once
+  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+  const [rate, setRate] = useState(1);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [rateOpen, setRateOpen] = useState(false);
+
+  const wakeControls = useCallback(() => {
+    setControlsVisible(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => {
+      if (videoRef.current && !videoRef.current.paused) setControlsVisible(false);
+    }, 2800);
+  }, []);
+
+  const togglePlay = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().then(() => setStarted(true)).catch(() => setPlaying(false));
+    } else {
+      v.pause();
+    }
+    wakeControls();
+  }, [wakeControls]);
+
+  const seekTo = useCallback((clientX: number, el: HTMLDivElement) => {
+    const v = videoRef.current;
+    if (!v || !Number.isFinite(v.duration)) return;
+    const rect = el.getBoundingClientRect();
+    const frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    v.currentTime = frac * v.duration;
+    wakeControls();
+  }, [wakeControls]);
+
+  // Autoplay attempt: must start muted per browser policy, then unmute on first gesture
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !autoPlay) return;
+    v.muted = true;
+    setMuted(true);
+    v.play()
+      .then(() => setStarted(true))
+      .catch(() => { setMuted(false); v.muted = false; });
+  }, [autoPlay, url]);
+
+  // Keyboard shortcuts on the focused container
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const v = videoRef.current;
+    if (!v) return;
+    switch (e.key) {
+      case " ": case "k": e.preventDefault(); togglePlay(); break;
+      case "ArrowRight": v.currentTime = Math.min(v.duration, v.currentTime + 10); break;
+      case "ArrowLeft": v.currentTime = Math.max(0, v.currentTime - 10); break;
+      case "ArrowUp": e.preventDefault(); v.volume = Math.min(1, v.volume + 0.1); break;
+      case "ArrowDown": e.preventDefault(); v.volume = Math.max(0, v.volume - 0.1); break;
+      case "f": toggleFullscreen(); break;
+      case "m": v.muted = !v.muted; break;
+    }
+    wakeControls();
+  };
+
+  const toggleFullscreen = useCallback(async () => {
+    const c = containerRef.current;
+    const v = videoRef.current;
+    if (!c) return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => {});
+    } else if (c.requestFullscreen) {
+      await c.requestFullscreen().catch(() => {});
+    } else if (v && (v as any).webkitEnterFullscreen) {
+      (v as any).webkitEnterFullscreen(); // iOS Safari
+    }
+  }, []);
+
+  const togglePiP = useCallback(async () => {
+    const v = videoRef.current;
+    if (!v || !document.pictureInPictureEnabled) return;
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture();
+      else await v.requestPictureInPicture();
+    } catch { /* unsupported */ }
+  }, []);
 
   useEffect(() => {
-    setPlaying(autoPlay);
-  }, [autoPlay]);
+    const onFsChange = () => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current); }, []);
+
+  const playedPct = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const bufferedPct = duration > 0 ? (buffered / duration) * 100 : 0;
 
   return (
     <div
-      className={`relative w-full aspect-video rounded-xl overflow-hidden bg-muted ${className}`}
-      style={{ background: "hsl(var(--background))" }}
+      ref={containerRef}
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      onMouseMove={wakeControls}
+      onTouchStart={wakeControls}
+      className={`relative w-full aspect-video bg-black rounded-xl overflow-hidden group/player outline-none focus-visible:ring-2 focus-visible:ring-[#00f2ff] ${className}`}
     >
-      {/* Poster image */}
-      {poster && (
-        <div
-          className="absolute inset-0 w-full h-full bg-cover bg-center transition-opacity"
-          style={{
-            backgroundImage: `url(${poster})`,
-            opacity: playing ? 0 : 1,
-          }}
-        />
-      )}
-      {/* Gradient overlay on poster */}
-      {poster && (
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity"
-          style={{ opacity: playing ? 0 : 1 }}
-        />
-      )}
-
-      {/* React Player */}
-      <ReactPlayer
-        ref={playerRef}
-        url={url}
-        width={width}
-        height={height}
-        playing={playing}
-        loop={false}
-        controls={true}
-        playsinline={true}
-        muted={false}
+      <video
+        ref={videoRef}
+        src={url}
+        poster={poster ?? undefined}
+        playsInline
         preload="metadata"
-        config={{
-          file: {
-            attributes: {
-              crossorigin: "anonymous",
-              playsinline: true,
-            },
-          },
-          youtube: {
-            playerVars: {
-              modestbranding: 1 as const,
-              rel: 0 as const,
-            },
-          },
-        }}
-        onReady={(p) => {
-          const player = p as ReactPlayer | null;
-          setDuration(player?.getDuration?.() || 0);
-          setLoading(false);
-        }}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onProgress={(state: any) => setPlayed(state.played || 0)}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onBuffer={(state: any) => setBuffered(state.buffered || 0)}
+        className="absolute inset-0 w-full h-full object-contain"
+        onClick={togglePlay}
+        onDoubleClick={toggleFullscreen}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
+        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onDurationChange={(e) => setDuration(e.currentTarget.duration)}
+        onProgress={(e) => {
+          const v = e.currentTarget;
+          try {
+            if (v.buffered.length > 0) setBuffered(v.buffered.end(v.buffered.length - 1));
+          } catch { /* no buffered data yet */ }
         }}
+        onWaiting={() => setWaiting(true)}
+        onPlaying={() => setWaiting(false)}
+        onVolumeChange={(e) => {
+          setVolume(e.currentTarget.volume);
+          setMuted(e.currentTarget.muted);
+        }}
+        onRateChange={(e) => setRate(e.currentTarget.playbackRate)}
+        onError={() => setError("Il video non può essere riprodotto (sorgente non raggiungibile).")}
+        aria-label={title}
       />
 
-      {/* Play/pause overlay */}
-      {!playing && (
-        <div
-          className="absolute inset-0 flex items-center justify-center cursor-pointer group"
-          onClick={() => {
-            setPlaying(true);
-            playerRef.current?.play?.();
-          }}
-        >
-          <div
-            className="w-16 h-16 rounded-full bg-brand-yellow/90 flex items-center justify-center shadow-2xl transition-transform group-hover:scale-105"
-            style={{ backdropFilter: "blur(6px)" }}
+      {/* Error state */}
+      {error && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/80 text-center px-6">
+          <p className="text-white/80 text-sm">{error}</p>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#00f2ff] text-black text-sm font-bold rounded-full"
           >
-            <svg
-              className="w-7 h-7 text-black ml-0.5"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-          {/* Video title label */}
+            <ExternalLink className="h-4 w-4" />
+            Apri il file video
+          </a>
+        </div>
+      )}
+
+      {/* Buffering spinner */}
+      {waiting && !error && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <Loader2 className="h-10 w-10 text-[#00f2ff] animate-spin" />
+        </div>
+      )}
+
+      {/* Big play overlay before first play */}
+      {!started && !error && (
+        <motion.button
+          onClick={togglePlay}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer bg-black/20"
+          aria-label="Riproduci il video"
+        >
+          <motion.div
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+            transition={MOTION.press}
+            className="w-20 h-20 rounded-full bg-[#00f2ff]/90 flex items-center justify-center shadow-2xl shadow-cyan-glow-1"
+          >
+            <Play className="w-9 h-9 text-black ml-1 fill-current" />
+          </motion.div>
           {title && (
-            <div className="absolute bottom-4 left-4 right-4">
-              <p className="text-white/90 text-sm font-medium text-center truncate">
-                {title}
-              </p>
-            </div>
+            <p className="absolute bottom-16 left-4 right-4 text-center text-white/90 text-sm font-medium truncate">
+              {title}
+            </p>
           )}
-        </div>
+        </motion.button>
       )}
 
-      {/* Bottom gradient (ensures controls are readable) */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"
-        style={{ opacity: playing ? 1 : 0 }}
-      />
+      {/* Control bar */}
+      <AnimatePresence>
+        {(controlsVisible || !playing) && !error && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8, transition: { duration: 0.15 } }}
+            transition={MOTION.enter}
+            className="absolute bottom-0 left-0 right-0 z-20 px-3 pb-2.5 pt-8 bg-gradient-to-t from-black/85 via-black/40 to-transparent"
+          >
+            {/* Seek bar */}
+            <div
+              className="group/seek relative h-4 flex items-center cursor-pointer"
+              onClick={(e) => seekTo(e.clientX, e.currentTarget)}
+              role="slider"
+              aria-label="Posizione di riproduzione"
+              aria-valuemin={0}
+              aria-valuemax={Math.round(duration)}
+              aria-valuenow={Math.round(currentTime)}
+            >
+              <div className="relative w-full h-1 group-hover/seek:h-1.5 rounded-full bg-white/20 transition-all">
+                <div className="absolute inset-y-0 left-0 rounded-full bg-white/25" style={{ width: `${bufferedPct}%` }} />
+                <div className="absolute inset-y-0 left-0 rounded-full bg-[#00f2ff]" style={{ width: `${playedPct}%` }}>
+                  <span className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#00f2ff] opacity-0 group-hover/seek:opacity-100 transition-opacity shadow" />
+                </div>
+              </div>
+            </div>
 
-      {/* Loading spinner */}
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-          <div className="w-10 h-10 rounded-full border-2 border-brand-yellow/50 border-t-brand-yellow animate-spin" />
-        </div>
-      )}
+            <div className="flex items-center gap-1.5 mt-1">
+              <button onClick={togglePlay} aria-label={playing ? "Pausa" : "Riproduci"}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors">
+                {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              </button>
+
+              <button
+                onClick={() => { const v = videoRef.current; if (v) v.muted = !v.muted; }}
+                aria-label={muted || volume === 0 ? "Riattiva l'audio" : "Silenzia"}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors"
+              >
+                {muted || volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </button>
+              <input
+                type="range"
+                min={0} max={1} step={0.05}
+                value={muted ? 0 : volume}
+                onChange={(e) => {
+                  const v = videoRef.current;
+                  if (!v) return;
+                  v.volume = Number(e.target.value);
+                  v.muted = Number(e.target.value) === 0;
+                }}
+                aria-label="Volume"
+                className="w-20 accent-[#00f2ff] h-1 cursor-pointer"
+              />
+
+              <span className="text-[11px] text-white/80 font-mono ml-1 whitespace-nowrap">
+                {fmt(currentTime)} <span className="text-white/40">/ {fmt(duration)}</span>
+              </span>
+
+              <div className="flex-1" />
+
+              {/* Speed */}
+              <div className="relative">
+                <button
+                  onClick={() => setRateOpen((v) => !v)}
+                  aria-label="Velocità di riproduzione"
+                  className="h-9 px-2.5 flex items-center gap-1 rounded-full text-white hover:bg-white/10 transition-colors text-xs font-mono"
+                >
+                  <Gauge className="h-4 w-4" />
+                  {rate}x
+                </button>
+                {rateOpen && (
+                  <div className="absolute bottom-11 right-0 glass-raised rounded-xl border border-white/10 py-1 min-w-[88px] z-30">
+                    {RATES.map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => {
+                          if (videoRef.current) videoRef.current.playbackRate = r;
+                          setRateOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors ${
+                          r === rate ? "text-[#00f2ff] bg-[#00f2ff]/10" : "text-white/70 hover:bg-white/10"
+                        }`}
+                      >
+                        {r}x
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {typeof document !== "undefined" && document.pictureInPictureEnabled && (
+                <button onClick={togglePiP} aria-label="Picture in Picture"
+                  className="w-9 h-9 hidden sm:flex items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors">
+                  <PictureInPicture2 className="h-5 w-5" />
+                </button>
+              )}
+
+              <button onClick={toggleFullscreen} aria-label={fullscreen ? "Esci da schermo intero" : "Schermo intero"}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors">
+                {fullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,20 +1,4 @@
 // Next.js 15/16 Configuration
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
-
-// @mux/playback-core (pulled in transitively by react-player) imports hls.js as
-// BOTH a default export and a named export (CapLevelController). Only the ESM
-// build (dist/hls.mjs) provides those; the CJS build (dist/hls.js) provides
-// neither, which is what failed the webpack build. Resolve to the ESM build
-// with an ABSOLUTE path so every importer — including the nested copies under
-// node_modules/@mux/*/node_modules/@mux/playback-core — lands on it.
-let hlsEsm;
-try {
-  hlsEsm = require.resolve("hls.js/dist/hls.mjs");
-} catch {
-  hlsEsm = "hls.js/dist/hls.mjs";
-}
 
 const nextConfig = {
   reactStrictMode: true,
@@ -69,21 +53,8 @@ const nextConfig = {
     ];
   },
 
-
   typescript: {
     ignoreBuildErrors: true,
-  },
-
-  // Force hls.js ESM resolution for @mux/mux-player / @mux/playback-core.
-  // Exact-match ($) aliases so the subpath requests are not prefix-rewritten.
-  webpack: (config) => {
-    config.resolve = config.resolve || {};
-    config.resolve.fullySpecified = false;
-    config.resolve.alias = config.resolve.alias || {};
-    config.resolve.alias["hls.js$"] = hlsEsm;
-    config.resolve.alias["hls.js/dist/hls.js$"] = hlsEsm;
-    config.resolve.alias["hls.js/dist/hls.mjs$"] = hlsEsm;
-    return config;
   },
 };
 
