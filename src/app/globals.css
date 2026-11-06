@@ -678,3 +678,15 @@
     display: none;
   }
 }
+
+/* Hero carousel rotation progress bar (ADR-0003) */
+@keyframes hero-rotation-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.hero-rotation-progress {
+  animation: hero-rotation-progress 6.5s linear forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-rotation-progress { animation: none; width: 0; }
+}

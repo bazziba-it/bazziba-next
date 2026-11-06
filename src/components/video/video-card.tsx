@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
 import { GlassCard } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
@@ -17,7 +18,10 @@ interface VideoCardProps {
 export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
   return (
     <GlassCard staggerIndex={staggerIndex} scrollList className="overflow-hidden">
-      <a href={`/watch/${video.id}`} className="group block">
+      <Link
+        href={`/watch/${video.id}`}
+        className="group block rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f2ff]"
+      >
         <div className="relative aspect-video overflow-hidden bg-black">
           {video.thumbnail ? (
             <>
@@ -80,7 +84,7 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
             </span>
           )}
         </div>
-      </a>
+      </Link>
     </GlassCard>
   );
 }
@@ -131,16 +135,16 @@ export function CategoryGrid({ categories, activeCategory, className = "" }: Cat
     <div className={`sticky top-24 ${className}`}>
       <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wider mb-3 px-2">Categorie</h3>
       <div className="space-y-1">
-        <a
+        <Link
           href="/feed"
           className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
             !activeCategory ? "bg-[#00f2ff]/10 text-[#00f2ff]" : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
           Tutti
-        </a>
+        </Link>
         {categories.map((cat) => (
-          <a
+          <Link
             key={cat.id}
             href={`/c/${cat.slug}`}
             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
@@ -150,7 +154,7 @@ export function CategoryGrid({ categories, activeCategory, className = "" }: Cat
             <span className="w-2 h-2 rounded-full flex-shrink-0 bg-[#00f2ff]/50" />
             {cat.name}
             <span className="ml-auto text-xs text-white/30">{cat.count}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </div>

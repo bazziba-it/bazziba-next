@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { fetchVideoCategories } from "@/data/wp";
+import { BazzibaMark } from "@/components/ui/brand";
 
 /** Real bazziba.it social profiles (verified on the live site). */
 const SOCIALS: { label: string; href: string; stroke?: boolean; icon: React.ReactNode }[] = [
@@ -32,18 +33,7 @@ const SOCIALS: { label: string; href: string; stroke?: boolean; icon: React.Reac
   },
 ];
 
-function BrandMark({ size = 40 }: { size?: number }) {
-  return (
-    <svg width={size} height={(size * 64) / 100} viewBox="0 0 100 64" fill="none">
-      <path d="M20 48V16a8 8 0 0 1 8-8h44a8 8 0 0 1 8 8v32a8 8 0 0 1-8 8H28a8 8 0 0 1-8-8Z" fill="#00f2ff" />
-      <rect x="24" y="22" width="8" height="20" rx="2" fill="#050a14" />
-      <rect x="36" y="28" width="6" height="14" rx="2" fill="#050a14" />
-      <rect x="46" y="24" width="8" height="18" rx="2" fill="#050a14" />
-      <rect x="58" y="30" width="6" height="12" rx="2" fill="#050a14" />
-      <rect x="68" y="20" width="8" height="22" rx="2" fill="#050a14" />
-    </svg>
-  );
-}
+
 
 export default async function Footer() {
   // Real categories with real counts (5-min cache in the data layer)
@@ -55,7 +45,7 @@ export default async function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand col */}
           <div>
-            <div className="mb-3"><BrandMark /></div>
+            <div className="mb-3"><BazzibaMark size={42} /></div>
             <h4 className="text-xs uppercase tracking-widest font-semibold text-[#00f2ff] mb-2">Chi siamo</h4>
             <p className="text-sm text-white/50 leading-relaxed mb-3 max-w-xs">
               La piattaforma digitale dedicata al mondo artistico.

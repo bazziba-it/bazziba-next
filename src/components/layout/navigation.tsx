@@ -7,20 +7,7 @@ import { useState } from "react";
 import { GlassNav } from "@/components/ui";
 import { MOTION } from "@/components/ui/glass";
 import { SearchAutocomplete } from "@/components/layout/search-autocomplete";
-
-const brandMark = (
-  <svg width="32" height="32" viewBox="0 0 100 32" fill="none">
-    <rect width="100" height="32" rx="6" fill="#00f2ff"/>
-    <rect x="10" y="6" width="8" height="20" rx="2" fill="#050a14"/>
-    <rect x="22" y="10" width="6" height="12" rx="2" fill="#050a14"/>
-    <rect x="32" y="4" width="8" height="24" rx="2" fill="#050a14"/>
-    <rect x="44" y="8" width="6" height="16" rx="2" fill="#050a14"/>
-    <rect x="54" y="2" width="8" height="28" rx="2" fill="#050a14"/>
-    <rect x="66" y="12" width="6" height="8" rx="2" fill="#050a14"/>
-    <rect x="76" y="14" width="6" height="4" rx="1" fill="#050a14"/>
-    <rect x="86" y="8" width="8" height="16" rx="2" fill="#050a14"/>
-  </svg>
-);
+import { BazzibaLogo } from "@/components/ui/brand";
 
 const pillIcons: Record<string, React.ReactNode> = {
   tutti: <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -65,12 +52,9 @@ export function Navigation() {
       <GlassNav
         innerClassName="glass-nav-inner max-w-[1600px] mx-auto px-5"
         brand={
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              {brandMark}
-              <span className="text-lg font-bold text-white tracking-tight">BAZZIBA!</span>
-            </Link>
-          </div>
+          <Link href="/" aria-label="BAZZIBA! — Home">
+            <BazzibaLogo size={30} />
+          </Link>
         }
         links={
           <div className="hidden md:flex items-center gap-0.5">

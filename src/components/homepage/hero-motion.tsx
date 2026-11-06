@@ -76,15 +76,18 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
 
   return (
     <>
-      {/* Slides — parallax wraps the whole media stack */}
+      {/* Slides — parallax wraps the whole media stack; active slide Ken-Burns zooms */}
       <HeroParallax>
         {slides.map((video, i) => (
-          <div
+          <motion.div
             key={video.id}
             className={`absolute inset-0 transition-opacity duration-700 ${
               i === current ? "opacity-100 z-10" : "opacity-0 z-0"
             }`}
             aria-hidden={i !== current}
+            animate={i === current && !paused ? { scale: [1, 1.06] } : { scale: 1 }}
+            transition={i === current && !paused ? { duration: 7, ease: "linear", repeat: Infinity, repeatType: "reverse" } : { duration: 0.4 }}
+            style={{ transformOrigin: "center" }}
           >
             {video.thumbnail ? (
               <>
@@ -111,13 +114,24 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
             ) : (
               <ThumbPlaceholder title={video.title} className="absolute inset-0" />
             )}
-          </div>
+          </motion.div>
         ))}
       </HeroParallax>
 
       {/* Gradient scrims (§9.2) */}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent z-10 pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-slate-950/40 to-transparent z-10 pointer-events-none" />
+
+      {/* Rotation progress bar — restarts per slide, freezes on pause */}
+      {slides.length > 1 && (
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 z-30">
+          <div
+            key={paused ? `paused-${current}` : `slide-${current}`}
+            className="h-full bg-brand-cyan hero-rotation-progress"
+            style={{ animationPlayState: paused ? "paused" : "running" }}
+          />
+        </div>
+      )}
 
       {slides.map((video, i) => (
         <div

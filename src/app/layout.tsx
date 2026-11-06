@@ -8,6 +8,7 @@ import Footer from "@/components/layout/footer";
 import { ThemeProvider } from "next-themes";
 import { MotionProvider } from "@/components/ui/motion-provider";
 import { ServiceWorkerRegistration } from "@/components/layout/sw-registration";
+import { BackToTop } from "@/components/layout/back-to-top";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const poppins = Poppins({
@@ -104,6 +105,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </div>
             <Toaster closeButton position="bottom-left" theme="system" richColors />
             <ServiceWorkerRegistration />
+            <BackToTop />
           </MotionProvider>
         </ThemeProvider>
       </body>
