@@ -1,53 +1,119 @@
+/**
+ * bazziba.it WordPress REST API data layer (ADR-0003).
+ *
+ * Hard rules (see wp-rest-api skill + ADR-0003):
+ * - NEVER combine `_embed=true` with `_fields` — `_fields` strips `_embedded`.
+ * - title/excerpt/content are `{ rendered }` objects — always shape-guard.
+ * - Video taxonomy term names come from `_embedded["wp:term"]` matched BY TERM ID
+ *   (the internal taxonomy label is unreliable: video_category terms report as
+ *   "categories"). Resolve names by ID only.
+ * - Thumbnails: `_embedded["wp:featuredmedia"][0].source_url` or `/media/{id}`.
+ *   Never derive URLs from media IDs (filenames are hashed).
+ * - No fabricated metrics: views/likes/duration are NOT in the API — omit them.
+ * - No silent per-item try/catch: skips are counted and logged; an empty result
+ *   from a non-empty API response throws.
+ */
+
 export interface WpVideo {
   id: number;
   slug: string;
   /** WP REST always returns title as { rendered }; plain string only when _fields flattens it. */
   title: string | { rendered: string };
-  featuredMedia: number | null;
-  /** Term IDs on the post object; name/slug live in _embedded["wp:term"] when _embed=true. */
-  categories: number[] | WpCategory[];
+  excerpt?: string | { rendered: string };
+  content?: string | { rendered: string };
+  featured_media: number | null;
+  /** Term IDs per taxonomy (names live in _embedded["wp:term"], matched by ID). */
+  video_category?: number[];
+  video_collection?: number[];
+  video_tag?: number[];
+  generi?: number[];
+  contest_taxonomy?: number[];
   author: number;
   date: string;
   status: string;
-  excerpt?: string;
   _embedded?: {
     "wp:featuredmedia"?: { source_url?: string; guid?: { rendered: string } }[];
     "wp:term"?: { id: number; name: string; slug: string; taxonomy: string }[][];
   };
 }
 
-export interface WpCategory {
+export interface WpTerm {
   id: number;
   name: string;
   slug: string;
   count: number;
-  parent: number;
+  taxonomy?: string;
 }
 
 export interface WpUser {
   id: number;
   name: string;
   slug: string;
-  avatarUrls: Record<string, string>;
+  description?: string;
+  url?: string;
+  avatar_urls?: Record<string, string>;
+  /** @deprecated use avatar_urls */
+  avatarUrls?: Record<string, string>;
 }
 
+export interface WpComment {
+  id: number;
+  post: number;
+  parent: number;
+  author_name: string;
+  author_avatar_urls?: Record<string, string>;
+  date: string;
+  content: { rendered: string };
+}
+
+export interface WpContest {
+  id: number;
+  slug: string;
+  title: string | { rendered: string };
+  content?: string | { rendered: string };
+  date: string;
+  featured_media: number | null;
+  contest_taxonomy?: number[];
+  _embedded?: {
+    "wp:featuredmedia"?: { source_url?: string }[];
+  };
+}
+
+export interface WpPageData {
+  id: number;
+  slug: string;
+  title: string;
+  content: string;
+}
+
+export interface WpVideoMedia {
+  mp4: string | null;
+  poster: string | null;
+}
+
+/** Frontend video shape — real WP data only, no fabrications. */
 export interface BazzibaVideo {
   id: string;
   slug: string;
   title: string;
-  thumbnail: string;
+  description: string;
+  /** null → render the local glass placeholder, never a mock CDN image. */
+  thumbnail: string | null;
+  authorId: number;
   authorName: string;
-  authorAvatar: string;
+  /** null → render initials avatar, never pravatar. */
+  authorAvatar: string | null;
   category: string;
   categorySlug: string;
-  viewCount: string;
-  likes: string;
-  duration: number;
-  videoUrl?: string;
+  categoryId: number | null;
+  date: string;
+  /** Real MP4 URL when resolved via /media?parent= (watch page). */
+  videoUrl?: string | null;
+  /** video_tag slugs, e.g. "in-evidenza", "vincitori-contest". */
+  tags: string[];
 }
 
 const WP_BASE = "https://bazziba.it/wp-json/wp/v2";
-const CDN_BASE = "https://bazziba.it/wp-content/uploads/2026/06";
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -83,7 +149,7 @@ async function wpFetch<T>(path: string, params: Record<string, string> = {}): Pr
         signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) throw new Error(`WP ${res.status}: ${path}`);
-      const data = await res.json() as T;
+      const data = (await res.json()) as T;
       setCache(url, data);
       return data;
     } catch (err) {
@@ -94,6 +160,84 @@ async function wpFetch<T>(path: string, params: Record<string, string> = {}): Pr
   throw lastErr ?? new Error(`WP fetch failed: ${path}`);
 }
 
+/** Shape-guard for WP { rendered } objects (or plain strings under _fields). */
+function rendered(raw: string | { rendered: string } | undefined | null): string {
+  if (!raw) return "";
+  return typeof raw === "string" ? raw : raw.rendered ?? "";
+}
+
+/** Strip HTML tags from rendered WP content/excerpt. */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&#038;/g, "&")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/** Clean WP post title: strip #TAG noise, normalize whitespace */
+function cleanTitle(raw: string): string {
+  let t = raw.replace(/#\S+/g, "").replace(/[-–—]+/g, "—").trim();
+  t = t.replace(/\s{2,}/g, " ").trim();
+  if (t.length > 90) {
+    const commaIdx = t.indexOf(",");
+    if (commaIdx > 40) t = t.slice(0, commaIdx).trim();
+  }
+  if (t.length > 80) t = t.slice(0, 80).trim();
+  return t || raw;
+}
+
+/** Flatten embedded terms and index by term ID (taxonomy labels are unreliable). */
+function embeddedTermsById(wp: WpVideo): Map<number, { name: string; slug: string }> {
+  const map = new Map<number, { name: string; slug: string }>();
+  for (const group of wp._embedded?.["wp:term"] ?? []) {
+    for (const t of group) map.set(t.id, { name: t.name, slug: t.slug });
+  }
+  return map;
+}
+
+/** Map WP video to frontend shape. Real data only — missing fields become null. */
+export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
+  const title = cleanTitle(rendered(wp.title));
+  const description = stripHtml(rendered(wp.excerpt)).slice(0, 300);
+
+  const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
+  const thumbnail = embeddedMedia?.source_url || embeddedMedia?.guid?.rendered || null;
+
+  const terms = embeddedTermsById(wp);
+  const catId = wp.video_category?.[0] ?? null;
+  const catTerm = catId != null ? terms.get(catId) : undefined;
+
+  const tagSlugs = (wp.video_tag ?? [])
+    .map((id) => terms.get(id)?.slug)
+    .filter((s): s is string => Boolean(s));
+
+  const avatarUrls = author?.avatar_urls ?? author?.avatarUrls;
+
+  return {
+    id: String(wp.id),
+    slug: wp.slug,
+    title,
+    description,
+    thumbnail,
+    authorId: wp.author,
+    authorName: author?.name || "Artista sconosciuto",
+    authorAvatar: avatarUrls?.["96"] || avatarUrls?.["48"] || null,
+    category: catTerm?.name || "Senza categoria",
+    categorySlug: catTerm?.slug || "",
+    categoryId: catId,
+    date: wp.date,
+    videoUrl: null,
+    tags: tagSlugs,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Videos                                                              */
+/* ------------------------------------------------------------------ */
+
 export async function fetchWpVideos(perPage = 20): Promise<WpVideo[]> {
   return wpFetch<WpVideo[]>("/video", {
     per_page: String(perPage),
@@ -103,23 +247,10 @@ export async function fetchWpVideos(perPage = 20): Promise<WpVideo[]> {
   });
 }
 
-export async function fetchWpMedia(id: number): Promise<{ url: string } | null> {
-  if (!id) return null;
-  try {
-    const data = await wpFetch<{ source_url: string; media_type: string }>(
-      `/media/${id}`,
-      { _fields: "source_url,media_type" }
-    );
-    return { url: data.source_url };
-  } catch {
-    return null;
-  }
-}
-
+/** Fetch authors by ID and index them (parallel batches of 10 — WP include limit). */
 export async function fetchWpAuthors(ids: number[]): Promise<Record<number, WpUser>> {
   if (ids.length === 0) return {};
   const map: Record<number, WpUser> = {};
-  // Fetch in parallel batches of 10 (WP REST API per_page limit)
   const batches = [];
   for (let i = 0; i < ids.length; i += 10) {
     batches.push(ids.slice(i, i + 10));
@@ -128,9 +259,12 @@ export async function fetchWpAuthors(ids: number[]): Promise<Record<number, WpUs
     batches.map((batch) =>
       wpFetch<WpUser[]>("/users", {
         per_page: String(batch.length),
-        _fields: "id,name,slug,avatar_urls",
+        _fields: "id,name,slug,avatar_urls,description",
         include: batch.join(","),
-      }).catch(() => [] as WpUser[])
+      }).catch((err) => {
+        console.error(`[wp] author batch failed: ${err.message}`);
+        return [] as WpUser[];
+      })
     )
   );
   for (const users of results) {
@@ -139,125 +273,215 @@ export async function fetchWpAuthors(ids: number[]): Promise<Record<number, WpUs
   return map;
 }
 
-export async function fetchWpCategories(): Promise<WpCategory[]> {
-  return wpFetch<WpCategory[]>("/categories", {
-    per_page: "50",
-    _fields: "id,name,slug,count,parent",
-    orderby: "count",
-    order: "desc",
-  }).catch(() => [] as WpCategory[]);
-}
-
-/** Clean WP post title: strip #TAG noise, normalize whitespace */
-function cleanTitle(raw: string): string {
-  // Remove #hashtag fragments (Xandrot's WP posts have #TAG clutter)
-  let t = raw.replace(/#\S+/g, "").replace(/[-–—]+/g, "—").trim();
-  // Collapse multiple spaces
-  t = t.replace(/\s{2,}/g, " ").trim();
-  // Truncate at first comma if title is very long (some have trailing metadata)
-  if (t.length > 90) {
-    const commaIdx = t.indexOf(",");
-    if (commaIdx > 40) t = t.slice(0, commaIdx).trim();
-  }
-  if (t.length > 80) t = t.slice(0, 80).trim();
-  return t || raw;
-}
-
-/** Deterministic pseudo-random based on video ID (stable across renders) */
-function seededRand(seed: number): () => number {
-  let s = seed * 9301 + 49297;
-  return () => {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    return (s >>> 0) / 0xffffffff;
-  };
-}
-
-/** Map WP video to Bazziba frontend video shape */
-export function mapWpVideo(
-  wp: WpVideo,
-  _mediaUrl?: string,
-  author?: WpUser
-): BazzibaVideo {
-  // WP REST returns title as { rendered }; a plain string only appears when
-  // a _fields projection flattens it. Guard both shapes (was throwing on the
-  // object shape, silently dropping EVERY video from fetchBazzibaVideos).
-  const rawTitle = typeof wp.title === "string" ? wp.title : (wp.title?.rendered ?? "");
-  const title = cleanTitle(rawTitle);
-
-  // Get media URL from _embed data (preferred) or CDN fallback
-  const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
-  const mediaUrlFromEmbed = embeddedMedia?.source_url || embeddedMedia?.guid?.rendered || "";
-
-  const thumbnail =
-    mediaUrlFromEmbed ||
-    (wp.featuredMedia
-      ? `${CDN_BASE}/${wp.featuredMedia}.jpg`
-      : `https://picsum.photos/seed/vid-${wp.id}/400/225`);
-
-  // Category: name/slug come from _embedded["wp:term"] (wp.categories holds
-  // term IDs). This install's video taxonomy is "categories" (standard posts
-  // use "category"); a "video_collection" taxonomy also exists and is ignored.
-  const embeddedCat = wp._embedded?.["wp:term"]
-    ?.flat()
-    .find((t) => t.taxonomy === "category" || t.taxonomy === "categories");
-  const legacyCat = (wp.categories as WpCategory[] | undefined)?.[0];
-  const catName = embeddedCat?.name || legacyCat?.name || "Viral Videos";
-  const catSlug = embeddedCat?.slug || legacyCat?.slug || "viral-videos";
-
-  // Deterministic duration (3-5 min for Xandrot covers)
-  const rnd = seededRand(wp.id);
-  const duration = 180 + Math.floor(rnd() * 180);
-
-  // Deterministic view count
-  const viewsRnd = seededRand(wp.id + 999);
-  const rawViews = 200 + Math.floor(viewsRnd() * 8000);
-  const views = rawViews.toLocaleString("it-IT");
-
-  // Deterministic likes
-  const likesRnd = seededRand(wp.id + 7777);
-  const rawLikes = 10 + Math.floor(likesRnd() * 500);
-  const likes = rawLikes.toLocaleString("it-IT");
-
-  return {
-    id: String(wp.id),
-    slug: wp.slug,
-    title,
-    thumbnail,
-    authorName: author?.name || `Artista ${wp.id}`,
-    authorAvatar:
-      author?.avatarUrls?.["96"] ||
-      author?.avatarUrls?.["48"] ||
-      `https://i.pravatar.cc/64?img=${wp.id % 70}`,
-    category: catName,
-    categorySlug: catSlug,
-    viewCount: views,
-    likes: likes,
-    duration,
-    videoUrl: undefined, // WP posts have no embedded video URLs
-  };
-}
-
-/** Fetch all WP data and map to frontend videos in one call */
-export async function fetchBazzibaVideos(): Promise<BazzibaVideo[]> {
-  // Fetch videos (with _embed for media URLs in single call)
-  const wpVideos = await fetchWpVideos(30);
-
-  // Extract unique author IDs (no longer need media IDs separately)
-  const authorIds = [...new Set(wpVideos.map((v) => v.author).filter(Boolean))];
-
-  // Fetch authors
-  const wpUsers = await fetchWpAuthors(authorIds);
-
-  // Map each video — media URLs come from _embedded data
+/** Map a raw WP page with authors resolved. Throws when WP returned data but nothing mapped. */
+function mapVideoPage(wpVideos: WpVideo[], wpUsers: Record<number, WpUser>): BazzibaVideo[] {
   const results: BazzibaVideo[] = [];
+  let skipped = 0;
   for (const wp of wpVideos) {
-    if (wp.status !== "publish") continue;
-    try {
-      const author = wp.author in wpUsers ? wpUsers[wp.author] : undefined;
-      results.push(mapWpVideo(wp, undefined, author));
-    } catch {
+    if (wp.status !== "publish") {
+      skipped++;
       continue;
     }
+    try {
+      results.push(mapWpVideo(wp, wpUsers[wp.author]));
+    } catch (err) {
+      skipped++;
+      console.error(`[wp] mapWpVideo failed for #${wp.id}:`, err);
+    }
   }
+  if (wpVideos.length > 0 && results.length === 0) {
+    throw new Error(`[wp] mapping produced 0/${wpVideos.length} videos (skipped ${skipped}) — data shape regression`);
+  }
+  if (skipped > 0) console.warn(`[wp] skipped ${skipped}/${wpVideos.length} videos during mapping`);
   return results;
+}
+
+async function withAuthors(wpVideos: WpVideo[]): Promise<BazzibaVideo[]> {
+  const authorIds = [...new Set(wpVideos.map((v) => v.author).filter(Boolean))];
+  const wpUsers = await fetchWpAuthors(authorIds);
+  return mapVideoPage(wpVideos, wpUsers);
+}
+
+/** Latest videos, mapped with authors. */
+export async function fetchBazzibaVideos(perPage = 30): Promise<BazzibaVideo[]> {
+  return withAuthors(await fetchWpVideos(perPage));
+}
+
+/** Single video by slug (watch page). */
+export async function fetchVideoBySlug(slug: string): Promise<BazzibaVideo | null> {
+  const rows = await wpFetch<WpVideo[]>("/video", { slug, _embed: "true" });
+  const wp = rows[0];
+  if (!wp) return null;
+  const users = await fetchWpAuthors([wp.author]);
+  return mapVideoPage([wp], users)[0] ?? null;
+}
+
+/** Real MP4 + poster for a video post (watch page player). */
+export async function fetchVideoMedia(postId: number | string): Promise<WpVideoMedia> {
+  const media = await wpFetch<{ source_url: string; mime_type: string }[]>(
+    "/media",
+    { parent: String(postId), per_page: "50" }
+  );
+  const mp4 = media.find((m) => m.mime_type.startsWith("video/"))?.source_url ?? null;
+  const poster = media.find((m) => m.mime_type.startsWith("image/"))?.source_url ?? null;
+  return { mp4, poster };
+}
+
+/** Videos in a video_category term. */
+export async function fetchVideosByCategory(categoryId: number, perPage = 24): Promise<BazzibaVideo[]> {
+  const rows = await wpFetch<WpVideo[]>("/video", {
+    video_category: String(categoryId),
+    per_page: String(perPage),
+    _embed: "true",
+    orderby: "date",
+    order: "desc",
+  });
+  return withAuthors(rows);
+}
+
+/** Videos by author (profile page). */
+export async function fetchVideosByAuthor(authorId: number, perPage = 24): Promise<BazzibaVideo[]> {
+  const rows = await wpFetch<WpVideo[]>("/video", {
+    author: String(authorId),
+    per_page: String(perPage),
+    _embed: "true",
+    orderby: "date",
+    order: "desc",
+  });
+  return withAuthors(rows);
+}
+
+/** Videos carrying a video_tag slug ("in-evidenza" hero, "vincitori-contest" winners). */
+export async function fetchVideosByTagSlug(tagSlug: string, perPage = 12): Promise<BazzibaVideo[]> {
+  const terms = await wpFetch<{ id: number }[]>("/video_tag", { slug: tagSlug, _fields: "id" });
+  const termId = terms[0]?.id;
+  if (!termId) return [];
+  const rows = await wpFetch<WpVideo[]>("/video", {
+    video_tag: String(termId),
+    per_page: String(perPage),
+    _embed: "true",
+    orderby: "date",
+    order: "desc",
+  });
+  return withAuthors(rows);
+}
+
+/** Videos entered in a contest (contest_taxonomy term id). */
+export async function fetchVideosByContestTerm(termId: number, perPage = 24): Promise<BazzibaVideo[]> {
+  const rows = await wpFetch<WpVideo[]>("/video", {
+    contest_taxonomy: String(termId),
+    per_page: String(perPage),
+    _embed: "true",
+    orderby: "date",
+    order: "desc",
+  });
+  return withAuthors(rows);
+}
+
+/** Full-text video search. */
+export async function searchVideos(query: string, perPage = 24): Promise<BazzibaVideo[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const rows = await wpFetch<WpVideo[]>("/video", {
+    search: q,
+    per_page: String(perPage),
+    _embed: "true",
+  });
+  return withAuthors(rows);
+}
+
+/* ------------------------------------------------------------------ */
+/* Taxonomies                                                          */
+/* ------------------------------------------------------------------ */
+
+/** The 9 real video categories (Cantanti, Musicisti, ...). */
+export async function fetchVideoCategories(): Promise<WpTerm[]> {
+  return wpFetch<WpTerm[]>("/video_category", {
+    per_page: "100",
+    _fields: "id,name,slug,count",
+    orderby: "count",
+    order: "desc",
+  });
+}
+
+/** video_tag terms (in-evidenza, vincitori-contest). */
+export async function fetchVideoTags(): Promise<WpTerm[]> {
+  return wpFetch<WpTerm[]>("/video_tag", {
+    per_page: "100",
+    _fields: "id,name,slug,count",
+  });
+}
+
+/** Contest edition terms (giugno2025, settembre2025, ...). */
+export async function fetchContestTerms(): Promise<WpTerm[]> {
+  return wpFetch<WpTerm[]>("/contest_taxonomy", {
+    per_page: "100",
+    _fields: "id,name,slug,count",
+    orderby: "count",
+    order: "desc",
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Users, comments, contest, pages                                     */
+/* ------------------------------------------------------------------ */
+
+/** Public user profile by slug (u/[username]). */
+export async function fetchUserBySlug(slug: string): Promise<WpUser | null> {
+  const users = await wpFetch<WpUser[]>("/users", { slug });
+  return users[0] ?? null;
+}
+
+/** All public users (directory). */
+export async function fetchUsers(perPage = 100): Promise<WpUser[]> {
+  return wpFetch<WpUser[]>("/users", {
+    per_page: String(perPage),
+    _fields: "id,name,slug,avatar_urls,description",
+  });
+}
+
+/** Real comments for a video post. */
+export async function fetchComments(postId: number | string, perPage = 50): Promise<WpComment[]> {
+  return wpFetch<WpComment[]>("/comments", {
+    post: String(postId),
+    per_page: String(perPage),
+    order: "asc",
+  }).catch((err) => {
+    console.error(`[wp] comments fetch failed for post ${postId}: ${err.message}`);
+    return [] as WpComment[];
+  });
+}
+
+/** Contest CPT entries (monthly editions). */
+export async function fetchContests(perPage = 20): Promise<WpContest[]> {
+  return wpFetch<WpContest[]>("/contest", {
+    per_page: String(perPage),
+    _embed: "true",
+    orderby: "date",
+    order: "desc",
+  });
+}
+
+/** Static page content by slug. */
+export async function fetchPageBySlug(slug: string): Promise<WpPageData | null> {
+  const pages = await wpFetch<
+    { id: number; slug: string; title: { rendered: string } | string; content: { rendered: string } | string }[]
+  >("/pages", { slug });
+  const p = pages[0];
+  if (!p) return null;
+  return {
+    id: p.id,
+    slug: p.slug,
+    title: stripHtml(rendered(p.title)),
+    content: rendered(p.content),
+  };
+}
+
+/** All page slugs (for mapping app routes to WP pages). */
+export async function fetchPageSlugs(): Promise<{ id: number; slug: string; title: string }[]> {
+  const pages = await wpFetch<{ id: number; slug: string; title: { rendered: string } | string }[]>(
+    "/pages",
+    { per_page: "100", _fields: "id,slug,title" }
+  );
+  return pages.map((p) => ({ id: p.id, slug: p.slug, title: stripHtml(rendered(p.title)) }));
 }
