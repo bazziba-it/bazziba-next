@@ -89,7 +89,11 @@ export interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement
  * Usage: <GlassButton size="sm">…</GlassButton>
  * Thin alias: the existing Button with variant="glass" (§6.3). variant="cyan"
  * stays the primary CTA; existing 12 variants and their call sites are untouched.
+ * Forwarded ref per §6.5 (Button itself forwards it as of the same change).
  */
-export function GlassButton({ size = "default", ...props }: GlassButtonProps) {
-  return <Button variant="glass" size={size} {...props} />;
-}
+export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(function GlassButton(
+  { size = "default", ...props },
+  ref
+) {
+  return <Button ref={ref} variant="glass" size={size} {...props} />;
+});

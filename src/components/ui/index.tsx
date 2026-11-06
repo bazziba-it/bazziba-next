@@ -1,6 +1,6 @@
 /** @format */
 
-import type { ReactNode, ButtonHTMLAttributes, HTMLAttributes } from "react";
+import { forwardRef, type ReactNode, type ButtonHTMLAttributes, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -11,13 +11,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
 }
 
-export function Button({
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
   className,
   variant = "default",
   size = "default",
   asChild = false,
   ...props
-}: ButtonProps) {
+}, ref) {
   const baseClasses = "inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
   const variants = {
@@ -58,14 +58,14 @@ export function Button({
   if (asChild) {
     const { className: classNameProp, children, ...rest } = props as any;
     return (
-      <a href="/" className={cn(baseClasses, variants[variant], sizes[size], classNameProp)} {...rest}>
+      <a href="/" ref={ref as any} className={cn(baseClasses, variants[variant], sizes[size], classNameProp)} {...rest}>
         {children}
       </a>
     );
   }
 
-  return <button className={Classes} {...props} />;
-}
+  return <button ref={ref} className={Classes} {...props} />;
+});
 
 // ============= Card =============
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
