@@ -40,6 +40,8 @@ export interface GlassCardProps extends MotionSafeDivProps {
   /** §5.4 index-based stagger; items past the cap appear instantly. */
   staggerIndex?: number;
   staggerStep?: "grid" | "list";
+  /** Card lives inside a scrolling list — suppresses the sheen film (§8). */
+  scrollList?: boolean;
 }
 
 /**
@@ -58,6 +60,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(function Gla
     delay,
     staggerIndex,
     staggerStep = "grid",
+    scrollList,
     children,
     ...props
   },
@@ -80,6 +83,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(function Gla
         tier={tier}
         accent={accent}
         media={media}
+        data-glass-scroll={scrollList || undefined}
         className={className}
         {...props}
       >
@@ -93,6 +97,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(function Gla
       ref={ref}
       data-glass-tier={tier}
       data-glass-context={media ? "media" : undefined}
+      data-glass-scroll={scrollList || undefined}
       className={cn(
         glassVariants({ tier, accent, media, interactive: interactive || undefined }),
         className
@@ -114,6 +119,9 @@ export interface GlassNavProps extends HTMLAttributes<HTMLElement> {
   actions?: ReactNode;
   /** Force the condensed (scrolled) state; defaults to tracking scrollY > 8. */
   condensed?: boolean;
+  /** Override the inner container classes (default "glass-nav-inner container-max" = 1280px).
+   *  navigation.tsx keeps its legacy 1600px via this prop — ADR-0001 D8/§13 hotspot. */
+  innerClassName?: string;
 }
 
 /**
@@ -123,7 +131,7 @@ export interface GlassNavProps extends HTMLAttributes<HTMLElement> {
  * never one per page. Sheen is suppressed on docked (§8).
  */
 export const GlassNav = forwardRef<HTMLElement, GlassNavProps>(function GlassNav(
-  { className, brand, links, actions, condensed, ...props },
+  { className, innerClassName, brand, links, actions, condensed, ...props },
   ref
 ) {
   const [scrolled, setScrolled] = useState(false);
@@ -149,7 +157,7 @@ export const GlassNav = forwardRef<HTMLElement, GlassNavProps>(function GlassNav
       )}
       {...props}
     >
-      <div className="glass-nav-inner container-max">
+      <div className={innerClassName ?? "glass-nav-inner container-max"}>
         {brand}
         {links != null ? <nav aria-label={props["aria-label"] ?? "Primary"}>{links}</nav> : null}
         {actions}

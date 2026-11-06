@@ -1,13 +1,19 @@
 export interface WpVideo {
   id: number;
   slug: string;
-  title: string;
+  /** WP REST always returns title as { rendered }; plain string only when _fields flattens it. */
+  title: string | { rendered: string };
   featuredMedia: number | null;
-  categories: WpCategory[];
+  /** Term IDs on the post object; name/slug live in _embedded["wp:term"] when _embed=true. */
+  categories: number[] | WpCategory[];
   author: number;
   date: string;
   status: string;
   excerpt?: string;
+  _embedded?: {
+    "wp:featuredmedia"?: { source_url?: string; guid?: { rendered: string } }[];
+    "wp:term"?: { id: number; name: string; slug: string; taxonomy: string }[][];
+  };
 }
 
 export interface WpCategory {
@@ -172,11 +178,15 @@ export function mapWpVideo(
   _mediaUrl?: string,
   author?: WpUser
 ): BazzibaVideo {
-  const title = cleanTitle(wp.title);
+  // WP REST returns title as { rendered }; a plain string only appears when
+  // a _fields projection flattens it. Guard both shapes (was throwing on the
+  // object shape, silently dropping EVERY video from fetchBazzibaVideos).
+  const rawTitle = typeof wp.title === "string" ? wp.title : (wp.title?.rendered ?? "");
+  const title = cleanTitle(rawTitle);
 
   // Get media URL from _embed data (preferred) or CDN fallback
   const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
-  const mediaUrlFromEmbed = embeddedMedia?.source_url || embeddedMedia?.guid || "";
+  const mediaUrlFromEmbed = embeddedMedia?.source_url || embeddedMedia?.guid?.rendered || "";
 
   const thumbnail =
     mediaUrlFromEmbed ||
@@ -184,10 +194,15 @@ export function mapWpVideo(
       ? `${CDN_BASE}/${wp.featuredMedia}.jpg`
       : `https://picsum.photos/seed/vid-${wp.id}/400/225`);
 
-  // Category from WP categories (default to "Viral Videos")
-  const cats = wp.categories || [];
-  const catName = cats.length > 0 ? cats[0].name : "Viral Videos";
-  const catSlug = cats.length > 0 ? cats[0].slug : "viral-videos";
+  // Category: name/slug come from _embedded["wp:term"] (wp.categories holds
+  // term IDs). This install's video taxonomy is "categories" (standard posts
+  // use "category"); a "video_collection" taxonomy also exists and is ignored.
+  const embeddedCat = wp._embedded?.["wp:term"]
+    ?.flat()
+    .find((t) => t.taxonomy === "category" || t.taxonomy === "categories");
+  const legacyCat = (wp.categories as WpCategory[] | undefined)?.[0];
+  const catName = embeddedCat?.name || legacyCat?.name || "Viral Videos";
+  const catSlug = embeddedCat?.slug || legacyCat?.slug || "viral-videos";
 
   // Deterministic duration (3-5 min for Xandrot covers)
   const rnd = seededRand(wp.id);

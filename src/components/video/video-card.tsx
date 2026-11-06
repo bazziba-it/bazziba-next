@@ -1,51 +1,55 @@
 import type { Video, Category } from "@/types";
+import { GlassCard } from "@/components/ui";
 
 interface VideoProps {
   video: Video;
   showAuthor?: boolean;
+  /** §5.4 grid stagger position — capped inside GlassCard. */
+  staggerIndex?: number;
 }
 
-export function VideoCard({ video, showAuthor }: VideoProps) {
+export function VideoCard({ video, showAuthor, staggerIndex }: VideoProps) {
   const thumb = video.thumbnail || "https://picsum.photos/seed/fallback/400/225";
   const dur = video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, "0")}` : "--:--";
 
+  // ADR-0001 §8 rule 1 — GlassCard tier "card", no sheen (scrolling list).
+  // Ad-hoc bg-[#0a0e1a]/border-white/5 replaced by the glass recipe (§10).
   return (
-    <a
-      href={`/watch/${video.id}`}
-      className="group block bg-[#0a0e1a] border border-white/5 rounded-xl overflow-hidden hover:border-[#00f2ff]/20 transition-all hover:shadow-lg hover:shadow-black/30"
-    >
-      <div className="relative aspect-video overflow-hidden">
-        <img
-          src={thumb}
-          alt={video.title}
-          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
-          {dur}
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-[0] group-hover:opacity-[1] transition-opacity">
-          <div className="w-12 h-12 rounded-full bg-[#00f2ff]/90 flex items-center justify-center">
-            <svg className="w-6 h-6 text-black ml-0.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
+    <GlassCard staggerIndex={staggerIndex} scrollList className="overflow-hidden">
+      <a href={`/watch/${video.id}`} className="group block">
+        <div className="relative aspect-video overflow-hidden">
+          <img
+            src={thumb}
+            alt={video.title}
+            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
+            {dur}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-[0] group-hover:opacity-[1] transition-opacity">
+            <div className="w-12 h-12 rounded-full bg-[#00f2ff]/90 flex items-center justify-center">
+              <svg className="w-6 h-6 text-black ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="p-3">
-        <h3 className="font-semibold text-sm line-clamp-2 text-white group-hover:text-[#00f2ff] transition-colors">
-          {video.title}
-        </h3>
-        {showAuthor && video.author && (
-          <p className="text-xs text-white/40 mt-1">{video.author.name}</p>
-        )}
-        {video.category && (
-          <span className="inline-block mt-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#00f2ff]/10 text-[#00f2ff]">
-            {video.category.name}
-          </span>
-        )}
-      </div>
-    </a>
+        <div className="p-3">
+          <h3 className="font-semibold text-sm line-clamp-2 text-white group-hover:text-[#00f2ff] transition-colors">
+            {video.title}
+          </h3>
+          {showAuthor && video.author && (
+            <p className="text-xs text-white/40 mt-1">{video.author.name}</p>
+          )}
+          {video.category && (
+            <span className="inline-block mt-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#00f2ff]/10 text-[#00f2ff]">
+              {video.category.name}
+            </span>
+          )}
+        </div>
+      </a>
+    </GlassCard>
   );
 }
 
@@ -78,8 +82,8 @@ export function VideoGrid({
         <p className="text-center py-12 text-white/40">{emptyMessage}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {videos.map((video) => (
-            <VideoCard key={video.id} video={video} showAuthor={showAuthor} />
+          {videos.map((video, i) => (
+            <VideoCard key={video.id} video={video} showAuthor={showAuthor} staggerIndex={i} />
           ))}
         </div>
       )}

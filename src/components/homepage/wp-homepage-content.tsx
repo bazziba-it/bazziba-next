@@ -5,7 +5,7 @@
 import Link from "next/link";
 import FeaturedHero from "@/components/homepage/featured-hero";
 import Footer from "@/components/layout/footer";
-import { Navigation } from "@/components/layout/navigation";
+import { GlassCard } from "@/components/ui";
 import { fetchBazzibaVideos, type BazzibaVideo } from "@/data/wp";
 import {
   Play,
@@ -87,7 +87,7 @@ function StreamTubeSlider({ videos }: { videos: BazzibaVideo[] }) {
 
             {/* Play button center */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-brand-cyan/90 flex items-center justify-center shadow-2xl shadow-brand-cyan-glow hover:scale-110 transition-transform cursor-pointer">
+              <div className="w-20 h-20 rounded-full bg-brand-cyan/90 flex items-center justify-center shadow-2xl shadow-cyan-glow-1 hover:scale-110 transition-transform cursor-pointer">
                 <Play className="h-10 w-10 text-black ml-0.5" />
               </div>
             </div>
@@ -119,14 +119,14 @@ function StreamTubeSlider({ videos }: { videos: BazzibaVideo[] }) {
       {/* Navigation arrows */}
       <button
         onClick={prev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors text-white z-20"
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-20"
         aria-label="Precedente"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
       <button
         onClick={next}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors text-white z-20"
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-20"
         aria-label="Successivo"
       >
         <ChevronRight className="h-5 w-5" />
@@ -154,7 +154,7 @@ function StreamTubeSlider({ videos }: { videos: BazzibaVideo[] }) {
 
       {/* "Eye Catching Slider" label */}
       <div className="absolute top-4 left-4">
-        <span className="text-[11px] uppercase tracking-widest text-brand-cyan font-semibold bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">
+        <span className="text-[11px] uppercase tracking-widest text-brand-cyan font-semibold bg-brand-navy-800/70 border border-white/10 px-2 py-1 rounded-full">
           Eye Catching Slider
         </span>
       </div>
@@ -200,9 +200,10 @@ function WpFetchedContent() {
   }
 
   if (error) {
+    // Navigation comes from the root layout — rendering a second one here was
+    // a duplicate-header bug (ADR-0001 §6.4: one docked surface per page).
     return (
       <div className="min-h-screen flex flex-col bg-[#050a14]">
-        <Navigation />
         <main className="flex-1 pt-[64px] lg:pt-[64px]">
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
             <p className="text-red-400 text-sm font-['Poppins']">{error}</p>
@@ -216,7 +217,6 @@ function WpFetchedContent() {
   if (videos.length === 0) {
     return (
       <div className="min-h-screen flex flex-col bg-[#050a14]">
-        <Navigation />
         <main className="flex-1 pt-[64px] lg:pt-[64px]">
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center py-20">
@@ -246,8 +246,6 @@ function WpFetchedContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050a14]">
-      <Navigation />
-
       <main className="flex-1 pt-[64px] lg:pt-[64px]">
         {/* ===== StreamTube Eye-Catching Slider (real WP data) ===== */}
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-6">
@@ -316,58 +314,59 @@ function WpFetchedContent() {
               </Link>
             </div>
 
-            {/* Grid — StreamTube responsive grid */}
+            {/* Grid — GlassCard per §8 rule 1 (no sheen in scrolling list),
+                §5.4 capped stagger replaces the old uncapped CSS animationDelay */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 xl:gap-5">
               {videos.map((vid, index) => (
-                <Link
-                  key={vid.id}
-                  href={`/watch/${vid.id}`}
-                  className="streamtube-card group block animate-fade-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                  prefetch={false}
-                >
-                  <div className="thumbnail">
-                    <img
-                      src={vid.thumbnail}
-                      alt={vid.title}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                    <div className="play-overlay">
-                      <div className="play-icon">
-                        <svg className="h-5 w-5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                <GlassCard key={vid.id} staggerIndex={index} scrollList className="overflow-hidden">
+                  <Link href={`/watch/${vid.id}`} className="group block" prefetch={false}>
+                    <div className="relative aspect-video overflow-hidden bg-black">
+                      <img
+                        src={vid.thumbnail}
+                        alt={vid.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/15 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-11 h-11 rounded-full bg-white/15 border-2 border-white/30 flex items-center justify-center">
+                          <svg className="h-5 w-5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="absolute bottom-2.5 right-2.5 bg-black/75 text-white text-[11px] font-mono px-[7px] py-0.5 rounded">
+                        {Math.floor(vid.duration / 60)}:
+                        {String(vid.duration % 60).padStart(2, "0")}
+                      </div>
+                      <div className="absolute bottom-2.5 left-2.5 bg-brand-cyan/90 text-[#050a14] text-[10px] font-bold px-2 py-0.5 rounded capitalize">
+                        {vid.category}
                       </div>
                     </div>
-                    <div className="duration">
-                      {Math.floor(vid.duration / 60)}:
-                      {String(vid.duration % 60).padStart(2, "0")}
-                    </div>
-                    <div className="category-badge">{vid.category}</div>
-                  </div>
-                  <div className="info">
-                    {vid.authorAvatar && (
-                      <div className="author-avatar">
-                        <img src={vid.authorAvatar} alt="" />
+                    <div className="p-3 flex gap-2.5 items-start">
+                      {vid.authorAvatar && (
+                        <div className="w-7 h-7 rounded-full flex-shrink-0 border border-white/10 overflow-hidden bg-[#1a1f2e]">
+                          <img src={vid.authorAvatar} alt="" className="h-full w-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[0.85rem] font-medium text-[#e5e7eb] leading-[1.3] line-clamp-2">{vid.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{vid.authorName}</p>
+                        <p className="text-[0.72rem] text-[#9ca3af] mt-px">@{vid.viewCount} visualizzazioni</p>
                       </div>
-                    )}
-                    <div className="meta">
-                      <p className="title">{vid.title}</p>
-                      <p className="author">{vid.authorName}</p>
-                      <p className="views">@{vid.viewCount} visualizzazioni</p>
                     </div>
-                  </div>
-                  <div className="px-3 pb-3">
-                    <button
-                      className={`action-btn ${
-                        vid.category === "VOTA" || vid.category === "Live" ? "watch" : ""
-                      }`}
-                    >
-                      {vid.category === "VOTA" || vid.category === "Live" ? "VOTA" : "GUARDA"}
-                    </button>
-                  </div>
-                </Link>
+                    <div className="px-3 pb-3">
+                      <span
+                        className={`flex items-center justify-center gap-1 py-1.5 w-full text-[11px] font-semibold rounded-md border font-display transition-all ${
+                          vid.category === "VOTA" || vid.category === "Live"
+                            ? "bg-brand-cyan text-[#050a14] border-brand-cyan hover:bg-brand-cyanHover"
+                            : "bg-brand-cyan/15 text-brand-cyan border-brand-cyan/20 hover:bg-brand-cyan/25 hover:border-brand-cyan/40"
+                        }`}
+                      >
+                        {vid.category === "VOTA" || vid.category === "Live" ? "VOTA" : "GUARDA"}
+                      </span>
+                    </div>
+                  </Link>
+                </GlassCard>
               ))}
             </div>
           </div>

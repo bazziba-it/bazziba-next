@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TrendingUp, Play, Gift, Clock, Eye, Heart } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, GlassSurface, GlassCard } from "@/components/ui";
 import type { BazzibaVideo } from "@/data/wp";
 
 interface FeaturedHeroProps {
@@ -15,8 +15,10 @@ interface StatBadgeProps {
 }
 
 function StatBadge({ icon, label }: StatBadgeProps) {
+  // Flat scrim-safe chip over the hero image (§9.2) — no backdrop-filter,
+  // so the hero viewport's §8 budget is spent on the nav + contest cards only.
   return (
-    <span className="flex items-center gap-1 bg-slate-900/60 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
+    <span className="flex items-center gap-1 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10">
       {icon}
       {label}
     </span>
@@ -81,8 +83,9 @@ export default function FeaturedHero({
 
       <div className="container-max relative">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* ===== LEFT: Featured Video (lg:col-span-2) ===== */}
-          <div className="lg:col-span-2 relative rounded-2xl overflow-hidden bg-black shadow-2xl group min-h-[420px]">
+          {/* ===== LEFT: Featured Video (lg:col-span-2) — raised glass hero panel (§4.5/§7 layer 3);
+              scrim rule (§9.2) is served by the gradient overlays below (α ≈ 0.9 ≥ 0.75) ===== */}
+          <GlassSurface tier="raised" className="lg:col-span-2 relative rounded-2xl overflow-hidden bg-black group min-h-[420px]">
             {/* Video player background */}
             {featuredVideo && (
               <img
@@ -126,7 +129,7 @@ export default function FeaturedHero({
               <Button
                 variant="cyan"
                 size="lg"
-                className="bg-brand-cyan text-black font-bold py-3 px-6 rounded-full flex items-center gap-2 shadow-lg shadow-brand-cyan-glow hover:shadow-xl hover:shadow-brand-cyan-glow"
+                className="bg-brand-cyan text-black font-bold py-3 px-6 rounded-full flex items-center gap-2 shadow-lg shadow-cyan-glow-1 hover:shadow-xl hover:shadow-cyan-glow-2"
                 asChild
               >
                 <a href="/c/vota">
@@ -168,16 +171,17 @@ export default function FeaturedHero({
                 </button>
               </div>
             </div>
-          </div>
+          </GlassSurface>
 
           {/* ===== RIGHT: Contest cards + featured artists (lg:col-span-1) ===== */}
           <div className="lg:col-span-1 space-y-4">
-            {/* Contest cards — glassmorphism */}
+            {/* Contest cards — static glass panels (§6.2: no lift), capped §5.4 stagger */}
             {contests.map((contest, i) => (
-              <div
+              <GlassCard
                 key={i}
-                className="glass-card p-4 rounded-2xl"
-                style={{ animationDelay: `${i * 0.1}s` }}
+                interactive={false}
+                staggerIndex={i}
+                className="p-4 rounded-2xl"
               >
                 <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">
                   {contest.subtitle}
@@ -194,7 +198,7 @@ export default function FeaturedHero({
                   <Button
                     variant="cyan"
                     size="sm"
-                    className="flex-1 bg-brand-cyan text-black font-bold py-2 rounded-full text-xs hover:bg-brand-cyan-hover"
+                    className="flex-1 bg-brand-cyan text-black font-bold py-2 rounded-full text-xs hover:bg-brand-cyanHover"
                     asChild
                   >
                     <a href="/c/vota">VOTA ORA</a>
@@ -208,7 +212,7 @@ export default function FeaturedHero({
                     <a href="/c/vota">PARTECIPA</a>
                   </Button>
                 </div>
-              </div>
+              </GlassCard>
             ))}
 
             {/* Featured artists strip */}
