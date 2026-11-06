@@ -7,6 +7,7 @@ import FeaturedHero from "@/components/homepage/featured-hero";
 import Footer from "@/components/layout/footer";
 import { GlassCard, FadeIn } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
+import { formatDurationSec, timeAgoIT } from "@/lib/format";
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
 import { Play, ChevronLeft, ChevronRight, Share2, User } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -172,6 +173,32 @@ export default function WpHomepageContent({
           />
         </div>
 
+        {/* Mobile category chips — horizontal scroll (sidebar is xl-only) */}
+        {categories.length > 0 && (
+          <div className="xl:hidden max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-1.5 w-max py-1">
+                <Link
+                  href="/feed"
+                  className="whitespace-nowrap px-3.5 py-2 text-xs font-medium rounded-full bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 transition-colors"
+                >
+                  Tutti
+                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/c/${cat.slug}`}
+                    className="whitespace-nowrap px-3.5 py-2 text-xs font-medium rounded-full bg-white/5 text-white/70 border border-white/10 hover:border-[#00f2ff]/40 hover:text-[#00f2ff] transition-colors flex items-center gap-1.5"
+                  >
+                    {cat.name}
+                    <span className="text-[10px] text-white/30">{cat.count}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex gap-6">
           {/* Real category sidebar from video_category taxonomy */}
           <aside className="hidden xl:block w-[200px] flex-shrink-0">
@@ -237,6 +264,12 @@ export default function WpHomepageContent({
                           </svg>
                         </div>
                       </div>
+                      {/* Real duration from the MP4 media_details */}
+                      {vid.durationSec && (
+                        <span className="absolute bottom-2.5 right-2.5 bg-black/75 text-white text-[11px] font-mono px-[7px] py-0.5 rounded">
+                          {formatDurationSec(vid.durationSec)}
+                        </span>
+                      )}
                       {vid.categorySlug && (
                         <div className="absolute bottom-2.5 left-2.5 bg-brand-cyan/90 text-[#050a14] text-[10px] font-bold px-2 py-0.5 rounded capitalize">
                           {vid.category}
@@ -252,6 +285,7 @@ export default function WpHomepageContent({
                       <div className="flex-1 min-w-0">
                         <p className="text-[0.85rem] font-medium text-[#e5e7eb] leading-[1.3] line-clamp-2">{vid.title}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{vid.authorName}</p>
+                        <p className="text-[11px] text-white/25 mt-px">{timeAgoIT(vid.date)}</p>
                       </div>
                     </div>
                     <div className="px-3 pb-3">

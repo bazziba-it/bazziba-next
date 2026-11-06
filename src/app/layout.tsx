@@ -7,6 +7,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider } from "next-themes";
 import { MotionProvider } from "@/components/ui/motion-provider";
+import { ServiceWorkerRegistration } from "@/components/layout/sw-registration";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const poppins = Poppins({
@@ -19,6 +20,12 @@ export const metadata = {
   title: {
     default: "BAZZIBA! - La Nuova Piattaforma delle Arti",
     template: `%s | BAZZIBA!`,
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "BAZZIBA!",
   },
   description: "Bazziba! è la Nuova Piattaforma digitale dedicata esclusivamente al mondo artistico di vario genere e lingua. Video, musica, arte, cultura.",
   keywords: "bazziba, video art, musica, artisti, cultura, concorsi, video contest, italiano",
@@ -43,6 +50,13 @@ export const metadata = {
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 } },
   alternates: { canonical: "https://bazziba.it", languages: { "it-IT": "https://bazziba.it" } },
   icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png", other: { rel: "apple-touch-icon", url: "/logo.png" } },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#050a14",
 };
 
 function ThemeScript() {
@@ -84,6 +98,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <MobileBottomNav />
             </div>
             <Toaster closeButton position="bottom-left" theme="system" richColors />
+            <ServiceWorkerRegistration />
           </MotionProvider>
         </ThemeProvider>
       </body>

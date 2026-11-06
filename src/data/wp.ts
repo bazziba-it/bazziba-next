@@ -89,6 +89,8 @@ export interface WpPageData {
 export interface WpVideoMedia {
   mp4: string | null;
   poster: string | null;
+  durationSec: number | null;
+  resolution: string | null;
 }
 
 /** Frontend video shape — real WP data only, no fabrications. */
@@ -113,6 +115,10 @@ export interface BazzibaVideo {
   videoUrl?: string | null;
   /** video_tag slugs, e.g. "in-evidenza", "vincitori-contest". */
   tags: string[];
+  /** Real duration in seconds from the MP4 attachment's media_details (null when unknown). */
+  durationSec: number | null;
+  /** Real video resolution label from media_details, e.g. "1080p" (null when unknown). */
+  resolution: string | null;
 }
 
 const WP_BASE = "https://bazziba.it/wp-json/wp/v2";
@@ -234,7 +240,68 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
     date: wp.date,
     videoUrl: null,
     tags: tagSlugs,
+    durationSec: null,
+    resolution: null,
   };
+}
+
+/** Resolution label from media_details dimensions (landscape: height; portrait: width). */
+function resolutionLabel(width?: number, height?: number): string | null {
+  if (!height) return null;
+  const h = width && width < height ? width : height;
+  if (h >= 2160) return "4K";
+  if (h >= 1440) return "1440p";
+  if (h >= 1080) return "1080p";
+  if (h >= 720) return "720p";
+  if (h >= 480) return "480p";
+  return `${h}p`;
+}
+
+export interface VideoMediaMeta {
+  durationSec: number | null;
+  resolution: string | null;
+}
+
+/**
+ * Bulk map: video post ID → real duration + resolution from MP4 attachments.
+ * ONE request per 100 recent attachments (media_details carries `length`
+ * seconds and dimensions; the REST parent key is `post`).
+ */
+export async function fetchVideoMediaMap(perPage = 100): Promise<Map<number, VideoMediaMeta>> {
+  const map = new Map<number, VideoMediaMeta>();
+  const rows = await wpFetch<
+    { post: number | null; media_details?: { length?: number; width?: number; height?: number } }[]
+  >("/media", {
+    media_type: "video",
+    per_page: String(perPage),
+    orderby: "date",
+    order: "desc",
+    _fields: "id,post,media_details",
+  }).catch((err) => {
+    console.error(`[wp] media map failed: ${err.message}`);
+    return [] as never[];
+  });
+  for (const m of rows) {
+    if (!m.post) continue;
+    const md = m.media_details ?? {};
+    map.set(m.post, {
+      durationSec: md.length && md.length > 0 ? Math.round(md.length) : null,
+      resolution: resolutionLabel(md.width, md.height),
+    });
+  }
+  return map;
+}
+
+/** Merge bulk media metadata into mapped videos. */
+function withMediaMeta(videos: BazzibaVideo[], map: Map<number, VideoMediaMeta>): BazzibaVideo[] {
+  for (const v of videos) {
+    const meta = map.get(Number(v.id));
+    if (meta) {
+      v.durationSec = meta.durationSec;
+      v.resolution = meta.resolution;
+    }
+  }
+  return videos;
 }
 
 /* ------------------------------------------------------------------ */
@@ -299,10 +366,14 @@ function mapVideoPage(wpVideos: WpVideo[], wpUsers: Record<number, WpUser>): Baz
   return results;
 }
 
+/** Map a WP page of videos with authors + bulk media metadata resolved in parallel. */
 async function withAuthors(wpVideos: WpVideo[]): Promise<BazzibaVideo[]> {
   const authorIds = [...new Set(wpVideos.map((v) => v.author).filter(Boolean))];
-  const wpUsers = await fetchWpAuthors(authorIds);
-  return mapVideoPage(wpVideos, wpUsers);
+  const [wpUsers, mediaMap] = await Promise.all([
+    fetchWpAuthors(authorIds),
+    fetchVideoMediaMap(),
+  ]);
+  return withMediaMeta(mapVideoPage(wpVideos, wpUsers), mediaMap);
 }
 
 /** Latest videos, mapped with authors. */
@@ -379,15 +450,19 @@ export async function searchUsers(query: string, perPage = 10): Promise<WpUser[]
   });
 }
 
-/** Real MP4 + poster for a video post (watch page player). */
+/** Real MP4 + poster + duration + resolution for a video post (watch page player). */
 export async function fetchVideoMedia(postId: number | string): Promise<WpVideoMedia> {
-  const media = await wpFetch<{ source_url: string; mime_type: string }[]>(
-    "/media",
-    { parent: String(postId), per_page: "50" }
-  );
-  const mp4 = media.find((m) => m.mime_type.startsWith("video/"))?.source_url ?? null;
-  const poster = media.find((m) => m.mime_type.startsWith("image/"))?.source_url ?? null;
-  return { mp4, poster };
+  const media = await wpFetch<
+    { source_url: string; mime_type: string; media_details?: { length?: number; width?: number; height?: number } }[]
+  >("/media", { parent: String(postId), per_page: "50" });
+  const video = media.find((m) => m.mime_type.startsWith("video/"));
+  const md = video?.media_details ?? {};
+  return {
+    mp4: video?.source_url ?? null,
+    poster: media.find((m) => m.mime_type.startsWith("image/"))?.source_url ?? null,
+    durationSec: md.length && md.length > 0 ? Math.round(md.length) : null,
+    resolution: resolutionLabel(md.width, md.height),
+  };
 }
 
 /** Videos in a video_category term. */

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { formatDurationSec } from "@/lib/format";
 
 function formatDateIT(iso: string): string {
   try {
@@ -153,7 +154,21 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
                     </Badge>
                   </Link>
                 )}
-                {mp4 && <RealDuration mp4={mp4} />}
+                {/* Real duration: API media_details first, MP4 metadata fallback */}
+                {video.durationSec ? (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {formatDurationSec(video.durationSec)}
+                  </span>
+                ) : (
+                  mp4 && <RealDuration mp4={mp4} />
+                )}
+                {/* Real resolution from the MP4 media_details */}
+                {video.resolution && (
+                  <Badge variant="outline" className="text-xs font-mono">
+                    {video.resolution}
+                  </Badge>
+                )}
                 {video.date && (
                   <span className="text-sm text-muted-foreground">
                     Pubblicato il {formatDateIT(video.date)}
@@ -221,6 +236,11 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
                         />
                       ) : (
                         <ThumbPlaceholder title={v.title} className="h-full w-full" />
+                      )}
+                      {v.durationSec && (
+                        <span className="absolute bottom-1 right-1 bg-black/75 text-white text-[10px] font-mono px-1 rounded">
+                          {formatDurationSec(v.durationSec)}
+                        </span>
                       )}
                     </div>
                     <div className="min-w-0">

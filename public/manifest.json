@@ -1,0 +1,24 @@
+{
+  "name": "BAZZIBA! - La Nuova Piattaforma delle Arti",
+  "short_name": "BAZZIBA!",
+  "description": "Video, musica, arte e cultura dalla community artistica di bazziba.it",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050a14",
+  "theme_color": "#050a14",
+  "lang": "it",
+  "categories": ["entertainment", "music", "video"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "In Evidenza", "url": "/feed/trending", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Contest", "url": "/contest", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Cerca", "url": "/search", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

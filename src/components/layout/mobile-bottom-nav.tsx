@@ -27,7 +27,10 @@ export function MobileBottomNav() {
   return (
     // ADR-0001 §7 layer 5 — docked glass, no sheen; top hairline overrides the
     // docked bottom-hairline default. §8: nav + dock count as one surface each.
-    <nav className="fixed bottom-0 left-0 right-0 z-[var(--z-overlay)] md:hidden glass-docked border-t border-b-0">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-[var(--z-overlay)] md:hidden glass-docked border-t border-b-0"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
       <div className="flex items-center justify-around h-16 px-2">
         {mobileMenuItems.map((item) => {
           const Icon = item.icon;

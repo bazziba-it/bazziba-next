@@ -1,6 +1,7 @@
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
 import { GlassCard } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
+import { formatDurationSec, timeAgoIT } from "@/lib/format";
 
 interface VideoCardProps {
   video: BazzibaVideo;
@@ -32,6 +33,12 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
               </svg>
             </div>
           </div>
+          {/* Real duration badge from the MP4's media_details */}
+          {video.durationSec && (
+            <span className="absolute bottom-2 right-2 bg-black/75 text-white text-[11px] font-mono px-[7px] py-0.5 rounded">
+              {formatDurationSec(video.durationSec)}
+            </span>
+          )}
           {video.tags.includes("in-evidenza") && (
             <span className="absolute top-2 left-2 bg-[#00f2ff] text-[#050a14] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
               In evidenza
@@ -47,6 +54,10 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
               <RealAvatar src={video.authorAvatar} name={video.authorName} className="w-5 h-5 text-[9px]" />
               <p className="text-xs text-white/40 truncate">{video.authorName}</p>
             </div>
+          )}
+          {/* Real publish date */}
+          {video.date && (
+            <p className="text-[11px] text-white/25 mt-1">{timeAgoIT(video.date)}</p>
           )}
           {video.categorySlug && (
             <span className="inline-block mt-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#00f2ff]/10 text-[#00f2ff]">

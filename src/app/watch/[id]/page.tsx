@@ -17,7 +17,7 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
   if (!video) notFound();
 
   const [media, comments, relatedAll] = await Promise.all([
-    fetchVideoMedia(video.id).catch(() => ({ mp4: null, poster: null })),
+    fetchVideoMedia(video.id).catch(() => ({ mp4: null, poster: null, durationSec: null, resolution: null })),
     fetchComments(video.id).catch(() => []),
     video.categoryId ? fetchVideosByCategory(video.categoryId, 7).catch(() => []) : Promise.resolve([]),
   ]);
@@ -28,7 +28,7 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
 
   return (
     <WatchClient
-      video={video}
+      video={{ ...video, durationSec: media.durationSec ?? video.durationSec, resolution: media.resolution ?? video.resolution }}
       mp4={mp4}
       poster={poster}
       comments={comments}

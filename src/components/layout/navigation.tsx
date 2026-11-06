@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 import { GlassNav } from "@/components/ui";
 import { MOTION } from "@/components/ui/glass";
+import { SearchAutocomplete } from "@/components/layout/search-autocomplete";
 
 const brandMark = (
   <svg width="32" height="32" viewBox="0 0 100 32" fill="none">
@@ -53,6 +55,7 @@ const mainLinks: [string, string][] = [
 export function Navigation() {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <>
@@ -110,9 +113,9 @@ export function Navigation() {
 
             {/* Search + user */}
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-sm text-white/40 w-[200px]">
-                <svg className="w-4 h-4 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.34-4.34"/></svg>
-                <input type="text" placeholder="Cerca..." className="bg-transparent border-none outline-none text-sm text-white placeholder-white/40 w-full" />
+              {/* Real search: debounced WP autocomplete with results dropdown */}
+              <div className="hidden sm:block w-[220px]">
+                <SearchAutocomplete />
               </div>
               <Link href="/upload" className="px-4 py-2 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg hover:bg-[#00d4e6] transition-colors flex items-center gap-1.5">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
@@ -126,48 +129,81 @@ export function Navigation() {
               </Link>
             </div>
 
-            {/* Mobile hamburger */}
-            <button className="md:hidden p-2 text-white/60 hover:text-white" aria-label="Menu">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            {/* Mobile hamburger — opens the animated drawer */}
+            <button
+              className="md:hidden p-2 text-white/60 hover:text-white"
+              aria-label={drawerOpen ? "Chiudi menu" : "Apri menu"}
+              aria-expanded={drawerOpen}
+              onClick={() => setDrawerOpen((v) => !v)}
+            >
+              {drawerOpen ? (
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              ) : (
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+              )}
             </button>
           </>
         }
       />
 
-      {/* Mobile nav drawer — markup kept per §6.4, gains the docked tier only */}
-      <div className="md:hidden hidden glass-docked">
-        <div className="flex items-center justify-between px-4 py-2">
-          <svg width="24" height="24" viewBox="0 0 100 32" fill="none">
-            <rect width="100" height="32" rx="6" fill="#00f2ff"/>
-            <rect x="10" y="6" width="8" height="20" rx="2" fill="#050a14"/>
-            <rect x="22" y="10" width="6" height="12" rx="2" fill="#050a14"/>
-            <rect x="32" y="4" width="8" height="24" rx="2" fill="#050a14"/>
-            <rect x="44" y="8" width="6" height="16" rx="2" fill="#050a14"/>
-            <rect x="54" y="2" width="8" height="28" rx="2" fill="#050a14"/>
-            <rect x="66" y="12" width="6" height="8" rx="2" fill="#050a14"/>
-            <rect x="76" y="14" width="6" height="4" rx="1" fill="#050a14"/>
-            <rect x="86" y="8" width="8" height="16" rx="2" fill="#050a14"/>
-          </svg>
-          <span className="text-base font-bold text-white">BAZZIBA!</span>
-          <button className="p-2 text-white/60" aria-label="Chiudi menu">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div className="flex items-center gap-1 px-3 overflow-x-auto py-2">
-          {pills.map(([slug, label]) => (
-            <Link key={slug} href={`/c/${slug}`} className="flex items-center gap-1 px-3 py-1 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap">{label}</Link>
-          ))}
-        </div>
-        <nav className="flex flex-col gap-1 px-4 py-2" aria-label="Mobile">
-          {mainLinks.map(([href, label]) => (
-            <Link key={href} href={href} className="px-4 py-2 text-sm text-white/60 hover:text-white">{label}</Link>
-          ))}
-          <Link href="/upload" className="mt-2 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
-            Carica video
-          </Link>
-        </nav>
-      </div>
+      {/* Mobile nav drawer — animated slide-down with real search + real categories */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12, transition: { duration: 0.15 } }}
+            transition={MOTION.page}
+            className="md:hidden glass-docked border-b border-white/10 sticky top-[64px] z-[var(--z-docked)]"
+          >
+            {/* Real search with autocomplete */}
+            <div className="px-4 pt-3">
+              <SearchAutocomplete />
+            </div>
+
+            {/* Real category pills */}
+            <div className="flex items-center gap-1.5 px-4 overflow-x-auto py-3 scrollbar-hide">
+              {pills.map(([slug, label]) => (
+                <Link
+                  key={slug}
+                  href={`/c/${slug}`}
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-white/70 bg-white/5 rounded-full whitespace-nowrap hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Main links with active state */}
+            <nav className="flex flex-col gap-1 px-4 pb-3" aria-label="Mobile">
+              {mainLinks.map(([href, label]) => {
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setDrawerOpen(false)}
+                    className={`px-4 py-2.5 rounded-lg text-sm transition-colors ${
+                      active ? "bg-white/10 text-white font-medium" : "text-white/60 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+              <Link
+                href="/upload"
+                onClick={() => setDrawerOpen(false)}
+                className="mt-2 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
+                Carica video
+              </Link>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
