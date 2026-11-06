@@ -465,7 +465,7 @@ export async function fetchLatestPosts(perPage = 3): Promise<WpPost[]> {
 export async function searchUsers(query: string, perPage = 10): Promise<WpUser[]> {
   const q = query.trim();
   if (!q) return [];
-  return wpFetch<WpUser[]>("/users", {
+  const users = await wpFetch<WpUser[]>("/users", {
     search: q,
     per_page: String(perPage),
     _fields: "id,name,slug,avatar_urls,description",
@@ -473,6 +473,7 @@ export async function searchUsers(query: string, perPage = 10): Promise<WpUser[]
     console.error(`[wp] user search failed: ${err.message}`);
     return [] as WpUser[];
   });
+  return users.map(cleanUser);
 }
 
 /** Real MP4 + poster + duration + resolution for a video post (watch page player). */
@@ -591,26 +592,41 @@ export async function fetchContestTerms(): Promise<WpTerm[]> {
 /* Users, comments, contest, pages                                     */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Sanitize a user's public description: artists can paste raw embed HTML
+ * into their WP bio (observed: a full YouTube engagement-panel markup in
+ * Xandrot's description) — strip tags so it never renders as raw code.
+ */
+function cleanUser(u: WpUser): WpUser {
+  if (!u.description) return u;
+  let bio = stripHtml(u.description);
+  // YouTube transcript timestamp junk ("00:00.", " 12:34.") pasted into bios
+  bio = bio.replace(/(?:^|[\s"'\u201c\u201d])\d{1,2}:\d{2}(?::\d{2})?\./g, " ").replace(/\s{2,}/g, " ").trim();
+  return { ...u, description: bio };
+}
+
 /** Public user profile by slug (u/[username]). */
 export async function fetchUserBySlug(slug: string): Promise<WpUser | null> {
   const users = await wpFetch<WpUser[]>("/users", { slug });
-  return users[0] ?? null;
+  return users[0] ? cleanUser(users[0]) : null;
 }
 
 /** Public user profile by numeric ID (author links / u/[id] redirects). */
 export async function fetchUserById(id: number | string): Promise<WpUser | null> {
-  return wpFetch<WpUser>(`/users/${id}`).catch((err) => {
+  const u = await wpFetch<WpUser>(`/users/${id}`).catch((err) => {
     console.error(`[wp] user ${id} fetch failed: ${err.message}`);
     return null;
   });
+  return u ? cleanUser(u) : null;
 }
 
 /** All public users (directory). */
 export async function fetchUsers(perPage = 100): Promise<WpUser[]> {
-  return wpFetch<WpUser[]>("/users", {
+  const users = await wpFetch<WpUser[]>("/users", {
     per_page: String(perPage),
     _fields: "id,name,slug,avatar_urls,description",
   });
+  return users.map(cleanUser);
 }
 
 /** Real comments for a video post. */

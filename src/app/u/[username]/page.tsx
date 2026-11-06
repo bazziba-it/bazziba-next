@@ -60,7 +60,7 @@ async function ProfileView({ user }: { user: WpUser }) {
               <h1 className="text-2xl font-bold">{user.name}</h1>
               <p className="text-white/50 text-sm">@{user.slug}</p>
               {bio ? (
-                <p className="mt-3 text-white/70 leading-relaxed">{bio}</p>
+                <p className="mt-3 text-white/70 leading-relaxed line-clamp-4">{bio}</p>
               ) : (
                 <p className="mt-3 text-white/40 text-sm">Artista della community Bazziba.</p>
               )}
