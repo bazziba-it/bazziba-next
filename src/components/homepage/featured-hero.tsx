@@ -198,7 +198,7 @@ export default function FeaturedHero({
                   <Button
                     variant="cyan"
                     size="sm"
-                    className="flex-1 bg-brand-cyan text-black font-bold py-2 rounded-full text-xs hover:bg-brand-cyanHover"
+                    className="flex-1 bg-brand-cyan text-black font-bold py-2 rounded-full text-xs hover:bg-brand-cyan-hover"
                     asChild
                   >
                     <a href="/c/vota">VOTA ORA</a>

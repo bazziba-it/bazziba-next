@@ -358,7 +358,7 @@ function WpFetchedContent() {
                       <span
                         className={`flex items-center justify-center gap-1 py-1.5 w-full text-[11px] font-semibold rounded-md border font-display transition-all ${
                           vid.category === "VOTA" || vid.category === "Live"
-                            ? "bg-brand-cyan text-[#050a14] border-brand-cyan hover:bg-brand-cyanHover"
+                            ? "bg-brand-cyan text-[#050a14] border-brand-cyan hover:bg-brand-cyan-hover"
                             : "bg-brand-cyan/15 text-brand-cyan border-brand-cyan/20 hover:bg-brand-cyan/25 hover:border-brand-cyan/40"
                         }`}
                       >

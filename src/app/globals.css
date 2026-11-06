@@ -1,4 +1,3 @@
-@config "../../tailwind.config.js";      /* v4: makes the legacy config actually load (C1/C4) */
 @custom-variant dark (&:where(.dark, .dark *)); /* class-based dark mode (C5) */
 @import "tailwindcss";
 
@@ -8,13 +7,67 @@
    Clean, professional video-first layout
    ============================================================ */
 
-/* ===== Animations ===== */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in {
-  animation: fade-in 0.4s ease-out both;
+/* ADR-0002 — the single theme source. Every utility-namespace token from the
+   deleted tailwind.config.js lives here (mapping: docs/adr/0002 §3). The glass
+   recipe's own CSS vars stay in :root below (ADR-0001 D2 — separate layer). */
+@theme {
+  /* brand + primary */
+  --color-primary-50: #f0f9ff;  --color-primary-100: #e0f2fe; --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc; --color-primary-400: #38bdf8; --color-primary-500: #0ea5e9;
+  --color-primary-600: #0284c7; --color-primary-700: #0369a1; --color-primary-800: #075985;
+  --color-primary-900: #0c4a64; --color-primary-950: #082f49;
+  --color-brand-yellow: #FFD700; --color-brand-yellow-hover: #FFC107;
+  --color-brand-dark: #0f0f11; --color-brand-dark-card: #1a1a1e;
+  --color-brand-dark-border: #2a2a32; --color-brand-dark-text: #e0e0e5;
+  --color-brand-dark-text-muted: #a0a0a8;
+  --color-brand-cyan: #00f2ff; --color-brand-cyan-hover: #00d4e6;
+  --color-brand-cyan-soft: rgba(0, 242, 255, 0.12); --color-brand-cyan-glow: rgba(0, 242, 255, 0.40);
+  --color-brand-gold: #FFD700; --color-brand-gold-hover: #E6C200;
+  --color-brand-navy-950: #050a14; --color-brand-navy-900: #080e1a;
+  --color-brand-navy-800: #0c1220; --color-brand-navy-700: #111827;
+  --color-brand-navy-600: #1e2a3a;
+  /* semantic */
+  --color-background: #050a14; --color-foreground: #f0f0f0;
+  --color-card: #0c1220; --color-card-foreground: #e8e8e8;
+  --color-muted: #111827; --color-muted-foreground: #9aa7b8;
+  --color-border: #1e2a3a; --color-input: #1e2a3a; --color-ring: #00f2ff;
+  --color-accent: rgba(0, 242, 255, 0.10); --color-accent-foreground: #00f2ff;
+  --color-secondary: #111827; --color-secondary-foreground: #e8e8e8;
+  --color-destructive: #ef4444; --color-destructive-foreground: #ffffff;
+  --color-primary-foreground: #050a14;
+  /* typography — next/font re-declares the same var names on <body> (wins, by design) */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Poppins", "Inter", system-ui, sans-serif;
+  --text-headline-lg: 2.5rem;
+  --text-headline-lg--line-height: 3rem;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+  /* elevation / blur / radii / motion */
+  --shadow-video-card: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-video-card-dark: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-player-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-glass-1: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+  --shadow-glass-2: 0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 0 rgba(255,255,255,0.12);
+  --shadow-glass-3: 0 16px 48px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(255,255,255,0.18);
+  --shadow-glass-4: 0 32px 80px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.55);
+  --shadow-cyan-glow-1: 0 0 16px -2px rgba(0,242,255,0.40);
+  --shadow-cyan-glow-2: 0 0 28px -4px rgba(0,242,255,0.55);
+  --blur-glass-xs: 8px; --blur-glass-sm: 12px; --blur-glass-md: 16px;
+  --blur-glass-lg: 24px; --blur-glass-xl: 32px;
+  --radius-glass-card: 1.25rem; --radius-glass-panel: 1.5rem;
+  --ease-glass-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-glass-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-duration-glass-instant: 100ms; --transition-duration-glass-fast: 180ms;
+  --transition-duration-glass-base: 260ms; --transition-duration-glass-slow: 420ms;
+  --transition-duration-glass-exit: 200ms;
+  /* aspect + animation (tokens own these now — hand-written duplicates deleted, ADR-0002 §5) */
+  --aspect-16-9: 16 / 9; --aspect-4-3: 4 / 3; --aspect-1-1: 1 / 1;
+  --animate-fade-in: fadeIn 0.3s ease-in-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-pulse-slow: pulse 3s ease-in-out infinite;
+  @keyframes fadeIn { 0% { opacity: 0 } 100% { opacity: 1 } }
+  @keyframes slideUp { 0% { opacity: 0; transform: translateY(20px) } 100% { opacity: 1; transform: translateY(0) } }
 }
 
 /* ===== Typography tokens ===== */
@@ -305,31 +358,6 @@
   color: #00f2ff;
 }
 
-/* ===== Animations ===== */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.5s ease-out forwards;
-}
-
 /* ===== Stagger delays ===== */
 .stagger-1 { animation-delay: 0.05s; }
 .stagger-2 { animation-delay: 0.10s; }
@@ -357,8 +385,8 @@
    LIQUID GLASS 2026 — ADR-0001 (docs/adr/0001-liquid-glass-2026.md)
    Material tokens (§4), motion tokens (§5), layer model (§7),
    glass recipe + compat classes (§6/§10/§12.4), perf budget (§8),
-   accessibility (§9). Utility-namespace tokens live in
-   tailwind.config.js (loaded via @config, D1); the composite
+   accessibility (§9). Utility-namespace tokens live in the @theme
+   block at the top of this file (ADR-0002); the composite
    material recipe lives here because a multi-layer shadow /
    ::before stack is not expressible as one utility (D2).
    ============================================================ */
