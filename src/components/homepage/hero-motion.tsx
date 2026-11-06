@@ -160,7 +160,7 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
           {/* Real meta: author + publish date */}
           <div className="absolute top-20 left-4 right-4 flex flex-wrap items-center gap-3 text-xs text-slate-300">
             <Link
-              href={video.authorSlug ? `/u/${video.authorSlug}` : "#"}
+              href={`/u/${video.authorSlug || video.authorId}`}
               className="flex items-center gap-2 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10 hover:border-[#00f2ff]/40 transition-colors"
             >
               <RealAvatar src={video.authorAvatar} name={video.authorName} className="w-4 h-4 text-[7px]" />

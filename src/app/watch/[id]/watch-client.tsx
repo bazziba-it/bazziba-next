@@ -198,7 +198,7 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
 
             {/* Channel — real author, links to the real profile page */}
             <div className="flex items-center justify-between pt-2">
-              <Link href={video.authorSlug ? `/u/${video.authorSlug}` : "#"} className="flex items-center gap-4 group">
+              <Link href={`/u/${video.authorSlug || video.authorId}`} className="flex items-center gap-4 group">
                 <RealAvatar
                   src={video.authorAvatar}
                   name={video.authorName}

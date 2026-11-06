@@ -11,14 +11,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import {
-  fetchBazzibaVideos,
-  fetchVideoCategories,
-  fetchLatestPosts,
-  type BazzibaVideo,
-  type WpTerm,
-  type WpPost,
-} from "@/data/wp";
+import type { BazzibaVideo, WpTerm, WpPost } from "@/data/wp";
 import { RealAvatar, ThumbPlaceholder } from "@/components/ui/media";
 
 /* =====================================================
@@ -342,44 +335,16 @@ function AboutSection() {
   );
 }
 
-/* ---- Main Client Page ---- */
-export default function BoxedHome1Client() {
-  const [videos, setVideos] = useState<BazzibaVideo[]>([]);
-  const [categories, setCategories] = useState<WpTerm[]>([]);
-  const [posts, setPosts] = useState<WpPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    Promise.all([
-      fetchBazzibaVideos(50).catch(() => []),
-      fetchVideoCategories().catch(() => []),
-      fetchLatestPosts(3).catch(() => []),
-    ])
-      .then(([v, c, p]) => {
-        if (!cancelled) {
-          setVideos(v);
-          setCategories(c);
-          setPosts(p);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#161823] flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#32373c] border-t-[#00d084]" />
-        <p className="mt-3 text-[#747775] text-xs font-['Roboto']">Caricamento...</p>
-      </div>
-    );
-  }
-
+/* ---- Main Client Page — SSR data via props, interactivity stays client-side ---- */
+export default function BoxedHome1Client({
+  videos,
+  categories,
+  posts,
+}: {
+  videos: BazzibaVideo[];
+  categories: WpTerm[];
+  posts: WpPost[];
+}) {
   if (videos.length === 0) {
     return (
       <div className="min-h-screen bg-[#161823] flex flex-col items-center justify-center">

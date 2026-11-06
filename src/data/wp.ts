@@ -597,6 +597,14 @@ export async function fetchUserBySlug(slug: string): Promise<WpUser | null> {
   return users[0] ?? null;
 }
 
+/** Public user profile by numeric ID (author links / u/[id] redirects). */
+export async function fetchUserById(id: number | string): Promise<WpUser | null> {
+  return wpFetch<WpUser>(`/users/${id}`).catch((err) => {
+    console.error(`[wp] user ${id} fetch failed: ${err.message}`);
+    return null;
+  });
+}
+
 /** All public users (directory). */
 export async function fetchUsers(perPage = 100): Promise<WpUser[]> {
   return wpFetch<WpUser[]>("/users", {
