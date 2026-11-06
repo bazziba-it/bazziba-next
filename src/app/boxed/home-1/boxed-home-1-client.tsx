@@ -7,149 +7,32 @@ import {
   ChevronRight,
   Eye,
   Heart,
-  Share2,
   Clock,
-  ThumbsUp,
   ArrowRight,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import {
+  fetchBazzibaVideos,
+  fetchVideoCategories,
+  fetchLatestPosts,
+  type BazzibaVideo,
+  type WpTerm,
+  type WpPost,
+} from "@/data/wp";
+import { RealAvatar, ThumbPlaceholder } from "@/components/ui/media";
 
 /* =====================================================
    StreamTube boxed/home-1 — exact clone (client UI)
-   Colors: dark #161823 bg, #00d084 green accent, #0693e3 blue
-   #9b51e0 purple, #fcb900 gold, #cf2e2e red, #32373c border
-   Typography: Montserrat headings, Roboto body
-   Layout: 8 sections matching StreamTube boxed/home-1 screenshot
+   Now 100% real bazziba.it data via the shared wp layer.
    ===================================================== */
 
-/* ---- WP data layer (inlined for client bundle) ---- */
-const WP_BASE = "https://bazziba.it/wp-json/wp/v2";
-
-async function wpFetch(path: string, params: Record<string, string> = {}) {
-  const qs = new URLSearchParams(params).toString();
-  const url = `${WP_BASE}${path}${qs ? "?" + qs : ""}`;
-  const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error(`WP ${res.status}: ${path}`);
-  return res.json();
-}
-
-const SEED = 42;
-function seededRand(max: number): number {
-  const x = Math.sin(SEED + max) * 10000;
-  return x - Math.floor(x);
-}
-
-function seededSeed(str: string): number {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = (h * 31 + str.charCodeAt(i)) | 0;
+function formatDateIT(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
+  } catch {
+    return "";
   }
-  return Math.abs(h);
 }
-
-function formatViews(n: string | number): string {
-  const v = typeof n === "number" ? n : parseInt(n, 10);
-  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (v >= 1_000) return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-  return String(v);
-}
-
-function formatLikes(n: string | number): string {
-  const v = typeof n === "number" ? n : parseInt(n, 10);
-  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (v >= 1_000) return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-  return String(v);
-}
-
-function durationStr(secs: number): string {
-  if (!secs || secs <= 0) return "2:27";
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function getAvatarUrl(authorId: number | null, avatarUrls: Record<string, string> | undefined): string {
-  if (authorId && avatarUrls && avatarUrls["96"]) return avatarUrls["96"] as string;
-  if (authorId) {
-    const seed = seededSeed(String(authorId));
-    return `https://ui-avatars.com/api/?name=user${authorId}&size=96&background=random&color=fff`;
-  }
-  return "https://bazziba.it/wp-content/uploads/2026/06/default-avatar.png";
-}
-
-function mapWpVideo(wp: any): any {
-  const title = (wp.title?.rendered || "Video").replace(/<[^>]+>/g, "").trim();
-  const slug = wp.slug || title.toLowerCase().replace(/\s+/g, "-");
-  const authorData = wp._embedded?.author?.[0] || wp.author_data || null;
-  const authorName = authorData?.name || "Bazziba";
-  const authorAvatar = getAvatarUrl(wp.author, authorData?.avatar_urls);
-  const cat = wp._embedded?.["wp:term"]?.[0]?.[0] || wp.categories?.[0];
-  let category = cat?.name || "Viral Videos";
-  let categorySlug = cat?.slug || "viral-videos";
-
-  let thumbnail = "";
-  const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
-  if (embeddedMedia) {
-    thumbnail = embeddedMedia.source_url || embeddedMedia.guid || "";
-  }
-  if (!thumbnail) {
-    thumbnail = `https://picsum.photos/seed/${slug}/400/225`;
-  }
-
-  return {
-    id: String(wp.id),
-    slug,
-    title,
-    thumbnail,
-    authorName,
-    authorAvatar,
-    category,
-    categorySlug,
-    viewCount: String(wp.meta?.views || seededRand(150000) + 12000),
-    likes: String(wp.meta?.likes || seededRand(8000) + 400),
-    duration: Number(wp.meta?.duration) || seededRand(1200) + 120,
-    videoUrl: wp.link || "",
-  };
-}
-
-async function fetchBazzibaVideos(): Promise<any[]> {
-  const videos = await wpFetch("/video", {
-    per_page: "50",
-    _embed: "1",
-    status: "publish",
-    order: "desc",
-  });
-  return videos.map((v) => mapWpVideo(v));
-}
-
-/* ---- types ---- */
-interface BazzibaVideo {
-  id: string;
-  slug: string;
-  title: string;
-  thumbnail: string;
-  authorName: string;
-  authorAvatar: string;
-  category: string;
-  categorySlug: string;
-  viewCount: string;
-  likes: string;
-  duration: number;
-  videoUrl?: string;
-}
-
-const CATEGORIES = [
-  { name: "Tutti", slug: "tutti" },
-  { name: "Cantanti", slug: "cantanti" },
-  { name: "Cinema", slug: "cinema" },
-  { name: "Pittori", slug: "pittori" },
-  { name: "Danzatori", slug: "danzatori" },
-  { name: "Musicisti", slug: "musicisti" },
-  { name: "Community", slug: "community" },
-  { name: "Video Virali", slug: "viral-videos" },
-];
-
-/* ---- components ---- */
 
 /* ---- Header ---- */
 function Header() {
@@ -160,58 +43,48 @@ function Header() {
           <span className="text-3xl font-bold text-[#00d084]">BAZZIBA!</span>
         </Link>
         <div className="flex items-center gap-3">
-          <div className="relative">
+          <form action="/search" method="get" className="relative">
             <input
+              name="q"
               type="text"
               placeholder="Cerca video..."
               className="bg-[#1a1d26] text-[#abb8c3] text-sm px-3 py-1.5 rounded-lg w-[200px] border border-[#32373c] focus:outline-none focus:border-[#00d084]/50 placeholder:text-[#747775]"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#747775] text-xs">/</span>
-          </div>
+          </form>
           <Link
-            href="/boxed/home-1"
+            href="/upload"
             className="bg-[#00d084] text-[#121212] px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-[#00e694] transition-colors"
           >
             Carica
           </Link>
-          <Link
-            href="/auth/signin"
-            className="bg-[#1a1d26] text-[#abb8c3] px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-[#252a38] transition-colors"
-          >
-            ACCEDI
-          </Link>
-          <Link
-            href="/auth/signup"
+          <a
+            href="https://bazziba.it/registrazione/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-[#00d084] text-[#121212] px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-[#00e694] transition-colors"
           >
             REGISTRATI
-          </Link>
+          </a>
         </div>
       </div>
     </div>
   );
 }
 
-/* ---- Eye Catching Slider ---- */
+/* ---- Eye Catching Slider — real videos, real category/author meta ---- */
 function EyeCatchingSlider({ videos }: { videos: BazzibaVideo[] }) {
-  const slider = videos.length > 0 ? videos.slice(0, 5).map((v) => ({
-    id: v.id,
-    title: v.title,
-    thumbnail: v.thumbnail,
-    views: v.viewCount || "0",
-    duration: v.duration || 0,
-    likes: v.likes || "0",
-    authorName: v.authorName || "Bazziba",
-  })) : [];
-
+  const slider = videos.slice(0, 5);
   const [current, setCurrent] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (slider.length < 2) return;
     timerRef.current = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slider.length);
     }, 6000);
-    return () => clearInterval(timerRef.current);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [slider.length]);
 
   if (slider.length === 0) return null;
@@ -226,29 +99,24 @@ function EyeCatchingSlider({ videos }: { videos: BazzibaVideo[] }) {
       </div>
       <div className="relative rounded-xl overflow-hidden bg-[#121212] border border-[#32373c]">
         <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${current * 100}%)` }}>
-          {slider.map((s, i) => (
+          {slider.map((s) => (
             <div key={s.id} className="w-full flex-shrink-0 relative">
-              <div
-                className="w-full h-[420px] relative bg-[#1a1d26]"
-                style={{
-                  backgroundImage: `url(${s.thumbnail})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              >
+              <div className="w-full h-[420px] relative bg-[#1a1d26]">
+                {s.thumbnail ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={s.thumbnail} alt={s.title} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <ThumbPlaceholder title={s.title} className="absolute inset-0" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/90 via-[#121212]/40 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   <h3 className="text-white text-xl font-['Montserrat'] font-bold mb-1 line-clamp-1">{s.title}</h3>
                   <div className="flex items-center gap-3 text-xs text-[#abb8c3]">
-                    <span>👁 {s.views}</span>
-                    <div className="flex items-center gap-1 bg-[#9b51e0]/20 text-[#9b51e0] px-2 rounded-full">
-                      <Heart size={12} />
-                      <span>{s.likes}</span>
-                    </div>
-                    <div className="flex items-center gap-1 bg-[#32373c] text-[#abb8c3] px-2 rounded-full">
-                      <Clock size={12} />
-                      <span>{durationStr(s.duration)}</span>
-                    </div>
+                    <span>{s.authorName}</span>
+                    {s.categorySlug && (
+                      <span className="bg-[#9b51e0]/20 text-[#9b51e0] px-2 rounded-full">{s.category}</span>
+                    )}
+                    <span className="text-[#747775]">{formatDateIT(s.date)}</span>
                   </div>
                 </div>
                 <Link
@@ -289,32 +157,39 @@ function EyeCatchingSlider({ videos }: { videos: BazzibaVideo[] }) {
 }
 
 /* ---- VideoCard ---- */
-function VideoCard({ v, index }: { v: BazzibaVideo; index: number }) {
+function BoxedVideoCard({ v, index }: { v: BazzibaVideo; index: number }) {
   return (
     <Link
       href={`/watch/${v.id}`}
       className="relative flex flex-col group rounded-lg overflow-hidden bg-[#161823] border border-[#32373c] hover:border-[#00d084]/40 transition-all duration-200"
     >
       <div className="relative aspect-video w-full bg-[#1a1d26] overflow-hidden">
-        <img
-          src={v.thumbnail}
-          alt={v.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${v.slug}/400/225`; }}
-        />
+        {v.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={v.thumbnail}
+            alt={v.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <ThumbPlaceholder title={v.title} className="w-full h-full" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
-        <div className="absolute bottom-2 left-2 text-xs bg-[#9b51e0]/90 text-white px-1.5 py-0.5 rounded font-medium">
-          {durationStr(v.duration)}
-        </div>
+        {v.categorySlug && (
+          <div className="absolute bottom-2 left-2 text-xs bg-[#9b51e0]/90 text-white px-1.5 py-0.5 rounded font-medium">
+            {v.category}
+          </div>
+        )}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <div className="w-14 h-14 rounded-full bg-[#00d084] flex items-center justify-center shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-200">
             <Play size={28} fill="currentColor" className="text-[#121212]" />
           </div>
         </div>
-        {index < 3 && (
+        {v.tags.includes("in-evidenza") && (
           <div className="absolute top-2 right-2 bg-[#00d084] text-[#121212] text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#121212]" />
-            LIVE
+            TOP
           </div>
         )}
       </div>
@@ -323,57 +198,48 @@ function VideoCard({ v, index }: { v: BazzibaVideo; index: number }) {
           {v.title}
         </h4>
         <div className="flex items-center gap-1.5 mt-auto">
-          <img
+          <RealAvatar
             src={v.authorAvatar}
-            alt={v.authorName}
-            className="w-7 h-7 rounded-full object-cover border border-[#32373c] bg-[#1a1d26]"
-            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${v.authorName}&background=random&size=96`; }}
+            name={v.authorName}
+            className="w-7 h-7 rounded-full border border-[#32373c] bg-[#1a1d26] text-[9px]"
           />
           <span className="text-[#747775] text-xs font-['Roboto'] truncate">{v.authorName}</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-[#747775]">
-          <Eye size={12} className="text-[#747775]" />
-          <span>{v.viewCount}</span>
-          <div className="flex items-center gap-0.5 text-[#9b51e0]">
-            <Heart size={12} fill="currentColor" />
-            <span>{v.likes}</span>
-          </div>
         </div>
       </div>
     </Link>
   );
 }
 
-/* ---- VideoRow ---- */
-function VideoRow({ title, videos }: { title: string; videos: BazzibaVideo[] }) {
+/* ---- VideoRow with real category pills ---- */
+function VideoRow({ title, videos, categories }: { title: string; videos: BazzibaVideo[]; categories: WpTerm[] }) {
   const [filter, setFilter] = useState("tutti");
-  const filtered = filter === "tutti"
-    ? videos
-    : videos.filter((v) => v.categorySlug === filter);
+  const filtered = filter === "tutti" ? videos : videos.filter((v) => v.categorySlug === filter);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2 px-1">
         <h3 className="text-white font-['Montserrat'] font-bold text-lg">{title}</h3>
-        <Link
-          href="/feed"
-          className="text-[#747775] text-xs hover:text-[#00d084] transition-colors flex items-center gap-1"
-        >
+        <Link href="/feed" className="text-[#747775] text-xs hover:text-[#00d084] transition-colors flex items-center gap-1">
           Carica Altri
           <ArrowRight size={12} />
         </Link>
       </div>
 
-      {/* Category filter pills */}
       <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-hide">
-        {CATEGORIES.map((c) => (
+        <button
+          onClick={() => setFilter("tutti")}
+          className={`whitespace-nowrap px-3 py-1 text-xs rounded-full transition-all duration-200 font-medium ${
+            filter === "tutti" ? "bg-[#00d084] text-[#121212] font-bold" : "bg-[#1a1d26] text-[#abb8c3] hover:bg-[#252a38] cursor-pointer"
+          }`}
+        >
+          Tutti
+        </button>
+        {categories.map((c) => (
           <button
-            key={c.slug}
+            key={c.id}
             onClick={() => setFilter(c.slug)}
             className={`whitespace-nowrap px-3 py-1 text-xs rounded-full transition-all duration-200 font-medium ${
-              filter === c.slug
-                ? "bg-[#00d084] text-[#121212] font-bold"
-                : "bg-[#1a1d26] text-[#abb8c3] hover:bg-[#252a38] cursor-pointer"
+              filter === c.slug ? "bg-[#00d084] text-[#121212] font-bold" : "bg-[#1a1d26] text-[#abb8c3] hover:bg-[#252a38] cursor-pointer"
             }`}
           >
             {c.name}
@@ -389,7 +255,7 @@ function VideoRow({ title, videos }: { title: string; videos: BazzibaVideo[] }) 
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filtered.map((v, i) => (
-            <VideoCard key={v.id} v={v} index={i} />
+            <BoxedVideoCard key={v.id} v={v} index={i} />
           ))}
         </div>
       )}
@@ -397,21 +263,22 @@ function VideoRow({ title, videos }: { title: string; videos: BazzibaVideo[] }) 
   );
 }
 
-/* ---- SidebarCategories ---- */
-function SidebarCategories() {
+/* ---- SidebarCategories — real taxonomy ---- */
+function SidebarCategories({ categories }: { categories: WpTerm[] }) {
   return (
     <div className="w-[220px] flex-shrink-0">
       <div className="sticky top-[80px] bg-[#161823] rounded-lg border border-[#32373c] p-3">
         <h4 className="text-[#747775] text-xs font-['Roboto'] uppercase tracking-wider mb-2">Categorie</h4>
         <nav className="flex flex-col gap-0.5">
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <Link
-              key={c.slug}
+              key={c.id}
               href={`/c/${c.slug}`}
               className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors hover:bg-[#0a0e1a] hover:text-[#00d084] group"
             >
-              <span className={`w-2 h-2 rounded-full ${c.slug === "tutti" ? "bg-[#00d084]" : c.slug === "cantanti" ? "bg-[#0693e3]" : c.slug === "cinema" ? "bg-[#9b51e0]" : c.slug === "pittori" ? "bg-[#fcb900]" : c.slug === "danzatori" ? "bg-[#cf2e2e]" : c.slug === "musicisti" ? "bg-[#00d084]" : "bg-[#32373c]"}`} />
+              <span className="w-2 h-2 rounded-full bg-[#00d084]/50" />
               <span className="text-[#abb8c3] group-hover:text-white transition-colors">{c.name}</span>
+              <span className="ml-auto text-[10px] text-[#747775]">{c.count}</span>
             </Link>
           ))}
         </nav>
@@ -420,132 +287,71 @@ function SidebarCategories() {
   );
 }
 
-/* ---- HandPickedSection ---- */
+/* ---- HandPickedSection — real editorial tag "in-evidenza" ---- */
 function HandPickedSection({ videos }: { videos: BazzibaVideo[] }) {
-  const picks = videos.length > 0 ? videos.slice(2, 7).slice(0, 4) : [];
+  const picks = videos.filter((v) => v.tags.includes("in-evidenza")).slice(0, 4);
   if (picks.length === 0) return null;
 
   return (
     <section className="my-3 px-4">
       <div className="flex items-center justify-between mb-2 px-1">
         <h3 className="text-white font-['Montserrat'] font-bold text-lg">Hand Picked</h3>
-        <Link
-          href="/feed"
-          className="text-[#747775] text-xs hover:text-[#00d084] transition-colors flex items-center gap-1"
-        >
+        <Link href="/feed/trending" className="text-[#747775] text-xs hover:text-[#00d084] transition-colors flex items-center gap-1">
           Carica Altri
           <ArrowRight size={12} />
         </Link>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {picks.map((v, i) => (
-          <VideoCard key={v.id} v={v} index={i + 3} />
+          <BoxedVideoCard key={v.id} v={v} index={i + 3} />
         ))}
       </div>
     </section>
   );
 }
 
-/* ---- LatestPostsSection (blog posts) ---- */
-function LatestPostsSection() {
-  const POSTS = [
-    { title: "Nuovo video: Il ritorno dei grandi", excerpt: "Scopri i backstage della produzione", author: "Admin", date: "2 ore fa" },
-    { title: "ECM 2026: le novità per i video", excerpt: "Tutto ciò che devi sapere sui nuovi formati", author: "Editor", date: "5 ore fa" },
-    { title: "L'arte nel video digitale", excerpt: "Come le nuove tecnologie stanno cambiando il modo di creare", author: "Artista", date: "1 giorno fa" },
-  ];
+/* ---- LatestPostsSection — real WP blog posts ---- */
+function LatestPostsSection({ posts }: { posts: WpPost[] }) {
+  if (posts.length === 0) return null;
 
   return (
     <section className="my-3 px-4">
       <div className="flex items-center justify-between mb-2 px-1">
         <h3 className="text-white font-['Montserrat'] font-bold text-lg">Latest Posts</h3>
-        <Link
-          href="/blog"
+        <a
+          href="https://bazziba.it/blog/"
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-[#747775] text-xs hover:text-[#00d084] transition-colors flex items-center gap-1"
         >
           Carica Altri
           <ArrowRight size={12} />
-        </Link>
+        </a>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {POSTS.map((p, i) => (
-          <div
-            key={i}
-            className="bg-[#161823] border border-[#32373c] rounded-lg p-3 cursor-pointer hover:border-[#00d084]/40 transition-all group"
+        {posts.map((p) => (
+          <a
+            key={p.id}
+            href={`https://bazziba.it/${p.slug}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#161823] border border-[#32373c] rounded-lg p-3 cursor-pointer hover:border-[#00d084]/40 transition-all group block"
           >
             <h5 className="text-white text-sm font-['Roboto'] font-medium line-clamp-2 mb-2 group-hover:text-[#00d084] transition-colors">
               {p.title}
             </h5>
             <p className="text-[#747775] text-xs line-clamp-2 mb-2">{p.excerpt}</p>
-            <div className="flex items-center justify-between text-xs text-[#747775]">
-              <span>✍️ {p.author}</span>
-              <span>🕐 {p.date}</span>
+            <div className="flex items-center justify-end text-xs text-[#747775]">
+              <span>{formatDateIT(p.date)}</span>
             </div>
-          </div>
+          </a>
         ))}
       </div>
     </section>
   );
 }
 
-/* ---- TrendingSection ---- */
-function TrendingSection({ videos }: { videos: BazzibaVideo[] }) {
-  const trending = videos.length > 0 ? [...videos].sort((a, b) => {
-    const viewsA = parseInt(a.viewCount, 10) || 0;
-    const viewsB = parseInt(b.viewCount, 10) || 0;
-    return viewsB - viewsA;
-  }).slice(0, 8) : [];
-
-  if (trending.length === 0) return null;
-
-  return (
-    <section className="my-3 px-4">
-      <div className="flex items-center justify-between mb-2 px-1">
-        <h3 className="text-white font-['Montserrat'] font-bold text-lg">Trending</h3>
-        <Link
-          href="/feed"
-          className="text-[#747775] text-xs hover:text-[#00d084] transition-colors flex items-center gap-1"
-        >
-          Carica Altri
-          <ArrowRight size={12} />
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {trending.map((v, i) => (
-          <div
-            key={v.id}
-            className="flex gap-2 items-start bg-[#161823] border border-[#32373c] rounded-lg p-2 hover:border-[#00d084]/40 transition-all group"
-          >
-            <span className="text-[#fcb900] text-xl font-['Montserrat'] font-bold text-center leading-none">{i + 1}.</span>
-            <div className="flex-1 min-w-0">
-              <div className="aspect-video w-full rounded overflow-hidden bg-[#1a1d26] mb-1.5 relative">
-                <img
-                  src={v.thumbnail}
-                  alt={v.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${v.slug}/400/225`; }}
-                />
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div className="w-10 h-10 rounded-full bg-[#00d084] flex items-center justify-center">
-                    <Play size={20} fill="currentColor" className="text-[#121212]" />
-                  </div>
-                </div>
-              </div>
-              <h6 className="text-white text-xs font-['Roboto'] font-medium line-clamp-2 group-hover:text-[#00d084] transition-colors">
-                {v.title}
-              </h6>
-              <div className="flex items-center gap-1 text-xs text-[#747775]">
-                <Eye size={10} />
-                <span>{v.viewCount}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ---- AboutSection ---- */
+/* ---- AboutSection — static site copy (real links) ---- */
 function AboutSection() {
   return (
     <section className="my-3 px-4">
@@ -554,18 +360,19 @@ function AboutSection() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
-          { icon: <Eye size={20} className="text-[#00d084]" />, title: "Trending", desc: "I video più popolari della settimana", color: "bg-[#00d084]/10 text-[#00d084]" },
-          { icon: <Heart size={20} className="text-[#9b51e0]" />, title: "Community", desc: "Contenuti dai nostri creatori", color: "bg-[#9b51e0]/10 text-[#9b51e0]" },
-          { icon: <Play size={20} className="text-[#0693e3]" />, title: "Livestream", desc: "Guarda i live streaming in diretta", color: "bg-[#0693e3]/10 text-[#0693e3]" },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="bg-[#161823] border border-[#32373c] rounded-lg p-4 text-center hover:border-[#00d084]/40 transition-all group cursor-pointer"
+          { href: "/feed/trending", icon: <Eye size={20} className="text-[#00d084]" />, title: "In Evidenza", desc: "I video scelti dalla redazione" },
+          { href: "/contest", icon: <Heart size={20} className="text-[#9b51e0]" />, title: "Contest", desc: "Vota i video del contest mensile" },
+          { href: "/feed", icon: <Play size={20} className="text-[#0693e3]" />, title: "Ultimi video", desc: "Le ultime pubblicazioni della community" },
+        ].map((item) => (
+          <Link
+            key={item.title}
+            href={item.href}
+            className="bg-[#161823] border border-[#32373c] rounded-lg p-4 text-center hover:border-[#00d084]/40 transition-all group cursor-pointer block"
           >
             <div className="flex justify-center mb-2">{item.icon}</div>
             <h5 className="text-white font-['Montserrat'] font-bold text-base mb-1 group-hover:text-[#00d084] transition-colors">{item.title}</h5>
             <p className="text-[#747775] text-xs">{item.desc}</p>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
@@ -585,21 +392,8 @@ function Footer() {
           <div className="flex items-center gap-4 text-xs text-[#747775]">
             <Link href="/" className="hover:text-[#00d084] transition-colors">Home</Link>
             <Link href="/feed" className="hover:text-[#00d084] transition-colors">Video</Link>
-            <Link href="/c/tutti" className="hover:text-[#00d084] transition-colors">Categorie</Link>
-            <Link href="/u/admin" className="hover:text-[#00d084] transition-colors">Utenti</Link>
-          </div>
-          <div className="flex items-center gap-2">
-            {[
-              { href: "https://facebook.com/bazziba", icon: "f", label: "Facebook" },
-              { href: "https://instagram.com/bazziba", icon: "📷", label: "Instagram" },
-              { href: "https://twitter.com/bazziba", icon: "𝕏", label: "X" },
-              { href: "https://youtube.com/bazziba", icon: "▶", label: "YouTube" },
-              { href: "https://wa.me/3900000000", icon: "💬", label: "WhatsApp" },
-            ].map((s) => (
-              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-[#1a1d26] border border-[#32373c] flex items-center justify-center text-[#747775] hover:border-[#00d084]/50 hover:text-[#00d084] transition-all text-xs" title={s.label}>
-                {s.icon}
-              </a>
-            ))}
+            <Link href="/contest" className="hover:text-[#00d084] transition-colors">Contest</Link>
+            <a href="https://bazziba.it" target="_blank" rel="noopener noreferrer" className="hover:text-[#00d084] transition-colors">bazziba.it</a>
           </div>
         </div>
       </div>
@@ -610,15 +404,27 @@ function Footer() {
 /* ---- Main Client Page ---- */
 export default function BoxedHome1Client() {
   const [videos, setVideos] = useState<BazzibaVideo[]>([]);
+  const [categories, setCategories] = useState<WpTerm[]>([]);
+  const [posts, setPosts] = useState<WpPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchBazzibaVideos()
-      .then((v) => { if (!cancelled) { setVideos(v); setLoading(false); } })
-      .catch((e) => {
-        console.warn("WP fetch failed:", e);
+    Promise.all([
+      fetchBazzibaVideos(50).catch(() => []),
+      fetchVideoCategories().catch(() => []),
+      fetchLatestPosts(3).catch(() => []),
+    ])
+      .then(([v, c, p]) => {
+        if (!cancelled) {
+          setVideos(v);
+          setCategories(c);
+          setPosts(p);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
@@ -633,22 +439,27 @@ export default function BoxedHome1Client() {
     );
   }
 
-  const shuffled = videos.length > 0 ? [...videos].sort(() => Math.random() - 0.5) : videos;
+  if (videos.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#161823] flex flex-col items-center justify-center">
+        <p className="text-[#747775] text-sm font-['Roboto']">bazziba.it non risponde — riprova più tardi.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#161823] flex flex-col">
       <div className="w-full max-w-[1240px] mx-auto flex-1 flex flex-col px-0">
         <Header />
-        <EyeCatchingSlider videos={shuffled} />
+        <EyeCatchingSlider videos={videos} />
         <div className="mt-4 flex gap-4 px-4 pb-4 flex-1">
-          <SidebarCategories />
+          <SidebarCategories categories={categories} />
           <div className="flex-1 min-w-0">
-            <VideoRow title="Latest Videos" videos={shuffled} />
+            <VideoRow title="Latest Videos" videos={videos} categories={categories} />
           </div>
         </div>
-        <HandPickedSection videos={shuffled} />
-        <LatestPostsSection />
-        <TrendingSection videos={shuffled} />
+        <HandPickedSection videos={videos} />
+        <LatestPostsSection posts={posts} />
         <AboutSection />
         <Footer />
       </div>

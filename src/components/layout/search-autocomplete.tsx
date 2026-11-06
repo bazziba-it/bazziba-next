@@ -1,54 +1,75 @@
 /** @format */
 
-import { useState } from "react";
-import { Search, Clock, TrendingUp } from "lucide-react";
-import Link from "next/link";
-import { Input } from "@/components/ui";
+"use client";
 
-const popularSearches = [
-  "Musa Urbana",
-  "Pittura astrale",
-  "Danza urbana",
-  "Cover canzoni",
-  "Arte digitale",
-  "Poesia sonora",
-  "DJ set",
-  "Performance live",
-  "Video art",
-  "Musica indie",
-];
-
-const mockResults = [
-  { id: 1, type: "video", title: "Il Canto dell'Anima - Performance Live", views: "1.2K", href: "/watch/vid-1" },
-  { id: 2, type: "channel", title: "Elena Rossi", href: "/u/elena_arte", verified: true },
-  { id: 3, type: "video", title: "Pittura Astrale - Il Viaggio di un Artista", views: "892", href: "/watch/vid-2" },
-  { id: 4, type: "category", title: "Cantanti", href: "/c/cantanti" },
-  { id: 5, type: "video", title: "Danza Contemporanea - Spazio e Movimento", views: "2.1K", href: "/watch/vid-3" },
-];
+import { useState, useEffect, useRef } from "react";
+import { Search, Tag } from "lucide-react";
+import { searchVideos, searchUsers, fetchVideoCategories, type BazzibaVideo, type WpUser, type WpTerm } from "@/data/wp";
+import { RealAvatar } from "@/components/ui/media";
 
 export function SearchAutocomplete() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [results, setResults] = useState<typeof mockResults>([]);
+  const [videos, setVideos] = useState<BazzibaVideo[]>([]);
+  const [users, setUsers] = useState<WpUser[]>([]);
+  const [categories, setCategories] = useState<WpTerm[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSearch = (value: string) => {
-    if (value.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(value.trim())}`;
+  // Load real top categories once for the empty-query dropdown
+  useEffect(() => {
+    fetchVideoCategories()
+      .then((cats) => setCategories(cats.slice(0, 8)))
+      .catch(() => setCategories([]));
+  }, []);
+
+  // Debounced real search against the WP API
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const q = query.trim();
+    if (q.length < 2) {
+      setVideos([]);
+      setUsers([]);
+      setSearching(false);
+      return;
     }
-  };
+    setSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const [v, u] = await Promise.all([searchVideos(q, 5), searchUsers(q, 4)]);
+        setVideos(v);
+        setUsers(u);
+      } catch {
+        setVideos([]);
+        setUsers([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
 
-  const handleResultClick = (href: string) => {
+  const go = (href: string) => {
     setIsOpen(false);
     setQuery("");
     window.location.href = href;
   };
+
+  const submit = () => {
+    const q = query.trim();
+    if (q) go(`/search?q=${encodeURIComponent(q)}`);
+  };
+
+  const hasResults = videos.length > 0 || users.length > 0;
 
   return (
     <div className="relative w-full">
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          handleSearch(query);
+          submit();
         }}
         className="relative"
       >
@@ -63,72 +84,77 @@ export function SearchAutocomplete() {
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           placeholder="Cerca video, canali, categorie..."
-          className="w-full rounded-full border border-input pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-yellow bg-background transition-all duration-200"
+          className="w-full rounded-full border border-input pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan bg-background transition-all duration-200"
         />
       </form>
 
       {isOpen && (
         <div className="absolute top-full mt-1 w-full rounded-xl border bg-popover shadow-lg z-50 overflow-hidden animate-fade-in">
-          {query.length > 1 && results.length > 0 ? (
+          {query.trim().length >= 2 ? (
             <div className="py-1">
-              {results.map((result) => (
+              {searching && (
+                <p className="px-4 py-3 text-xs text-muted-foreground">Ricerca in corso...</p>
+              )}
+              {!searching && !hasResults && (
+                <p className="px-4 py-3 text-sm text-muted-foreground">Nessun risultato per &quot;{query}&quot;</p>
+              )}
+              {videos.map((v) => (
                 <button
-                  key={result.id}
+                  key={v.id}
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleResultClick(result.href)}
+                  onClick={() => go(`/watch/${v.id}`)}
                   className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-accent transition-colors"
                 >
-                  <div className="flex-shrink-0">
-                    {result.type === "video" ? (
-                      <div className="w-12 h-8 bg-muted rounded overflow-hidden flex items-center justify-center">
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 bg-brand-yellow/20 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-brand-yellow">
-                          {result.type === "channel" ? "C" : "C"}
-                        </span>
-                      </div>
+                  <div className="w-12 h-8 bg-muted rounded overflow-hidden flex-shrink-0">
+                    {v.thumbnail && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={v.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{result.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {result.type === "video" && `${result.views} visualizzazioni`}
-                      {result.type === "channel" && "Canale"}
-                      {result.type === "category" && "Categoria"}
-                    </p>
+                    <p className="text-sm font-medium truncate">{v.title}</p>
+                    <p className="text-xs text-muted-foreground">{v.category}</p>
                   </div>
                 </button>
               ))}
-
+              {users.map((u) => (
+                <button
+                  key={u.id}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => go(`/u/${u.slug}`)}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-accent transition-colors"
+                >
+                  <RealAvatar src={u.avatar_urls?.["48"] ?? null} name={u.name} className="w-8 h-8 text-[10px]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{u.name}</p>
+                    <p className="text-xs text-muted-foreground">Canale</p>
+                  </div>
+                </button>
+              ))}
               <button
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleSearch(query)}
+                onClick={submit}
                 className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-accent transition-colors border-t"
               >
                 <Search className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Cerca "{query}"</span>
+                <span className="text-sm">Cerca &quot;{query.trim()}&quot;</span>
               </button>
             </div>
-          ) : query.length === 0 ? (
+          ) : (
             <div className="py-2">
-              <p className="px-4 text-xs font-semibold text-muted-foreground mb-2">RICERCHE POPULARI</p>
-              {popularSearches.map((search, i) => (
+              <p className="px-4 text-xs font-semibold text-muted-foreground mb-2">CATEGORIE POPOLARI</p>
+              {categories.map((cat) => (
                 <button
-                  key={search}
+                  key={cat.id}
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleSearch(search)}
+                  onClick={() => go(`/c/${cat.slug}`)}
                   className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-accent transition-colors"
                 >
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{search}</span>
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{cat.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{cat.count}</span>
                 </button>
               ))}
-            </div>
-          ) : (
-            <div className="py-4 text-center text-sm text-muted-foreground">
-              Nessun risultato per "{query}"
             </div>
           )}
         </div>

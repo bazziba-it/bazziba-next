@@ -1,50 +1,56 @@
-import type { Video, Category } from "@/types";
+import type { BazzibaVideo, WpTerm } from "@/data/wp";
 import { GlassCard } from "@/components/ui";
+import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
 
-interface VideoProps {
-  video: Video;
+interface VideoCardProps {
+  video: BazzibaVideo;
   showAuthor?: boolean;
   /** §5.4 grid stagger position — capped inside GlassCard. */
   staggerIndex?: number;
 }
 
-export function VideoCard({ video, showAuthor, staggerIndex }: VideoProps) {
-  const thumb = video.thumbnail || "https://picsum.photos/seed/fallback/400/225";
-  const dur = video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, "0")}` : "--:--";
-
-  // ADR-0001 §8 rule 1 — GlassCard tier "card", no sheen (scrolling list).
-  // Ad-hoc bg-[#0a0e1a]/border-white/5 replaced by the glass recipe (§10).
+export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
   return (
     <GlassCard staggerIndex={staggerIndex} scrollList className="overflow-hidden">
       <a href={`/watch/${video.id}`} className="group block">
-        <div className="relative aspect-video overflow-hidden">
-          <img
-            src={thumb}
-            alt={video.title}
-            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
-          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-mono">
-            {dur}
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-[0] group-hover:opacity-[1] transition-opacity">
+        <div className="relative aspect-video overflow-hidden bg-black">
+          {video.thumbnail ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={video.thumbnail}
+              alt={video.title}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          ) : (
+            <ThumbPlaceholder title={video.title} className="h-full w-full" />
+          )}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="w-12 h-12 rounded-full bg-[#00f2ff]/90 flex items-center justify-center">
               <svg className="w-6 h-6 text-black ml-0.5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
           </div>
+          {video.tags.includes("in-evidenza") && (
+            <span className="absolute top-2 left-2 bg-[#00f2ff] text-[#050a14] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+              In evidenza
+            </span>
+          )}
         </div>
         <div className="p-3">
           <h3 className="font-semibold text-sm line-clamp-2 text-white group-hover:text-[#00f2ff] transition-colors">
             {video.title}
           </h3>
-          {showAuthor && video.author && (
-            <p className="text-xs text-white/40 mt-1">{video.author.name}</p>
+          {showAuthor && (
+            <div className="flex items-center gap-2 mt-2">
+              <RealAvatar src={video.authorAvatar} name={video.authorName} className="w-5 h-5 text-[9px]" />
+              <p className="text-xs text-white/40 truncate">{video.authorName}</p>
+            </div>
           )}
-          {video.category && (
+          {video.categorySlug && (
             <span className="inline-block mt-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#00f2ff]/10 text-[#00f2ff]">
-              {video.category.name}
+              {video.category}
             </span>
           )}
         </div>
@@ -54,12 +60,10 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoProps) {
 }
 
 interface VideoGridProps {
-  videos: Video[];
+  videos: BazzibaVideo[];
   title?: string;
   showAuthor?: boolean;
   emptyMessage?: string;
-  onLoadMore?: () => void;
-  hasMore?: boolean;
 }
 
 export function VideoGrid({
@@ -67,8 +71,6 @@ export function VideoGrid({
   title,
   showAuthor,
   emptyMessage = "Nessun video disponibile",
-  onLoadMore,
-  hasMore,
 }: VideoGridProps) {
   return (
     <div>
@@ -87,51 +89,42 @@ export function VideoGrid({
           ))}
         </div>
       )}
-      {hasMore && onLoadMore && (
-        <div className="text-center py-8 mt-8">
-          <button
-            onClick={onLoadMore}
-            className="px-6 py-3 bg-[#00f2ff]/10 text-[#00f2ff] font-medium rounded-full hover:bg-[#00f2ff]/20 transition-colors text-sm"
-          >
-            Carica altri video
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
 interface CategoryGridProps {
-  categories: Category[];
+  categories: WpTerm[];
   activeCategory?: string;
-  onSelect?: (slug: string) => void;
+  className?: string;
 }
 
-export function CategoryGrid({ categories, activeCategory, onSelect }: CategoryGridProps) {
+/** Real video_category terms sidebar (links to /c/[slug]). */
+export function CategoryGrid({ categories, activeCategory, className = "" }: CategoryGridProps) {
   return (
-    <div className="sticky top-24">
+    <div className={`sticky top-24 ${className}`}>
       <h3 className="text-sm font-semibold text-white/40 uppercase tracking-wider mb-3 px-2">Categorie</h3>
       <div className="space-y-1">
-        <button
-          onClick={() => onSelect?.("all")}
-          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-            activeCategory === "all" ? "bg-[#00f2ff]/10 text-[#00f2ff]" : "text-white/60 hover:text-white hover:bg-white/5"
+        <a
+          href="/feed"
+          className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+            !activeCategory ? "bg-[#00f2ff]/10 text-[#00f2ff]" : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
           Tutti
-        </button>
+        </a>
         {categories.map((cat) => (
-          <button
+          <a
             key={cat.id}
-            onClick={() => onSelect?.(cat.slug)}
+            href={`/c/${cat.slug}`}
             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
               activeCategory === cat.slug ? "bg-[#00f2ff]/10 text-[#00f2ff]" : "text-white/60 hover:text-white hover:bg-white/5"
             }`}
           >
-            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color || "#00f2ff" }} />
+            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-[#00f2ff]/50" />
             {cat.name}
-            <span className="ml-auto text-xs text-white/30">{cat.videoCount}</span>
-          </button>
+            <span className="ml-auto text-xs text-white/30">{cat.count}</span>
+          </a>
         ))}
       </div>
     </div>

@@ -1,28 +1,24 @@
 import Link from "next/link";
-import { TrendingUp, Play, Gift, Clock, Eye, Heart } from "lucide-react";
+import { TrendingUp, Play, Gift, Calendar } from "lucide-react";
 import { Button, GlassSurface, GlassCard } from "@/components/ui";
+import { RealAvatar, ThumbPlaceholder } from "@/components/ui/media";
 import type { BazzibaVideo } from "@/data/wp";
 
 interface FeaturedHeroProps {
   featuredVideo?: BazzibaVideo | null;
-  contestCards?: { title: string; subtitle: string; timer?: string }[];
-  featuredArtists?: { name: string; role: string; avatar?: string }[];
+  /** Real contest editions from the WP contest CPT. */
+  contestCards?: { title: string; subtitle: string }[];
+  /** Real artists (recent video authors). */
+  featuredArtists?: { name: string; role: string; avatar?: string | null }[];
 }
 
-interface StatBadgeProps {
-  icon: React.ReactNode;
-  label: string;
-}
-
-function StatBadge({ icon, label }: StatBadgeProps) {
-  // Flat scrim-safe chip over the hero image (§9.2) — no backdrop-filter,
-  // so the hero viewport's §8 budget is spent on the nav + contest cards only.
-  return (
-    <span className="flex items-center gap-1 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10">
-      {icon}
-      {label}
-    </span>
-  );
+function formatDateIT(iso?: string): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+  } catch {
+    return "";
+  }
 }
 
 export default function FeaturedHero({
@@ -30,48 +26,7 @@ export default function FeaturedHero({
   contestCards = [],
   featuredArtists = [],
 }: FeaturedHeroProps) {
-  // Compute duration display from featured video
-  const featuredDuration = featuredVideo ? featuredVideo.duration : 147;
-  const durationStr = `${Math.floor(featuredDuration / 60)}:${(featuredDuration % 60)
-    .toString()
-    .padStart(2, "0")}`;
-  const isPlaying = false;
-
-  const viewCountNum = featuredVideo ? parseInt(featuredVideo.viewCount.replace(/\D/g, "")) || 0 : 0;
-  const likesNum = featuredVideo ? parseInt(featuredVideo.likes.replace(/\D/g, "")) || 0 : 0;
-  const formattedViews = viewCountNum >= 1_000_000
-    ? (viewCountNum / 1_000_000).toFixed(1) + "M"
-    : viewCountNum >= 1_000
-      ? (viewCountNum / 1_000).toFixed(1) + "K"
-      : String(viewCountNum);
-  const formattedLikes = likesNum >= 1_000
-    ? (likesNum / 1_000).toFixed(1) + "K"
-    : String(likesNum);
-
-  const heroStats = featuredVideo ? [
-    { icon: <TrendingUp className="h-3 w-3 text-brand-cyan" />, label: formattedViews },
-    { icon: <Eye className="h-3 w-3 text-brand-cyan" />, label: formattedViews },
-    { icon: <Heart className="h-3 w-3 text-brand-cyan" />, label: formattedLikes || "0" },
-  ] : [
-    // fallback when no featured video
-    { icon: <TrendingUp className="h-3 w-3 text-brand-cyan" />, label: "2.4K" },
-    { icon: <Eye className="h-3 w-3 text-brand-cyan" />, label: "1.2M" },
-    { icon: <Heart className="h-3 w-3 text-brand-cyan" />, label: "245K" },
-  ];
-
-  const contests = contestCards.length > 0
-    ? contestCards
-    : [
-        { title: "Voci Acustiche", subtitle: "In Contest / Contest in corso", timer: "00:00:07:05" },
-        { title: "Nuove Proposte - Iscrizioni", subtitle: "Iscrizioni" },
-      ];
-
-  const artists = featuredArtists.length > 0
-    ? featuredArtists
-    : [
-        { name: "Leo K.", role: "Painter", avatar: "https://i.pravatar.cc/40?img=12" },
-        { name: "Eva L.", role: "Filmmaker", avatar: "https://i.pravatar.cc/40?img=5" },
-      ];
+  const contests = contestCards;
 
   return (
     <section className="relative pt-[72px] pb-6 overflow-hidden hero-ambient">
@@ -83,117 +38,95 @@ export default function FeaturedHero({
 
       <div className="container-max relative">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* ===== LEFT: Featured Video (lg:col-span-2) — raised glass hero panel (§4.5/§7 layer 3);
-              scrim rule (§9.2) is served by the gradient overlays below (α ≈ 0.9 ≥ 0.75) ===== */}
+          {/* ===== LEFT: Featured Video (lg:col-span-2) ===== */}
           <GlassSurface tier="raised" className="lg:col-span-2 relative rounded-2xl overflow-hidden bg-black group min-h-[420px]">
-            {/* Video player background */}
-            {featuredVideo && (
+            {featuredVideo?.thumbnail ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={featuredVideo.thumbnail}
                 alt={featuredVideo.title}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading="eager"
               />
+            ) : (
+              <ThumbPlaceholder title={featuredVideo?.title ?? "Bazziba"} className="absolute inset-0" />
             )}
 
             {/* Gradient overlays */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/40 to-transparent" />
 
-            {/* Top-left: contest label */}
+            {/* Top-left: category label */}
             <div className="absolute top-4 left-4">
               <div className="bg-brand-cyan/90 text-black text-[11px] font-bold px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-lg">
                 <TrendingUp className="h-3 w-3" />
                 {featuredVideo?.category || "In Evidenza"}
-                <span className="opacity-60">/</span>
-                <span className="opacity-80">Contest in corso</span>
               </div>
             </div>
 
             {/* Title */}
             <div className="absolute top-4 right-4 left-4 md:left-auto md:right-4">
               <h2 className="font-display text-headline-lg text-white drop-shadow-lg line-clamp-2 max-w-[70%] md:max-w-[80%]">
-                {featuredVideo?.title || "Stefania Rinaldi - Cover & Inediti Live"}
+                {featuredVideo?.title ?? "BAZZIBA! — La piattaforma degli artisti"}
               </h2>
             </div>
 
-            {/* Stats row — from real video data */}
-            <div className="absolute top-20 left-4 right-4 md:left-auto md:right-4 flex flex-wrap gap-3 text-xs text-slate-300">
-              {heroStats.map((stat, i) => (
-                <StatBadge key={i} icon={stat.icon} label={stat.label} />
-              ))}
-            </div>
+            {/* Real meta: author + publish date */}
+            {featuredVideo && (
+              <div className="absolute top-20 left-4 right-4 flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                <span className="flex items-center gap-2 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10">
+                  <RealAvatar src={featuredVideo.authorAvatar} name={featuredVideo.authorName} className="w-4 h-4 text-[7px]" />
+                  {featuredVideo.authorName}
+                </span>
+                {featuredVideo.date && (
+                  <span className="flex items-center gap-1 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10">
+                    <Calendar className="h-3 w-3 text-brand-cyan" />
+                    {formatDateIT(featuredVideo.date)}
+                  </span>
+                )}
+              </div>
+            )}
 
-            {/* VOTA ORA button */}
-            <div className="absolute bottom-24 left-4">
+            {/* CTA buttons */}
+            <div className="absolute bottom-24 left-4 flex gap-3">
+              {featuredVideo && (
+                <Button
+                  variant="cyan"
+                  size="lg"
+                  className="bg-brand-cyan text-black font-bold py-3 px-6 rounded-full flex items-center gap-2 shadow-lg shadow-cyan-glow-1 hover:shadow-xl hover:shadow-cyan-glow-2"
+                  asChild
+                >
+                  <Link href={`/watch/${featuredVideo.id}`}>
+                    <Play className="h-4 w-4" />
+                    GUARDA ORA
+                  </Link>
+                </Button>
+              )}
               <Button
-                variant="cyan"
+                variant="purple"
                 size="lg"
-                className="bg-brand-cyan text-black font-bold py-3 px-6 rounded-full flex items-center gap-2 shadow-lg shadow-cyan-glow-1 hover:shadow-xl hover:shadow-cyan-glow-2"
+                className="bg-purple-600 text-white font-bold py-3 px-6 rounded-full flex items-center gap-2 hover:bg-purple-500"
                 asChild
               >
-                <a href="/c/vota">
+                <Link href="/contest">
                   <Gift className="h-4 w-4" />
                   VOTA ORA
-                </a>
+                </Link>
               </Button>
             </div>
 
-            {/* Video controls bar */}
-            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent">
-              <div className="flex items-center gap-3 text-white">
-                <button className="w-8 h-8 rounded-full bg-brand-cyan/90 flex items-center justify-center hover:bg-brand-cyan transition-colors">
-                  <Play className="h-4 w-4 text-black ml-0.5" />
-                </button>
-                <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-brand-cyan rounded-full transition-all duration-300"
-                    style={{ width: isPlaying ? "35%" : "15%" }}
-                  />
-                </div>
-                <button className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center hover:bg-slate-700 transition-colors">
-                  <span className="text-xs font-mono">{durationStr}</span>
-                </button>
-                <button className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center hover:bg-slate-700 transition-colors">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                    <path d="M15.54 8.46a2 2 0 0 1 0 2.83" />
-                    <path d="M18.36 12H9" />
-                  </svg>
-                </button>
-                <button className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center hover:bg-slate-700 transition-colors">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3" />
-                    <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-                    <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
-                    <path d="M3 16v3a2 2 0 0 0 2 2h3" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+            {/* Bottom scrim bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-950/90 to-transparent" />
           </GlassSurface>
 
-          {/* ===== RIGHT: Contest cards + featured artists (lg:col-span-1) ===== */}
+          {/* ===== RIGHT: Contest cards + featured artists ===== */}
           <div className="lg:col-span-1 space-y-4">
-            {/* Contest cards — static glass panels (§6.2: no lift), capped §5.4 stagger */}
             {contests.map((contest, i) => (
-              <GlassCard
-                key={i}
-                interactive={false}
-                staggerIndex={i}
-                className="p-4 rounded-2xl"
-              >
+              <GlassCard key={i} interactive={false} staggerIndex={i} className="p-4 rounded-2xl">
                 <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">
                   {contest.subtitle}
                 </p>
-                <h3 className="text-base font-bold text-white leading-tight mb-2">
-                  {contest.title}
-                </h3>
-                {contest.timer && (
-                  <p className="text-xs text-slate-400 font-mono mb-3">
-                    Contesta {contest.timer}
-                  </p>
-                )}
+                <h3 className="text-base font-bold text-white leading-tight mb-3">{contest.title}</h3>
                 <div className="flex gap-2">
                   <Button
                     variant="cyan"
@@ -201,7 +134,7 @@ export default function FeaturedHero({
                     className="flex-1 bg-brand-cyan text-black font-bold py-2 rounded-full text-xs hover:bg-brand-cyan-hover"
                     asChild
                   >
-                    <a href="/c/vota">VOTA ORA</a>
+                    <Link href="/contest">VOTA ORA</Link>
                   </Button>
                   <Button
                     variant="purple"
@@ -209,36 +142,38 @@ export default function FeaturedHero({
                     className="flex-1 bg-purple-600 text-white font-bold py-2 rounded-full text-xs hover:bg-purple-500"
                     asChild
                   >
-                    <a href="/c/vota">PARTECIPA</a>
+                    <Link href="/upload">PARTECIPA</Link>
                   </Button>
                 </div>
               </GlassCard>
             ))}
 
-            {/* Featured artists strip */}
-            <div className="pt-2">
-              <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold mb-3">
-                Next featured artists
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {artists.map((artist) => (
-                  <div
-                    key={artist.name}
-                    className="flex items-center gap-2 bg-slate-900/50 px-3 py-1.5 pr-3 rounded-full border border-slate-700/50"
-                  >
-                    <img
-                      src={artist.avatar || `https://i.pravatar.cc/40?img=${artist.name.charCodeAt(0)}`}
-                      alt={artist.name}
-                      className="w-8 h-8 rounded-full object-cover ring-2 ring-brand-cyan/30"
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-white">{artist.name}</p>
-                      <p className="text-[10px] text-slate-400">{artist.role}</p>
+            {/* Featured artists strip — real recent authors */}
+            {featuredArtists.length > 0 && (
+              <div className="pt-2">
+                <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold mb-3">
+                  Artisti in evidenza
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {featuredArtists.map((artist) => (
+                    <div
+                      key={artist.name}
+                      className="flex items-center gap-2 bg-slate-900/50 px-3 py-1.5 pr-3 rounded-full border border-slate-700/50"
+                    >
+                      <RealAvatar
+                        src={artist.avatar}
+                        name={artist.name}
+                        className="w-8 h-8 text-[10px] ring-2 ring-brand-cyan/30"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-white">{artist.name}</p>
+                        <p className="text-[10px] text-slate-400">{artist.role}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

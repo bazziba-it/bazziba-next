@@ -1,262 +1,156 @@
-import { Trophy, Calendar, Users, Clock, Share2, Upload } from "lucide-react";
+import { Trophy, Users, Calendar, Upload, Medal } from "lucide-react";
 import Link from "next/link";
+import {
+  fetchContests,
+  fetchContestTerms,
+  fetchVideosByContestTerm,
+  fetchVideosByTagSlug,
+} from "@/data/wp";
+import { VideoGrid } from "@/components/video/video-card";
+import { GlassSurface, GlassCard } from "@/components/ui";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-interface ContestEntry {
-  id: string;
-  voteCount: number;
-  video: {
-    id: string;
-    title: string;
-    slug: string;
-    thumbnail: string;
-    viewCount: number;
-    duration: number;
-    createdAt: string;
-    author: { id: string; username: string; name: string; image: string };
-  };
+function rendered(raw: string | { rendered: string } | undefined): string {
+  if (!raw) return "";
+  return typeof raw === "string" ? raw : raw.rendered ?? "";
 }
 
-const mockContest = {
-  id: "contest-1",
-  title: "Arte e Street Culture",
-  description: "Un contest dedicato all'arte urbana, street art, e culture di strada. Partecipa con i tuoi video artistici!",
-  startAt: "2025-09-01T00:00:00Z",
-  endAt: "2025-09-30T23:59:59Z",
-  prizePool: 5000,
-  status: "ACTIVE" as const,
-  entries: [
-    {
-      id: "entry-1",
-      voteCount: 1248,
-      video: {
-        id: "vid-7",
-        title: "Musa Urbana - Frammenti di Luce",
-        slug: "musa-urbana-frammenti-di-luce",
-        thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop",
-        viewCount: 890,
-        duration: 520,
-        createdAt: "2025-09-15T12:00:00Z",
-        author: { id: "user-7", username: "musa_urbana", name: "Musa Urbana", image: "https://i.pravatar.com/64?img=7" },
-      },
-    },
-    {
-      id: "entry-2",
-      voteCount: 982,
-      video: {
-        id: "vid-8",
-        title: "Street Art Live Painting",
-        slug: "street-art-live-painting",
-        thumbnail: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=400&h=300&fit=crop",
-        viewCount: 654,
-        duration: 480,
-        createdAt: "2025-09-14T15:30:00Z",
-        author: { id: "user-8", username: "bluemark", name: "Blu Mark", image: "https://i.pravatar.com/64?img=8" },
-      },
-    },
-    {
-      id: "entry-3",
-      voteCount: 756,
-      video: {
-        id: "vid-9",
-        title: "Graffiti Stories - Roma",
-        slug: "graffiti-stories-roma",
-        thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop",
-        viewCount: 445,
-        duration: 380,
-        createdAt: "2025-09-12T10:00:00Z",
-        author: { id: "user-9", username: "romano_graffiti", name: "Romano", image: "https://i.pravatar.com/64?img=9" },
-      },
-    },
-    {
-      id: "entry-4",
-      voteCount: 432,
-      video: {
-        id: "vid-10",
-        title: "Bboying Under the Bridges",
-        slug: "bboying-under-the-bridges",
-        thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
-        viewCount: 312,
-        duration: 290,
-        createdAt: "2025-09-08T18:00:00Z",
-        author: { id: "user-10", username: "breaker_kid", name: "Kid Breaker", image: "https://i.pravatar.com/64?img=10" },
-      },
-    },
-    {
-      id: "entry-5",
-      voteCount: 298,
-      video: {
-        id: "vid-11",
-        title: "Urban Canvas - Berlin Walls",
-        slug: "urban-canvas-berlin-walls",
-        thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop",
-        viewCount: 267,
-        duration: 420,
-        createdAt: "2025-09-05T14:00:00Z",
-        author: { id: "user-11", username: "berlin_street", name: "Alex K", image: "https://i.pravatar.com/64?img=11" },
-      },
-    },
-  ] as ContestEntry[],
-};
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s{2,}/g, " ").trim();
+}
 
-export default function ContestPage() {
-  const contest = mockContest;
-  const remainingDays = Math.ceil(
-    (new Date(contest.endAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  );
+export default async function ContestPage() {
+  const [contests, terms, winners] = await Promise.all([
+    fetchContests(10).catch(() => []),
+    fetchContestTerms().catch(() => []),
+    fetchVideosByTagSlug("vincitori-contest", 8).catch(() => []),
+  ]);
+
+  // Latest edition = first contest CPT entry; entries = videos carrying its contest_taxonomy term
+  const latest = contests[0] ?? null;
+  const latestTerm = terms[0] ?? null;
+  const entries = latestTerm ? await fetchVideosByContestTerm(latestTerm.id, 24).catch(() => []) : [];
+
+  const latestTitle = latest ? stripHtml(rendered(latest.title)) : "Contest Bazziba";
+  const latestDescription = latest ? stripHtml(rendered(latest.content)).slice(0, 400) : "";
 
   return (
     <div className="py-8">
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Contest Header */}
-        <div className="hero-section relative overflow-hidden rounded-2xl border mb-8">
+        {/* Contest header — real latest edition from the contest CPT */}
+        <div className="relative overflow-hidden rounded-2xl border mb-8">
           <div className="absolute inset-0 -z-10">
-            <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>
-            <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-brand-yellow/5 blur-3xl"></div>
+            <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-[#00f2ff]/5 blur-3xl" />
+            <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-[#00f2ff]/5 blur-3xl" />
           </div>
 
           <div className="p-8">
             <div className="flex items-center gap-2 mb-4">
-              <Trophy className="h-5 w-5 text-brand-yellow fill-current" />
-              <span className="text-sm font-medium text-brand-yellow">
-                CONTEST MENSILE BAZZIBA
-              </span>
+              <Trophy className="h-5 w-5 text-[#00f2ff] fill-current" />
+              <span className="text-sm font-medium text-[#00f2ff]">CONTEST MENSILE BAZZIBA</span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">{contest.title}</h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-3xl">
-              {contest.description}
-            </p>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">{latestTitle}</h1>
+            {latestDescription && (
+              <p className="text-lg text-muted-foreground mb-8 max-w-3xl">{latestDescription}</p>
+            )}
 
-            {/* Contest Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
               <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
-                <Calendar className="h-5 w-5 text-brand-yellow flex-shrink-0" />
+                <Calendar className="h-5 w-5 text-[#00f2ff] flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Inizio</p>
-                  <p className="font-medium">
-                    {new Date(contest.startAt).toLocaleDateString("it-IT")}
-                  </p>
+                  <p className="text-xs text-muted-foreground uppercase">Edizione</p>
+                  <p className="font-medium">{latestTitle}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
-                <Clock className="h-5 w-5 text-brand-yellow flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase">Giorni Rimasti</p>
-                  <p className="font-bold text-2xl text-brand-yellow">{remainingDays}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
-                <Users className="h-5 w-5 text-brand-yellow flex-shrink-0" />
+                <Users className="h-5 w-5 text-[#00f2ff] flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Partecipanti</p>
-                  <p className="font-medium">{contest.entries.length}</p>
+                  <p className="font-bold text-2xl text-[#00f2ff]">{latestTerm?.count ?? entries.length}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
-                <Trophy className="h-5 w-5 text-brand-yellow flex-shrink-0" />
+                <Medal className="h-5 w-5 text-[#00f2ff] flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Premio</p>
-                  <p className="font-bold text-xl">€{contest.prizePool.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground uppercase">Vincitori passati</p>
+                  <p className="font-bold text-2xl text-[#00f2ff]">{winners.length}</p>
                 </div>
               </div>
             </div>
 
-            <a
+            <Link
               href="/upload"
-              className="inline-flex items-center justify-center rounded-lg bg-brand-yellow px-6 py-3 text-sm font-bold text-black transition-all duration-200 hover:bg-brand-yellow-hover hover:scale-105"
+              className="inline-flex items-center justify-center rounded-lg bg-[#00f2ff] px-6 py-3 text-sm font-bold text-black transition-all duration-200 hover:bg-[#00d4e6] hover:scale-105"
             >
               <Upload className="h-5 w-5 mr-2" />
               Candida il tuo video
-            </a>
+            </Link>
           </div>
         </div>
 
-        {/* Contest Leaderboard */}
-        <div>
+        {/* Real entries for the latest edition */}
+        <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-brand-yellow" />
-              Classifica Partecipanti
+              <Trophy className="h-6 w-6 text-[#00f2ff]" />
+              {latestTerm ? `Video in gara — ${latestTerm.name}` : "Video in gara"}
             </h2>
-            <a
-              href="/contest/entries"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Vedi tutti
-            </a>
           </div>
+          <VideoGrid
+            videos={entries}
+            showAuthor
+            emptyMessage="Nessun video in gara in questa edizione — candida il tuo!"
+          />
+        </section>
 
-          <div className="space-y-3">
-            {contest.entries.map((entry, index) => (
-              <div
-                key={entry.id}
-                className="flex items-center gap-4 p-4 rounded-xl glass-card text-card-foreground"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-b from-brand-yellow to-amber-400 text-black font-bold flex-shrink-0">
-                  {index < 3 ? (
-                    <span className="text-xl">
-                      {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
-                    </span>
-                  ) : (
-                    index + 1
-                  )}
-                </div>
+        {/* Real winners hall of fame (video_tag: vincitori-contest) */}
+        {winners.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold flex items-center gap-2 mb-6">
+              <Medal className="h-6 w-6 text-[#00f2ff]" />
+              Albo d'oro — Vincitori dei contest
+            </h2>
+            <VideoGrid videos={winners} showAuthor />
+          </section>
+        )}
 
-                <Link href={`/watch/${entry.video.slug}`} className="flex-shrink-0">
-                  <img
-                    src={entry.video.thumbnail}
-                    alt={entry.video.title}
-                    className="w-24 h-16 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                  />
-                </Link>
-
-                <div className="flex-1 min-w-0">
-                  <Link href={`/watch/${entry.video.slug}`}>
-                    <h3 className="font-medium hover:text-brand-yellow line-clamp-1 transition-colors">
-                      {entry.video.title}
-                    </h3>
-                  </Link>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
-                    di{" "}
-                    <Link
-                      href={`/u/${entry.video.author.username}`}
-                      className="hover:text-brand-yellow transition-colors"
-                    >
-                      {entry.video.author.name || entry.video.author.username}
-                    </Link>
+        {/* Past editions — real contest CPT list */}
+        {contests.length > 1 && (
+          <section className="mb-12">
+            <h2 className="text-xl font-bold mb-4">Edizioni precedenti</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {contests.slice(1).map((c) => (
+                <GlassCard key={c.id} interactive={false} className="p-4 rounded-xl">
+                  <p className="font-semibold text-white">{stripHtml(rendered(c.title))}</p>
+                  <p className="text-xs text-white/40 mt-1">
+                    {new Date(c.date).toLocaleDateString("it-IT", { month: "long", year: "numeric" })}
                   </p>
-                </div>
+                </GlassCard>
+              ))}
+            </div>
+          </section>
+        )}
 
-                <div className="flex items-center gap-2 text-right">
-                  <span className="font-bold text-lg">{entry.voteCount}</span>
-                  <Share2 className="h-4 w-4 text-muted-foreground" />
-                </div>
-
-                <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50">
-                  Vota
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* How to Participate */}
-        <div className="rounded-xl border glass-card text-card-foreground p-6 mt-8">
+        {/* Rules — real WP page link */}
+        <GlassSurface tier="card" className="rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4">Come partecipare</h3>
           <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-            <li>Pubblica un video con contenuti artistici nella tua categoria preferita</li>
-            <li>Vai alla pagina del contest e clicca "Candida il tuo video"</li>
-            <li>Potresti candidare fino a 3 video al mese</li>
-            <li>Lascia che la community voti il tuo video</li>
-            <li>I 3 video con più voti vincitori ricevono premi in denaro</li>
-            <li>I vincitori vengono annunciati alla fine del periodo di contest</li>
+            <li>Pubblica il tuo video artistico su bazziba.it</li>
+            <li>Il video viene iscritto all'edizione del mese in corso</li>
+            <li>La community vota i video in gara</li>
+            <li>I vincitori entrano nell'albo d'oro con il tag &quot;Vincitori Contest&quot;</li>
           </ol>
-        </div>
+          <a
+            href="https://bazziba.it/regolamento-del-contest/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-4 text-sm text-[#00f2ff] hover:underline"
+          >
+            Leggi il regolamento completo su bazziba.it →
+          </a>
+        </GlassSurface>
       </div>
     </div>
   );

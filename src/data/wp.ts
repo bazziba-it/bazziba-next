@@ -101,6 +101,8 @@ export interface BazzibaVideo {
   thumbnail: string | null;
   authorId: number;
   authorName: string;
+  /** Real WP user slug for /u/[username] links (empty when unresolved). */
+  authorSlug: string;
   /** null → render initials avatar, never pravatar. */
   authorAvatar: string | null;
   category: string;
@@ -224,6 +226,7 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
     thumbnail,
     authorId: wp.author,
     authorName: author?.name || "Artista sconosciuto",
+    authorSlug: author?.slug || "",
     authorAvatar: avatarUrls?.["96"] || avatarUrls?.["48"] || null,
     category: catTerm?.name || "Senza categoria",
     categorySlug: catTerm?.slug || "",
@@ -314,6 +317,66 @@ export async function fetchVideoBySlug(slug: string): Promise<BazzibaVideo | nul
   if (!wp) return null;
   const users = await fetchWpAuthors([wp.author]);
   return mapVideoPage([wp], users)[0] ?? null;
+}
+
+/** Single video by numeric ID (watch page). */
+export async function fetchVideoById(id: number | string): Promise<BazzibaVideo | null> {
+  const wp = await wpFetch<WpVideo>(`/video/${id}`, { _embed: "true" }).catch((err) => {
+    console.error(`[wp] video ${id} fetch failed: ${err.message}`);
+    return null;
+  });
+  if (!wp || wp.status !== "publish") return null;
+  const users = await fetchWpAuthors([wp.author]);
+  return mapVideoPage([wp], users)[0] ?? null;
+}
+
+/** Resolve a watch-page param that may be a numeric ID or a slug. */
+export async function fetchVideoByIdOrSlug(param: string): Promise<BazzibaVideo | null> {
+  return /^\d+$/.test(param) ? fetchVideoById(param) : fetchVideoBySlug(param);
+}
+
+/** Latest blog posts (boxed home "Latest Posts" section). */
+export interface WpPost {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+}
+
+export async function fetchLatestPosts(perPage = 3): Promise<WpPost[]> {
+  const posts = await wpFetch<
+    { id: number; slug: string; date: string; title: { rendered: string } | string; excerpt: { rendered: string } | string }[]
+  >("/posts", {
+    per_page: String(perPage),
+    orderby: "date",
+    order: "desc",
+    _fields: "id,slug,date,title,excerpt",
+  }).catch((err) => {
+    console.error(`[wp] posts fetch failed: ${err.message}`);
+    return [] as never[];
+  });
+  return posts.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: stripHtml(rendered(p.title)),
+    excerpt: stripHtml(rendered(p.excerpt)).slice(0, 140),
+    date: p.date,
+  }));
+}
+
+/** Search public users by name (search page / autocomplete). */
+export async function searchUsers(query: string, perPage = 10): Promise<WpUser[]> {
+  const q = query.trim();
+  if (!q) return [];
+  return wpFetch<WpUser[]>("/users", {
+    search: q,
+    per_page: String(perPage),
+    _fields: "id,name,slug,avatar_urls,description",
+  }).catch((err) => {
+    console.error(`[wp] user search failed: ${err.message}`);
+    return [] as WpUser[];
+  });
 }
 
 /** Real MP4 + poster for a video post (watch page player). */
