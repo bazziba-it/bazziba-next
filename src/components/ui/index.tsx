@@ -6,7 +6,7 @@ import Link from "next/link";
 
 // ============= Button =============
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "gold" | "goldOutline" | "goldGhost" | "cyan" | "purple" | "blue" | "guarda";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "gold" | "goldOutline" | "goldGhost" | "cyan" | "purple" | "blue" | "guarda" | "glass";
   size?: "default" | "sm" | "lg" | "icon";
   asChild?: boolean;
 }
@@ -41,6 +41,9 @@ export function Button({
       "inline-flex items-center justify-center font-['Poppins'] font-semibold text-white bg-blue-600 rounded-full h-8 px-4 shadow-[0_0_12px_-2px_rgba(37,99,235,0.4)] hover:shadow-[0_0_20px_-2px_rgba(37,99,235,0.55)] hover:bg-blue-500 active:scale-[0.97] transition-all duration-200 ease-out",
     guarda:
       "inline-flex items-center justify-center font-['Poppins'] font-semibold text-white bg-white/10 rounded-full h-8 px-4 border border-white/20 hover:bg-white/20 hover:border-white/30 active:scale-[0.97] transition-all duration-200 ease-out",
+    // ADR-0001 §6.3 — glass variant; recipe classes live in globals.css (@layer components)
+    glass:
+      "glass glass-interactive rounded-full font-['Poppins'] font-semibold text-foreground hover:text-brand-cyan active:scale-[0.97]",
   };
 
   const sizes = {
@@ -250,3 +253,11 @@ export function ScrollArea({ children, className }: {
     </div>
   );
 }
+
+// ============= Liquid Glass 2026 (ADR-0001 D3) =============
+// "@/components/ui" stays the single import path. Server-safe half from
+// glass.tsx; client half (GlassCard/GlassNav) from glass-motion.tsx.
+export { GlassSurface, GlassButton, glassVariants, MOTION, STAGGER } from "./glass";
+export type { GlassSurfaceProps, GlassButtonProps, GlassTier } from "./glass";
+export { GlassCard, GlassNav } from "./glass-motion";
+export type { GlassCardProps, GlassNavProps } from "./glass-motion";

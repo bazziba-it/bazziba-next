@@ -1,4 +1,5 @@
-@reference "tailwindcss";
+@config "../../tailwind.config.js";      /* v4: makes the legacy config actually load (C1/C4) */
+@custom-variant dark (&:where(.dark, .dark *)); /* class-based dark mode (C5) */
 @import "tailwindcss";
 
 /* ============================================================
@@ -186,7 +187,7 @@
 
 .streamtube-card .meta .author {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #9aa7b8; /* ADR-0001 §9.1 — #6b7280 is 4.05:1 on glass, fails AA */
   margin-top: 2px;
 }
 
@@ -285,7 +286,7 @@
 
 .section-header .count {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #9aa7b8; /* ADR-0001 §9.1 — #6b7280 is 4.05:1 on glass, fails AA */
   font-weight: 400;
   margin-left: 4px;
 }
@@ -349,5 +350,303 @@
 @media (max-width: 640px) {
   .streamtube-card .meta .title {
     font-size: 0.8rem;
+  }
+}
+
+/* ============================================================
+   LIQUID GLASS 2026 — ADR-0001 (docs/adr/0001-liquid-glass-2026.md)
+   Material tokens (§4), motion tokens (§5), layer model (§7),
+   glass recipe + compat classes (§6/§10/§12.4), perf budget (§8),
+   accessibility (§9). Utility-namespace tokens live in
+   tailwind.config.js (loaded via @config, D1); the composite
+   material recipe lives here because a multi-layer shadow /
+   ::before stack is not expressible as one utility (D2).
+   ============================================================ */
+
+:root {
+  /* §4.1 blur radius — content-adaptive, capped (lg = hard cap for repeated surfaces) */
+  --glass-blur-xs: 8px;
+  --glass-blur-sm: 12px;
+  --glass-blur-md: 16px;
+  --glass-blur-lg: 24px;
+  --glass-blur-xl: 32px; /* full-screen modal scrim only */
+
+  /* §4.2 translucency / fill */
+  --glass-fill-docked: rgba(5, 10, 20, 0.55);
+  --glass-fill-card: rgba(8, 14, 26, 0.45);
+  --glass-fill-raised: rgba(11, 20, 34, 0.62);
+  --glass-fill-overlay: rgba(5, 10, 20, 0.75);
+  --glass-fill-accent: rgba(0, 242, 255, 0.10);
+  --glass-scrim-media: linear-gradient(to top, rgba(5, 10, 20, 0.88), rgba(5, 10, 20, 0.75));
+
+  /* §4.3 specular highlight + edge light */
+  --glass-specular-top: rgba(255, 255, 255, 0.55);   /* inset 0 1px 0 — the "wet edge" */
+  --glass-specular-bottom: rgba(255, 255, 255, 0.12); /* never stronger than the top */
+  --glass-edge-hairline: 1px solid rgba(255, 255, 255, 0.10);
+  --glass-edge-light: 1px solid rgba(0, 242, 255, 0.35); /* accent rim: focus/active/featured only */
+  --glass-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 28%, transparent 58%);
+
+  /* §4.4 refraction layers (count, not pixels): tint fill + specular/sheen film;
+     hero/modal may add the cyan rim as ::after. No surface takes 4+. */
+  --glass-refraction-layers: 2;
+
+  /* §5.1 durations — exit is always faster than enter */
+  --dur-instant: 100ms;
+  --dur-fast: 180ms;
+  --dur-base: 260ms;
+  --dur-slow: 420ms;
+  --dur-exit: 200ms;
+
+  /* §5.2 easings */
+  --ease-glass-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-glass-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* §7 layering model over #050a14 */
+  --z-base: 0;
+  --z-ambient: 1;
+  --z-content: 10;
+  --z-glass: 20;
+  --z-docked: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+}
+
+/* §6.1 + §12.4 — the recipe lives once, keyed on classes emitted by
+   glassVariants (CVA) so raw-class call sites (§10) keep working during
+   the incremental migration. @layer components keeps utilities winning:
+   the 13 raw .glass-card / .liquid-glass sites keep their existing
+   rounded / padding utilities. */
+@layer components {
+  /* Base — every glass surface (tier card defaults; tiers override below) */
+  .glass,
+  .glass-card,
+  .glass-docked,
+  .glass-nav,
+  .glass-raised,
+  .glass-overlay,
+  .liquid-glass {
+    position: relative;
+    isolation: isolate;
+    border: var(--glass-edge-hairline);
+    background: var(--glass-fill-card);
+    backdrop-filter: blur(var(--glass-blur-md));
+    -webkit-backdrop-filter: blur(var(--glass-blur-md));
+    border-radius: 1.25rem; /* token: rounded-glass-card */
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 var(--glass-specular-top),
+      inset 0 -1px 0 var(--glass-specular-bottom); /* token: shadow-glass-2 */
+    transition:
+      transform var(--dur-fast) var(--ease-glass-out),
+      box-shadow var(--dur-fast) var(--ease-glass-out),
+      background-color var(--dur-fast) var(--ease-glass-out),
+      border-color var(--dur-fast) var(--ease-glass-out);
+  }
+
+  /* §4.3 sheen film — decorative, pointer-events none (§9.5) */
+  .glass::before,
+  .glass-card::before,
+  .glass-raised::before,
+  .glass-overlay::before,
+  .liquid-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--glass-sheen);
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  /* §8 — sheen suppressed on docked surfaces and inside scrolling lists */
+  .glass-docked::before,
+  .glass-nav::before,
+  [data-glass-tier="docked"]::before,
+  [data-glass-scroll]::before {
+    display: none;
+  }
+
+  /* ===== §4.5 elevation tiers ===== */
+
+  /* docked — header, mobile bottom nav: full-bleed, never lifts */
+  .glass-docked,
+  .glass-nav {
+    border-radius: 0;
+    border-width: 0 0 1px 0; /* bottom hairline only (§6.4) */
+    background: var(--glass-fill-docked);
+    backdrop-filter: blur(var(--glass-blur-sm));
+    -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35); /* token: shadow-glass-1 */
+  }
+
+  /* raised — hero panel, bento hero tile (also the .liquid-glass compat tier, §10) */
+  .glass-raised,
+  .liquid-glass {
+    border-radius: 1.5rem; /* token: rounded-glass-panel */
+    background: var(--glass-fill-raised);
+    backdrop-filter: blur(var(--glass-blur-lg));
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 var(--glass-specular-top),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.18); /* token: shadow-glass-3 */
+  }
+
+  /* overlay — modal, sheet, command palette */
+  .glass-overlay {
+    border-radius: 1.5rem; /* token: rounded-glass-panel */
+    background: var(--glass-fill-overlay);
+    backdrop-filter: blur(var(--glass-blur-xl));
+    -webkit-backdrop-filter: blur(var(--glass-blur-xl));
+    box-shadow:
+      0 32px 80px rgba(0, 0, 0, 0.65),
+      inset 0 1px 0 var(--glass-specular-top); /* token: shadow-glass-4 */
+  }
+
+  /* §4.1 content adaptation — [data-glass-context="media"] steps blur up once, capped */
+  .glass-docked[data-glass-context="media"],
+  .glass-nav[data-glass-context="media"] {
+    backdrop-filter: blur(var(--glass-blur-md));
+    -webkit-backdrop-filter: blur(var(--glass-blur-md));
+  }
+  .glass[data-glass-context="media"],
+  .glass-card[data-glass-context="media"] {
+    backdrop-filter: blur(var(--glass-blur-lg));
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  }
+  /* raised is already at the lg hard cap; overlay stays xl (modal-only) */
+
+  /* Accent — cyan edge-light + tint; active/selected/featured only, not decoration */
+  .glass-accent {
+    background: var(--glass-fill-accent);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 var(--glass-specular-top),
+      0 0 16px -2px rgba(0, 242, 255, 0.40); /* token: shadow-cyan-glow-1 */
+  }
+  /* §4.4 third refraction layer: the cyan rim as a separate ::after ring */
+  .glass-accent::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: var(--glass-edge-light);
+    pointer-events: none;
+  }
+
+  /* §9.2 scrim rule — mandatory under text on image-backed glass (α ≥ 0.75) */
+  .glass-media {
+    background-image: var(--glass-scrim-media);
+  }
+
+  /* §4.5 hover lift + press — card/raised only, opt-in via .glass-interactive;
+     static panels (contest stats, FAQ) never get this class. Docked never lifts. */
+  .glass-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 var(--glass-specular-top),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.18); /* one shadow step up */
+  }
+  .glass-raised.glass-interactive:hover {
+    box-shadow:
+      0 32px 80px rgba(0, 0, 0, 0.65),
+      inset 0 1px 0 var(--glass-specular-top); /* raised steps to glass-4 */
+  }
+  .glass-interactive:active {
+    transform: translateY(0) scale(0.99);
+    transition-duration: var(--dur-instant);
+  }
+
+  /* §6.4 — GlassNav condensed state (scrollY > 8, single passive listener) */
+  .glass-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 4rem;
+    transition: height var(--dur-base) var(--ease-glass-out);
+  }
+  .glass-nav-condensed {
+    background: rgba(5, 10, 20, 0.78);
+  }
+  .glass-nav-condensed .glass-nav-inner {
+    height: 3.75rem; /* drops 4px */
+  }
+
+  /* §10 compat — hero layout tokens (C7) */
+  .container-max {
+    max-width: 80rem; /* D8 — max-w-7xl (1280px) is canonical */
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  .hero-ambient {
+    /* layer-1 ambient context: blobs live in markup (featured-hero.tsx),
+       isolation keeps them under content per §7. @keyframes-free per §10. */
+    position: relative;
+    isolation: isolate;
+  }
+}
+
+/* §8 — mobile: ≤ 8px blur below 640px */
+@media (max-width: 640px) {
+  .glass,
+  .glass-card,
+  .glass-docked,
+  .glass-nav,
+  .glass-raised,
+  .glass-overlay,
+  .liquid-glass {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* §9.3 — prefers-reduced-motion: one global switch, no per-component work */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* §9.4 — prefers-reduced-transparency: glass collapses to solid navy */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-card,
+  .glass-docked,
+  .glass-nav,
+  .glass-raised,
+  .glass-overlay,
+  .liquid-glass,
+  [data-glass-tier] {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(5, 10, 20, 0.94); /* solid navy */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .glass::before,
+  .glass::after,
+  .glass-card::before,
+  .glass-card::after,
+  .glass-nav::before,
+  .glass-nav::after,
+  .glass-raised::before,
+  .glass-raised::after,
+  .glass-overlay::before,
+  .glass-overlay::after,
+  .liquid-glass::before,
+  .liquid-glass::after,
+  [data-glass-tier]::before,
+  [data-glass-tier]::after {
+    display: none;
   }
 }
