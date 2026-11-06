@@ -16,13 +16,24 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
       <a href={`/watch/${video.id}`} className="group block">
         <div className="relative aspect-video overflow-hidden bg-black">
           {video.thumbnail ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={video.thumbnail}
-              alt={video.title}
-              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-            />
+            <>
+              {/* Blurred fill behind portrait thumbnails */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={video.thumbnail}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full object-cover scale-125 blur-xl opacity-30"
+                loading="lazy"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="relative h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+            </>
           ) : (
             <ThumbPlaceholder title={video.title} className="h-full w-full" />
           )}

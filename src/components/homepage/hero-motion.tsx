@@ -83,13 +83,25 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
             aria-hidden={i !== current}
           >
             {video.thumbnail ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading={i === 0 ? "eager" : "lazy"}
-              />
+              <>
+                {/* Blurred backdrop fill — portrait posters get a soft side fill
+                    instead of hard crops (landscape fully covers it anyway) */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={video.thumbnail}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-40"
+                  loading={i === 0 ? "eager" : "lazy"}
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading={i === 0 ? "eager" : "lazy"}
+                />
+              </>
             ) : (
               <ThumbPlaceholder title={video.title} className="absolute inset-0" />
             )}

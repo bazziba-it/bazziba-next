@@ -185,16 +185,33 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-/** Clean WP post title: strip #TAG noise, normalize whitespace */
+/** Clean WP post title: strip #TAG noise, boilerplate disclaimers, normalize spacing. */
 function cleanTitle(raw: string): string {
   let t = raw.replace(/#\S+/g, "").replace(/[-–—]+/g, "—").trim();
-  t = t.replace(/\s{2,}/g, " ").trim();
+  // Repeated rights-disclaimer boilerplate (very common in this corpus) — strip to end of title
+  t = t.replace(/\s*[-–—,]?\s*(non ho i diritti|nessun diritto|ho diritti|diritt[io] sul brano|belle cover italiane).*$/gi, "");
+  // "&" as Italian "e" when glued to a lowercase word ("Perche& fai" → "Perche e fai"; "R&B" untouched)
+  t = t.replace(/(\p{Ll})&\s+/gu, "$1 e ").replace(/\s+&(\p{Ll})/gu, " e $1");
+  // Missing space at lowercase→uppercase boundary ("CantautoreBELLE" → "Cantautore BELLE")
+  t = t.replace(/(\p{Ll})(\p{Lu})/gu, "$1 $2");
+  t = t.replace(/\s{2,}/g, " ").replace(/[—–\-,;.:\s]+$/g, "").trim();
   if (t.length > 90) {
     const commaIdx = t.indexOf(",");
     if (commaIdx > 40) t = t.slice(0, commaIdx).trim();
   }
   if (t.length > 80) t = t.slice(0, 80).trim();
   return t || raw;
+}
+
+/** True when the WP title is a raw filename/UUID/numeric placeholder, not a real title. */
+function isPlaceholderTitle(t: string): boolean {
+  const s = t.trim();
+  if (!s) return true;
+  if (/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(s)) return true; // UUID
+  if (/^[0-9a-f]{20,}$/i.test(s)) return true; // long hex blob
+  if (/^\d+$/.test(s)) return true; // pure numeric (media id)
+  if (/\.(mp4|mov|webm|jpg|jpeg|png)$/i.test(s)) return true; // filename
+  return false;
 }
 
 /** Flatten embedded terms and index by term ID (taxonomy labels are unreliable). */
@@ -208,7 +225,7 @@ function embeddedTermsById(wp: WpVideo): Map<number, { name: string; slug: strin
 
 /** Map WP video to frontend shape. Real data only — missing fields become null. */
 export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
-  const title = cleanTitle(rendered(wp.title));
+  let title = cleanTitle(rendered(wp.title));
   const description = stripHtml(rendered(wp.excerpt)).slice(0, 300);
 
   const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
@@ -223,6 +240,13 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
     .filter((s): s is string => Boolean(s));
 
   const avatarUrls = author?.avatar_urls ?? author?.avatarUrls;
+
+  // Placeholder titles (UUID/filename/numeric from uploads without a title)
+  // become "{author} — {category}" instead of leaking raw IDs into the UI.
+  if (isPlaceholderTitle(title)) {
+    const who = author?.name?.trim();
+    title = who && who !== "Artista sconosciuto" ? `${who} — ${catTerm?.name || "Video"}` : `Video — ${catTerm?.name || "Bazziba"}`;
+  }
 
   return {
     id: String(wp.id),
@@ -308,9 +332,10 @@ function withMediaMeta(videos: BazzibaVideo[], map: Map<number, VideoMediaMeta>)
 /* Videos                                                              */
 /* ------------------------------------------------------------------ */
 
-export async function fetchWpVideos(perPage = 20): Promise<WpVideo[]> {
+export async function fetchWpVideos(perPage = 20, page = 1): Promise<WpVideo[]> {
   return wpFetch<WpVideo[]>("/video", {
     per_page: String(perPage),
+    page: String(page),
     _embed: "true",
     orderby: "date",
     order: "desc",
@@ -377,8 +402,8 @@ async function withAuthors(wpVideos: WpVideo[]): Promise<BazzibaVideo[]> {
 }
 
 /** Latest videos, mapped with authors. */
-export async function fetchBazzibaVideos(perPage = 30): Promise<BazzibaVideo[]> {
-  return withAuthors(await fetchWpVideos(perPage));
+export async function fetchBazzibaVideos(perPage = 30, page = 1): Promise<BazzibaVideo[]> {
+  return withAuthors(await fetchWpVideos(perPage, page));
 }
 
 /** Single video by slug (watch page). */
@@ -466,10 +491,11 @@ export async function fetchVideoMedia(postId: number | string): Promise<WpVideoM
 }
 
 /** Videos in a video_category term. */
-export async function fetchVideosByCategory(categoryId: number, perPage = 24): Promise<BazzibaVideo[]> {
+export async function fetchVideosByCategory(categoryId: number, perPage = 24, page = 1): Promise<BazzibaVideo[]> {
   const rows = await wpFetch<WpVideo[]>("/video", {
     video_category: String(categoryId),
     per_page: String(perPage),
+    page: String(page),
     _embed: "true",
     orderby: "date",
     order: "desc",
@@ -517,12 +543,13 @@ export async function fetchVideosByContestTerm(termId: number, perPage = 24): Pr
 }
 
 /** Full-text video search. */
-export async function searchVideos(query: string, perPage = 24): Promise<BazzibaVideo[]> {
+export async function searchVideos(query: string, perPage = 24, page = 1): Promise<BazzibaVideo[]> {
   const q = query.trim();
   if (!q) return [];
   const rows = await wpFetch<WpVideo[]>("/video", {
     search: q,
     per_page: String(perPage),
+    page: String(page),
     _embed: "true",
   });
   return withAuthors(rows);

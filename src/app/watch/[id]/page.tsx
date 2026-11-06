@@ -8,8 +8,28 @@ import {
   fetchVideosByCategory,
 } from "@/data/wp";
 import WatchClient from "./watch-client";
+import type { Metadata } from "next";
 
 export const revalidate = 300;
+
+/** Per-video SEO from real WP data (title, description, OG thumbnail). */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const video = await fetchVideoByIdOrSlug(id).catch(() => null);
+  if (!video) return { title: "Video non trovato" };
+  const description = video.description || `Guarda "${video.title}" di ${video.authorName} su BAZZIBA!`;
+  return {
+    title: video.title,
+    description,
+    openGraph: {
+      title: video.title,
+      description,
+      type: "video.other",
+      images: video.thumbnail ? [{ url: video.thumbnail }] : undefined,
+    },
+    twitter: { card: "summary_large_image", title: video.title, description },
+  };
+}
 
 export default async function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,15 +45,33 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
   const related = relatedAll.filter((v) => v.id !== video.id).slice(0, 5);
   const mp4 = media.mp4 ?? null;
   const poster = media.poster ?? video.thumbnail;
+  const merged = { ...video, durationSec: media.durationSec ?? video.durationSec, resolution: media.resolution ?? video.resolution };
+
+  // VideoObject structured data (Google video rich results) — real fields only
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: merged.title,
+    description: merged.description || undefined,
+    thumbnailUrl: merged.thumbnail ?? undefined,
+    uploadDate: merged.date,
+    duration: merged.durationSec ? `PT${Math.floor(merged.durationSec / 60)}M${merged.durationSec % 60}S` : undefined,
+    contentUrl: mp4 ?? undefined,
+    author: { "@type": "Person", name: merged.authorName },
+    isPartOf: { "@type": "WebSite", name: "BAZZIBA!", url: "https://bazziba.it" },
+  };
 
   return (
-    <WatchClient
-      video={{ ...video, durationSec: media.durationSec ?? video.durationSec, resolution: media.resolution ?? video.resolution }}
-      mp4={mp4}
-      poster={poster}
-      comments={comments}
-      related={related}
-      sourceUrl={`https://bazziba.it/video/${video.slug}/`}
-    />
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <WatchClient
+        video={merged}
+        mp4={mp4}
+        poster={poster}
+        comments={comments}
+        related={related}
+        sourceUrl={`https://bazziba.it/video/${video.slug}/`}
+      />
+    </>
   );
 }

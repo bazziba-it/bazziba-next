@@ -6,6 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Search, Video, User, Tag } from "lucide-react";
 import { VideoCard } from "@/components/video/video-card";
+import { LoadMoreVideos } from "@/components/video/load-more";
 import { RealAvatar } from "@/components/ui/media";
 import type { BazzibaVideo, WpUser, WpTerm } from "@/data/wp";
 
@@ -83,11 +84,13 @@ export default function SearchClient({ query, videos, users, categories }: Searc
                       <Video className="h-5 w-5 text-[#00f2ff]" />
                       Video
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                      {videos.map((video, i) => (
-                        <VideoCard key={video.id} video={video} showAuthor staggerIndex={i} />
-                      ))}
-                    </div>
+                    <LoadMoreVideos
+                      initialVideos={videos}
+                      scope="search"
+                      query={query}
+                      perPage={24}
+                      showAuthor
+                    />
                   </section>
                 )}
 

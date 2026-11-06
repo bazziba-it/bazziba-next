@@ -1,6 +1,7 @@
 /** @format */
 
 import { VideoGrid, CategoryGrid } from "@/components/video/video-card";
+import { LoadMoreVideos } from "@/components/video/load-more";
 import { fetchBazzibaVideos, fetchVideoCategories } from "@/data/wp";
 import Link from "next/link";
 
@@ -8,7 +9,7 @@ export const revalidate = 300;
 
 export default async function FeedPage() {
   const [videos, categories] = await Promise.all([
-    fetchBazzibaVideos(48).catch(() => []),
+    fetchBazzibaVideos(24).catch(() => []),
     fetchVideoCategories().catch(() => []),
   ]);
 
@@ -34,12 +35,17 @@ export default async function FeedPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-6">
           <CategoryGrid categories={categories} className="hidden lg:block" />
-          <VideoGrid
-            videos={videos}
-            showAuthor
-            title="Ultime pubblicazioni"
-            emptyMessage="Nessun video trovato — bazziba.it non risponde."
-          />
+          <div>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00f2ff]" />
+              Ultime pubblicazioni
+            </h2>
+            {videos.length === 0 ? (
+              <p className="text-center py-12 text-white/40">Nessun video trovato — bazziba.it non risponde.</p>
+            ) : (
+              <LoadMoreVideos initialVideos={videos} scope="latest" perPage={24} showAuthor />
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { fetchVideoCategories, fetchVideosByCategory } from "@/data/wp";
-import { VideoGrid } from "@/components/video/video-card";
+import { LoadMoreVideos } from "@/components/video/load-more";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -23,11 +23,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         </h1>
 
         <div className="mt-6">
-          <VideoGrid
-            videos={videos}
-            showAuthor
-            emptyMessage={`Nessun video nella categoria ${category.name}`}
-          />
+          {videos.length === 0 ? (
+            <p className="text-center py-12 text-white/40">Nessun video nella categoria {category.name}</p>
+          ) : (
+            <LoadMoreVideos initialVideos={videos} scope="category" categoryId={category.id} perPage={24} showAuthor />
+          )}
         </div>
 
         <div className="mt-8 pt-6 border-t border-white/5 flex gap-4">
