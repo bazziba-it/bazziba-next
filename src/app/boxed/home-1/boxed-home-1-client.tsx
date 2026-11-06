@@ -34,43 +34,6 @@ function formatDateIT(iso: string): string {
   }
 }
 
-/* ---- Header ---- */
-function Header() {
-  return (
-    <div className="sticky top-0 z-50 bg-[#121212] border-b border-[#32373c]">
-      <div className="max-w-[1240px] mx-auto flex items-center justify-between px-4 h-[64px]">
-        <Link href="/boxed/home-1" className="flex items-center gap-2">
-          <span className="text-3xl font-bold text-[#00d084]">BAZZIBA!</span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <form action="/search" method="get" className="relative">
-            <input
-              name="q"
-              type="text"
-              placeholder="Cerca video..."
-              className="bg-[#1a1d26] text-[#abb8c3] text-sm px-3 py-1.5 rounded-lg w-[200px] border border-[#32373c] focus:outline-none focus:border-[#00d084]/50 placeholder:text-[#747775]"
-            />
-          </form>
-          <Link
-            href="/upload"
-            className="bg-[#00d084] text-[#121212] px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-[#00e694] transition-colors"
-          >
-            Carica
-          </Link>
-          <a
-            href="https://bazziba.it/registrazione/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-[#00d084] text-[#121212] px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-[#00e694] transition-colors"
-          >
-            REGISTRATI
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ---- Eye Catching Slider — real videos, real category/author meta ---- */
 function EyeCatchingSlider({ videos }: { videos: BazzibaVideo[] }) {
   const slider = videos.slice(0, 5);
@@ -379,28 +342,6 @@ function AboutSection() {
   );
 }
 
-/* ---- Footer ---- */
-function Footer() {
-  return (
-    <footer className="bg-[#121212] border-t border-[#32373c] mt-4">
-      <div className="max-w-[1240px] mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold text-[#00d084]">BAZZIBA!</span>
-            <span className="text-[#747775] text-sm">© 2026</span>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-[#747775]">
-            <Link href="/" className="hover:text-[#00d084] transition-colors">Home</Link>
-            <Link href="/feed" className="hover:text-[#00d084] transition-colors">Video</Link>
-            <Link href="/contest" className="hover:text-[#00d084] transition-colors">Contest</Link>
-            <a href="https://bazziba.it" target="_blank" rel="noopener noreferrer" className="hover:text-[#00d084] transition-colors">bazziba.it</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 /* ---- Main Client Page ---- */
 export default function BoxedHome1Client() {
   const [videos, setVideos] = useState<BazzibaVideo[]>([]);
@@ -450,7 +391,6 @@ export default function BoxedHome1Client() {
   return (
     <div className="min-h-screen bg-[#161823] flex flex-col">
       <div className="w-full max-w-[1240px] mx-auto flex-1 flex flex-col px-0">
-        <Header />
         <EyeCatchingSlider videos={videos} />
         <div className="mt-4 flex gap-4 px-4 pb-4 flex-1">
           <SidebarCategories categories={categories} />
@@ -461,7 +401,6 @@ export default function BoxedHome1Client() {
         <HandPickedSection videos={videos} />
         <LatestPostsSection posts={posts} />
         <AboutSection />
-        <Footer />
       </div>
     </div>
   );

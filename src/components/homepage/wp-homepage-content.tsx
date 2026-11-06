@@ -1,142 +1,25 @@
 /** @format */
 
-"use client";
-
 import Link from "next/link";
 import FeaturedHero from "@/components/homepage/featured-hero";
-import Footer from "@/components/layout/footer";
 import { GlassCard, FadeIn } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
 import { formatDurationSec, timeAgoIT } from "@/lib/format";
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
-import { Play, ChevronLeft, ChevronRight, Share2, User } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-
-/* ===== StreamTube Eye-Catching Slider — real WP data, no fabricated metrics ===== */
-function StreamTubeSlider({ videos }: { videos: BazzibaVideo[] }) {
-  const sliderVideos = videos.slice(0, 5);
-  const [current, setCurrent] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (sliderVideos.length < 2) return;
-    intervalRef.current = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % sliderVideos.length);
-    }, 6000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [sliderVideos.length]);
-
-  const restart = (next: (p: number) => number) => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setCurrent(next);
-    intervalRef.current = setInterval(() => {
-      setCurrent((p) => (p + 1) % sliderVideos.length);
-    }, 6000);
-  };
-
-  if (sliderVideos.length === 0) return null;
-
-  return (
-    <section className="relative w-full h-[420px] md:h-[500px] overflow-hidden bg-black rounded-2xl mb-6 shadow-2xl">
-      {sliderVideos.map((video, i) => (
-        <div
-          key={video.id}
-          className={`absolute inset-0 flex items-center justify-center p-8 transition-opacity duration-700 ${
-            i === current ? "opacity-[1] z-10" : "opacity-[0] z-0"
-          }`}
-        >
-          <div className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl group">
-            <div className="absolute inset-0 bg-black">
-              {video.thumbnail ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={video.thumbnail} alt={video.title} className="h-full w-full object-cover" />
-              ) : (
-                <ThumbPlaceholder title={video.title} className="h-full w-full" />
-              )}
-            </div>
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
-
-            <Link href={`/watch/${video.id}`} className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-brand-cyan/90 flex items-center justify-center shadow-2xl shadow-cyan-glow-1 hover:scale-110 transition-transform cursor-pointer">
-                <Play className="h-10 w-10 text-black ml-0.5" />
-              </div>
-            </Link>
-
-            <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none">
-              <h3 className="text-xl font-bold text-white font-['Poppins'] drop-shadow-lg mb-2">
-                {video.title}
-              </h3>
-              <div className="flex items-center gap-4 text-sm text-white/70">
-                <span className="flex items-center gap-1.5">
-                  <User className="h-3 w-3" />
-                  {video.authorName}
-                </span>
-                {video.categorySlug && (
-                  <span className="bg-brand-cyan/20 text-brand-cyan px-2 py-0.5 rounded-full text-xs">
-                    {video.category}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-
-      <button
-        onClick={() => restart((prev) => (prev - 1 + sliderVideos.length) % sliderVideos.length)}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-20"
-        aria-label="Precedente"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
-        onClick={() => restart((prev) => (prev + 1) % sliderVideos.length)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-navy-800/70 border border-white/10 flex items-center justify-center hover:bg-brand-navy-700/80 transition-colors text-white z-20"
-        aria-label="Successivo"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
-
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-        {sliderVideos.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => restart(() => i)}
-            className={`w-2 h-2 rounded-full transition-all ${
-              i === current ? "bg-brand-cyan w-6" : "bg-white/30 hover:bg-white/50"
-            }`}
-            aria-label={`Slide ${i + 1}`}
-          />
-        ))}
-      </div>
-
-      <div className="absolute top-4 left-4">
-        <span className="text-[11px] uppercase tracking-widest text-brand-cyan font-semibold bg-brand-navy-800/70 border border-white/10 px-2 py-1 rounded-full">
-          In Evidenza
-        </span>
-      </div>
-    </section>
-  );
-}
 
 interface WpHomepageContentProps {
   videos: BazzibaVideo[];
-  sliderVideos: BazzibaVideo[];
-  heroVideo: BazzibaVideo | null;
+  /** In-evidenza videos for the rotating hero carousel. */
+  heroVideos: BazzibaVideo[];
   contestCards: { title: string; subtitle: string }[];
   featuredArtists: { name: string; role: string; avatar?: string | null }[];
   categories: WpTerm[];
 }
 
-/* ===== Main homepage content — props from the server page, real WP data only ===== */
+/* ===== Main homepage content — server component, props from the server page ===== */
 export default function WpHomepageContent({
   videos,
-  sliderVideos,
-  heroVideo,
+  heroVideos,
   contestCards,
   featuredArtists,
   categories,
@@ -153,7 +36,6 @@ export default function WpHomepageContent({
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -161,17 +43,12 @@ export default function WpHomepageContent({
   return (
     <div className="min-h-screen flex flex-col bg-[#050a14]">
       <main className="flex-1 pt-[64px]">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-          <StreamTubeSlider videos={sliderVideos} />
-        </div>
-
-        <div className="max-w-full">
-          <FeaturedHero
-            featuredVideo={heroVideo}
-            contestCards={contestCards}
-            featuredArtists={featuredArtists}
-          />
-        </div>
+        {/* Rotating hero carousel: in-evidenza videos + contest cards + artists */}
+        <FeaturedHero
+          featuredVideos={heroVideos}
+          contestCards={contestCards}
+          featuredArtists={featuredArtists}
+        />
 
         {/* Mobile category chips — horizontal scroll (sidebar is xl-only) */}
         {categories.length > 0 && (
@@ -300,8 +177,6 @@ export default function WpHomepageContent({
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -18,8 +18,8 @@ export default async function Page() {
     fetchVideoCategories().catch(() => []),
   ]);
 
-  const heroVideo = featured[0] ?? videos[0] ?? null;
-  const sliderVideos = featured.length >= 3 ? featured : videos.slice(0, 5);
+  // Rotating hero: in-evidenza picks, filled with latest videos when short
+  const heroVideos = featured.length >= 3 ? featured.slice(0, 5) : videos.slice(0, 5);
 
   const contestCards = contests.map((c) => ({
     title: typeof c.title === "string" ? c.title : c.title.rendered,
@@ -40,8 +40,7 @@ export default async function Page() {
   return (
     <WpHomepageContent
       videos={videos}
-      sliderVideos={sliderVideos}
-      heroVideo={heroVideo}
+      heroVideos={heroVideos}
       contestCards={contestCards}
       featuredArtists={featuredArtists}
       categories={categories}
