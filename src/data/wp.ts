@@ -285,6 +285,14 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
   const colId = wp.video_collection?.[0] ?? null;
   const colTerm = colId != null ? terms.get(colId) : undefined;
 
+  // video_collection names are "{user-email} - {Title}" — never leak the email
+  const cleanCollectionName = (raw?: string): string => {
+    if (!raw) return "";
+    const m = raw.match(/^.+?\s+-\s+(.+)$/);
+    const tail = m ? m[1].trim() : raw;
+    return tail.includes("@") ? "Raccolta" : tail;
+  };
+
   const avatarUrls = author?.avatar_urls ?? author?.avatarUrls;
 
   // Placeholder titles (UUID/filename/numeric from uploads without a title)
@@ -311,7 +319,7 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
     videoUrl: null,
     tags: tagSlugs,
     collectionId: colId,
-    collectionName: colTerm?.name ?? "",
+    collectionName: cleanCollectionName(colTerm?.name),
     collectionSlug: colTerm?.slug ?? "",
     durationSec: null,
     resolution: null,

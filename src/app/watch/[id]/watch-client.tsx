@@ -127,13 +127,14 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
               )}
             </GlassSurface>
 
-            {/* Action row — like is local UI state (real counts aren't exposed by the API) */}
-            <div className="flex items-center gap-3">
+            {/* Action row — like is local UI state (real counts aren't exposed by the API).
+                Horizontally scrollable on narrow screens so every action stays reachable. */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 [mask-image:linear-gradient(to_right,black_94%,transparent)]">
               <motion.button
                 onClick={() => setIsLiked(!isLiked)}
                 whileTap={{ scale: 0.92 }}
                 transition={MOTION.press}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 ${
                   isLiked
                     ? "bg-red-500/10 text-red-500 border border-red-500/20"
                     : "bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -154,7 +155,7 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
 
               <button
                 onClick={copyToClipboard}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
               >
                 {copied ? (
                   <>
@@ -176,7 +177,7 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
                   download
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
                 >
                   <Download className="h-4 w-4" />
                   Scarica
@@ -199,7 +200,7 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
                   setSaved(added);
                 }}
                 aria-pressed={saved}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
                   saved
                     ? "bg-[#00f2ff]/15 text-[#00f2ff] border border-[#00f2ff]/30"
                     : "bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -213,7 +214,7 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
               <div className="relative">
                 <button
                   onClick={() => setEmbedOpen((v) => !v)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
                 >
                   <Code className="h-4 w-4" />
                   Incorpora
