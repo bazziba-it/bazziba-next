@@ -9,7 +9,7 @@ import { MOTION } from "@/components/ui/glass";
 import { searchVideos, searchUsers, fetchVideoCategories, type BazzibaVideo, type WpUser, type WpTerm } from "@/data/wp";
 import { RealAvatar } from "@/components/ui/media";
 
-export function SearchAutocomplete() {
+export function SearchAutocomplete({ inputClassName = "" }: { inputClassName?: string }) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [videos, setVideos] = useState<BazzibaVideo[]>([]);
@@ -86,7 +86,7 @@ export function SearchAutocomplete() {
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           placeholder="Cerca video, canali, categorie..."
-          className="w-full rounded-full border border-input pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan bg-background transition-all duration-200"
+          className={`w-full rounded-full border border-input pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan bg-background transition-all duration-200 ${inputClassName}`}
         />
       </form>
 

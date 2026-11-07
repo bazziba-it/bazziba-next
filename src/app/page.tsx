@@ -6,16 +6,18 @@ import {
   fetchVideosByTagSlug,
   fetchContests,
   fetchVideoCategories,
+  fetchSiteStats,
 } from "@/data/wp";
 
 export const revalidate = 300;
 
 export default async function Page() {
-  const [videos, featured, contests, categories] = await Promise.all([
+  const [videos, featured, contests, categories, stats] = await Promise.all([
     fetchBazzibaVideos(30).catch(() => []),
     fetchVideosByTagSlug("in-evidenza", 5).catch(() => []),
     fetchContests(2).catch(() => []),
     fetchVideoCategories().catch(() => []),
+    fetchSiteStats().catch(() => ({ videos: 0, artists: 0, comments: 0 })),
   ]);
 
   // Rotating hero: in-evidenza picks, filled with latest videos when short
@@ -44,6 +46,7 @@ export default async function Page() {
       contestCards={contestCards}
       featuredArtists={featuredArtists}
       categories={categories}
+      stats={stats}
     />
   );
 }

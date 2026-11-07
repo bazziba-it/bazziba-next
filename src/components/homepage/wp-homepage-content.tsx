@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import FeaturedHero from "@/components/homepage/featured-hero";
+import { HeroIntro } from "@/components/homepage/hero-intro";
 import { GlassCard, FadeIn } from "@/components/ui";
 import { ThumbPlaceholder, RealAvatar, SafeImage } from "@/components/ui/media";
 import { formatDurationSec, timeAgoIT } from "@/lib/format";
@@ -10,6 +11,7 @@ import type { BazzibaVideo, WpTerm } from "@/data/wp";
 
 interface WpHomepageContentProps {
   videos: BazzibaVideo[];
+  stats: { videos: number; artists: number; comments: number };
   /** In-evidenza videos for the rotating hero carousel. */
   heroVideos: BazzibaVideo[];
   contestCards: { title: string; subtitle: string }[];
@@ -24,6 +26,7 @@ export default function WpHomepageContent({
   contestCards,
   featuredArtists,
   categories,
+  stats,
 }: WpHomepageContentProps) {
   if (videos.length === 0) {
     return (
@@ -44,6 +47,9 @@ export default function WpHomepageContent({
   return (
     <div className="min-h-screen flex flex-col bg-[#050a14]">
       <main className="flex-1 pt-[64px]">
+        {/* Live intro strip: headline + real counters + search CTA */}
+        <HeroIntro stats={stats} />
+
         {/* Rotating hero carousel: in-evidenza videos + contest cards + artists */}
         <FeaturedHero
           featuredVideos={heroVideos}

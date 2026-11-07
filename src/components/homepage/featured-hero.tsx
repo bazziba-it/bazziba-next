@@ -19,7 +19,7 @@ export default function FeaturedHero({
   featuredArtists = [],
 }: FeaturedHeroProps) {
   return (
-    <section className="relative pt-[72px] pb-6 overflow-hidden hero-ambient">
+    <section className="relative pt-2 pb-6 overflow-hidden hero-ambient">
       {/* Ambient glow blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-80px] right-[-60px] w-[500px] h-[500px] rounded-full bg-brand-cyan/5 blur-3xl animate-pulse" />

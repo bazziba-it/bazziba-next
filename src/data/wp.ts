@@ -638,6 +638,44 @@ export async function fetchContestTerms(): Promise<WpTerm[]> {
 }
 
 /* ------------------------------------------------------------------ */
+/* Site stats (real X-WP-Total counts)                                 */
+/* ------------------------------------------------------------------ */
+
+export interface WpSiteStats {
+  videos: number;
+  artists: number;
+  comments: number;
+}
+
+/** Real totals from WP's X-WP-Total headers (per_page=1 — one tiny call each). */
+export async function fetchSiteStats(): Promise<WpSiteStats> {
+  const cached = getCached<WpSiteStats>("__site_stats");
+  if (cached) return cached;
+
+  async function totalOf(path: string): Promise<number> {
+    try {
+      const res = await fetch(`${WP_BASE}${path}?per_page=1`, {
+        next: { revalidate: 600 },
+        signal: AbortSignal.timeout(8000),
+      } as RequestInit);
+      if (!res.ok) return 0;
+      return parseInt(res.headers.get("X-WP-Total") ?? "0", 10) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  const [videos, artists, comments] = await Promise.all([
+    totalOf("/video"),
+    totalOf("/users"),
+    totalOf("/comments"),
+  ]);
+  const stats = { videos, artists, comments };
+  setCache("__site_stats", stats);
+  return stats;
+}
+
+/* ------------------------------------------------------------------ */
 /* Users, comments, contest, pages                                     */
 /* ------------------------------------------------------------------ */
 
