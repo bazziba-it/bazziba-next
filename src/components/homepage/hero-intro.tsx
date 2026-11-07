@@ -93,7 +93,7 @@ export function HeroIntro({ stats }: HeroIntroProps) {
                     </span>
                     <span>
                       <Counter value={item.value} />
-                      <span className="block text-[11px] text-white/40 uppercase tracking-wider">{item.label}</span>
+                      <span className="block text-[11px] text-white/55 uppercase tracking-wider">{item.label}</span>
                     </span>
                   </motion.div>
                 ))}
@@ -116,7 +116,7 @@ export function HeroIntro({ stats }: HeroIntroProps) {
               <div className="flex items-center gap-2 mt-3">
                 <Link
                   href="/feed/trending"
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-cyan/10 text-brand-cyan text-xs font-semibold hover:bg-brand-cyan/20 transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-cyan/25 text-[#8ef7ff] text-xs font-semibold hover:bg-brand-cyan/35 transition-colors"
                 >
                   <TrendingUp className="h-3.5 w-3.5" />
                   In Evidenza
