@@ -638,6 +638,55 @@ export async function fetchContestTerms(): Promise<WpTerm[]> {
 }
 
 /* ------------------------------------------------------------------ */
+/* Site pulse (latest comments + their videos)                         */
+/* ------------------------------------------------------------------ */
+
+export interface WpPulseItem {
+  id: number;
+  authorName: string;
+  authorAvatar: string | null;
+  text: string;
+  date: string;
+  videoId: string;
+  videoTitle: string;
+}
+
+/** Latest site-wide comments, each linked to its video (home "live pulse" strip). */
+export async function fetchSitePulse(perPage = 6): Promise<WpPulseItem[]> {
+  const comments = await wpFetch<WpComment[]>("/comments", {
+    per_page: String(perPage),
+    orderby: "date",
+    order: "desc",
+  }).catch((err) => {
+    console.error(`[wp] pulse fetch failed: ${err.message}`);
+    return [] as WpComment[];
+  });
+  if (comments.length === 0) return [];
+
+  // Resolve each comment's video title in parallel (unique post IDs)
+  const postIds = [...new Set(comments.map((cm) => cm.post))];
+  const titles = new Map<number, string>();
+  await Promise.all(
+    postIds.map(async (id) => {
+      const v = await wpFetch<{ title: { rendered: string } | string }>(`/video/${id}`, {
+        _fields: "id,title",
+      }).catch(() => null);
+      if (v) titles.set(id, cleanTitle(rendered(v.title)));
+    })
+  );
+
+  return comments.map((cm) => ({
+    id: cm.id,
+    authorName: cm.author_name || "Utente",
+    authorAvatar: cm.author_avatar_urls?.["48"] ?? null,
+    text: stripHtml(rendered(cm.content)).slice(0, 140),
+    date: cm.date,
+    videoId: String(cm.post),
+    videoTitle: titles.get(cm.post) ?? "Video",
+  }));
+}
+
+/* ------------------------------------------------------------------ */
 /* Site stats (real X-WP-Total counts)                                 */
 /* ------------------------------------------------------------------ */
 

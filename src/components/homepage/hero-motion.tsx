@@ -7,7 +7,7 @@ import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Play, Gift, Calendar, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Vote, Calendar, TrendingUp } from "lucide-react";
 import { MOTION, STAGGER } from "@/components/ui/glass";
 import { RealAvatar, ThumbPlaceholder } from "@/components/ui/media";
 import type { BazzibaVideo } from "@/data/wp";
@@ -101,6 +101,7 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
                   sizes="(max-width: 1024px) 100vw, 66vw"
                   priority={i === 0}
                   className="object-cover scale-125 blur-2xl opacity-40"
+                  unoptimized
                 />
                 <Image
                   src={video.thumbnail}
@@ -109,6 +110,7 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
                   sizes="(max-width: 1024px) 100vw, 66vw"
                   priority={i === 0}
                   className="object-cover"
+                  unoptimized
                 />
               </>
             ) : (
@@ -181,7 +183,7 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
               href="/contest"
               className="bg-purple-600 text-white font-bold py-3 px-6 rounded-full flex items-center gap-2 hover:bg-purple-500 text-sm transition-colors"
             >
-              <Gift className="h-4 w-4" />
+              <Vote className="h-4 w-4" />
               VOTA ORA
             </Link>
           </div>

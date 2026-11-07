@@ -33,6 +33,7 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
                 fill
                 sizes={GRID_SIZES}
                 className="object-cover scale-125 blur-xl opacity-30"
+                unoptimized
               />
               <SafeImage
                 src={video.thumbnail}

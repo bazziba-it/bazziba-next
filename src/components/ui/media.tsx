@@ -99,6 +99,9 @@ export function SafeImage({
       priority={priority}
       className={className}
       onError={() => setFailed(true)}
+      // WP already serves right-sized variants (pickThumbSize ~768w) — the
+      // Next optimizer only adds timeout risk (500/504 on slow upstreams).
+      unoptimized
     />
   );
 }

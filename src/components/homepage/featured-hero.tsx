@@ -8,7 +8,7 @@ interface FeaturedHeroProps {
   /** In-evidenza videos for the rotating hero (up to 5). */
   featuredVideos?: BazzibaVideo[];
   /** Real contest editions from the WP contest CPT. */
-  contestCards?: { title: string; subtitle: string }[];
+  contestCards?: { title: string; subtitle: string; closed?: boolean }[];
   /** Real artists (recent video authors). */
   featuredArtists?: { name: string; role: string; avatar?: string | null }[];
 }
@@ -41,24 +41,35 @@ export default function FeaturedHero({
                   {contest.subtitle}
                 </p>
                 <h3 className="text-base font-bold text-white leading-tight mb-3">{contest.title}</h3>
-                <div className="flex gap-2">
+                {contest.closed ? (
                   <Button
                     variant="cyan"
                     size="sm"
-                    className="flex-1 bg-brand-cyan text-black font-bold py-2 rounded-full text-xs hover:bg-brand-cyan-hover"
+                    className="w-full bg-white/10 text-[#00f2ff] border border-[#00f2ff]/30 font-bold py-2 rounded-full text-xs hover:bg-white/15"
                     asChild
                   >
-                    <Link href="/contest">VOTA ORA</Link>
+                    <Link href="/contest">VEDI I VINCITORI</Link>
                   </Button>
-                  <Button
-                    variant="purple"
-                    size="sm"
-                    className="flex-1 bg-purple-600 text-white font-bold py-2 rounded-full text-xs hover:bg-purple-500"
-                    asChild
-                  >
-                    <Link href="/upload">PARTECIPA</Link>
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="cyan"
+                      size="sm"
+                      className="flex-1 bg-brand-cyan text-black font-bold py-2 rounded-full text-xs hover:bg-brand-cyan-hover"
+                      asChild
+                    >
+                      <Link href="/contest">VOTA ORA</Link>
+                    </Button>
+                    <Button
+                      variant="purple"
+                      size="sm"
+                      className="flex-1 bg-purple-600 text-white font-bold py-2 rounded-full text-xs hover:bg-purple-500"
+                      asChild
+                    >
+                      <Link href="/upload">PARTECIPA</Link>
+                    </Button>
+                  </div>
+                )}
               </GlassCard>
             ))}
 
@@ -68,7 +79,7 @@ export default function FeaturedHero({
                 <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold mb-3">
                   Artisti in evidenza
                 </p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 [mask-image:linear-gradient(to_right,black_92%,transparent)]">
                   {featuredArtists.map((artist) => (
                     <div
                       key={artist.name}

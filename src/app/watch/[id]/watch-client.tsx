@@ -235,6 +235,7 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
                           fill
                           sizes="160px"
                           className="object-cover group-hover:brightness-110 transition-brightness"
+                          unoptimized
                         />
                       ) : (
                         <ThumbPlaceholder title={v.title} className="h-full w-full" />
