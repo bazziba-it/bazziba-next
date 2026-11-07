@@ -8,7 +8,7 @@ import {
   fetchVideosByCategory,
   fetchVideosByAuthor,
   fetchAuthorVideoCount,
-  fetchVideoViews,
+  fetchVideoPlayerData,
   fetchVideosByCollection,
 } from "@/data/wp";
 import WatchClient from "./watch-client";
@@ -40,13 +40,13 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
   const video = await fetchVideoByIdOrSlug(id);
   if (!video) notFound();
 
-  const [media, comments, relatedAll, authorVideos, authorVideoCount, views, collectionVideos] = await Promise.all([
+  const [media, comments, relatedAll, authorVideos, authorVideoCount, playerData, collectionVideos] = await Promise.all([
     fetchVideoMedia(video.id).catch(() => ({ mp4: null, poster: null, durationSec: null, resolution: null })),
     fetchComments(video.id).catch(() => []),
     video.categoryId ? fetchVideosByCategory(video.categoryId, 7).catch(() => []) : Promise.resolve([]),
     fetchVideosByAuthor(video.authorId, 6).catch(() => []),
     fetchAuthorVideoCount(video.authorId).catch(() => 0),
-    fetchVideoViews(video.slug).catch(() => null),
+    fetchVideoPlayerData(video.slug).catch(() => ({ sources: [], views: null })),
     video.collectionId ? fetchVideosByCollection(video.collectionId, 20).catch(() => []) : Promise.resolve([]),
   ]);
 
@@ -56,7 +56,11 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
   // Up-next: the following video in the collection, else first related
   const collectionOrdered = collectionVideos.filter((v) => v.id !== video.id);
   const upNext = collectionOrdered[0] ?? related[0] ?? null;
-  const mp4 = media.mp4 ?? null;
+  const views = playerData.views;
+  // Prefer the real scraped sources (HLS playlist when Bunny-hosted), else the media attachment MP4
+  const scrapedMp4 = playerData.sources.find((s) => s.type.includes("mp4"))?.src ?? null;
+  const mp4 = scrapedMp4 ?? media.mp4 ?? null;
+  const sources = playerData.sources.length > 0 ? playerData.sources : (mp4 ? [{ src: mp4, type: "video/mp4" }] : []);
   const poster = media.poster ?? video.thumbnail;
   const merged = { ...video, durationSec: media.durationSec ?? video.durationSec, resolution: media.resolution ?? video.resolution };
 
@@ -80,6 +84,7 @@ export default async function WatchPage({ params }: { params: Promise<{ id: stri
       <WatchClient
         video={merged}
         mp4={mp4}
+        sources={sources}
         poster={poster}
         comments={comments}
         related={related}

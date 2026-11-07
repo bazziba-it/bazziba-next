@@ -10,9 +10,10 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { savePosition, getPosition, clearPosition } from "@/lib/watch-later";
+import Hls from "hls.js";
 import {
   Play, Pause, Volume2, VolumeX, Maximize, Minimize,
-  PictureInPicture2, Gauge, ExternalLink, Loader2,
+  PictureInPicture2, Gauge, ExternalLink, Loader2, Settings,
 } from "lucide-react";
 import { MOTION } from "@/components/ui/glass";
 
@@ -22,8 +23,15 @@ interface UpNext {
   thumbnail: string | null;
 }
 
+interface VideoSource {
+  src: string;
+  type: string;
+}
+
 interface VideoPlayerProps {
   url: string;
+  /** Preferred multi-source list (HLS playlist first when Bunny-hosted). */
+  sources?: VideoSource[];
   poster?: string | null;
   title?: string;
   autoPlay?: boolean;
@@ -51,6 +59,7 @@ function fmt(sec: number): string {
 
 export default function VideoPlayer({
   url,
+  sources,
   poster,
   title = "",
   autoPlay = false,
@@ -61,6 +70,7 @@ export default function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
 
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false); // user started playback at least once
@@ -78,6 +88,13 @@ export default function VideoPlayer({
   const [rateOpen, setRateOpen] = useState(false);
   const [upNextCountdown, setUpNextCountdown] = useState<number | null>(null);
   const [resumeOffer, setResumeOffer] = useState<number | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [qualityLevels, setQualityLevels] = useState<{ height: number; index: number }[]>([]);
+  const [quality, setQuality] = useState<number>(-1); // -1 = Auto
+
+  // Source resolution: HLS playlist (multi-quality) preferred over single MP4
+  const src = sources?.find((s) => /mpegurl|m3u8/i.test(s.type))?.src ?? sources?.[0]?.src ?? url;
+  const isHls = /\.m3u8($|\?)/i.test(src) || /mpegurl/i.test(sources?.[0]?.type ?? "");
 
   const wakeControls = useCallback(() => {
     setControlsVisible(true);
@@ -117,6 +134,49 @@ export default function VideoPlayer({
       .then(() => setStarted(true))
       .catch(() => { setMuted(false); v.muted = false; });
   }, [autoPlay, url]);
+
+  // HLS attach: hls.js where supported, native (Safari) otherwise
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isHls && Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+      hlsRef.current = hls;
+      hls.loadSource(src);
+      hls.attachMedia(v);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        const levels = (hls.levels ?? [])
+          .map((l, i) => ({ height: l.height ?? 0, index: i }))
+          .filter((l) => l.height > 0)
+          .sort((a, b) => b.height - a.height);
+        setQualityLevels(levels);
+        setQuality(-1);
+        if (autoPlay) v.play().catch(() => {});
+      });
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => {
+        if (quality === -1) setQuality(-1); // keep "Auto" label; hls picks the level
+        void data;
+      });
+      hls.on(Hls.Events.ERROR, (_e, data) => {
+        if (data.fatal) setError("Errore di streaming HLS — riprova o apri il file sorgente.");
+      });
+      return () => {
+        hls.destroy();
+        hlsRef.current = null;
+      };
+    }
+    if (isHls && v.canPlayType("application/vnd.apple.mpegurl")) {
+      v.src = src; // Safari native HLS
+    }
+    return undefined;
+  }, [src, isHls, autoPlay]);
+
+  // Quality switch (hls.js): -1 Auto, else pin the level index
+  const selectQuality = useCallback((index: number) => {
+    setQuality(index);
+    const hls = hlsRef.current;
+    if (hls) hls.currentLevel = index;
+  }, []);
 
   // Resume-position offer (localStorage memory, 30-day TTL)
   useEffect(() => {
@@ -221,7 +281,7 @@ export default function VideoPlayer({
     >
       <video
         ref={videoRef}
-        src={url}
+        src={isHls && Hls.isSupported() ? undefined : src}
         poster={poster ?? undefined}
         playsInline
         preload="metadata"
@@ -467,6 +527,62 @@ export default function VideoPlayer({
                         {r}x
                       </button>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Settings: quality (HLS levels / source info) + speed */}
+              <div className="relative">
+                <button
+                  onClick={() => setSettingsOpen((v) => !v)}
+                  aria-label="Impostazioni"
+                  className="w-9 h-9 flex items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors"
+                >
+                  <Settings className="h-5 w-5" />
+                </button>
+                {settingsOpen && (
+                  <div className="absolute bottom-11 right-0 glass-raised rounded-xl border border-white/10 py-2 min-w-[180px] z-30">
+                    <p className="px-3 pb-1.5 text-[10px] uppercase tracking-widest text-white/35">Qualità</p>
+                    {qualityLevels.length > 0 ? (
+                      <>
+                        <button
+                          onClick={() => selectQuality(-1)}
+                          className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${quality === -1 ? "text-[#00f2ff] bg-[#00f2ff]/10" : "text-white/70 hover:bg-white/10"}`}
+                        >
+                          Auto
+                        </button>
+                        {qualityLevels.map((l) => (
+                          <button
+                            key={l.index}
+                            onClick={() => selectQuality(l.index)}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors ${quality === l.index ? "text-[#00f2ff] bg-[#00f2ff]/10" : "text-white/70 hover:bg-white/10"}`}
+                          >
+                            {l.height}p
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      <p className="px-3 py-1.5 text-xs text-white/40">
+                        {duration > 0 && videoRef.current?.videoHeight
+                          ? `${videoRef.current.videoHeight}p (sorgente unica)`
+                          : "Sorgente unica"}
+                      </p>
+                    )}
+                    <div className="h-px bg-white/10 my-1.5" />
+                    <p className="px-3 pb-1.5 text-[10px] uppercase tracking-widest text-white/35">Velocità</p>
+                    <div className="px-3 pb-1 flex flex-wrap gap-1">
+                      {RATES.map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => { if (videoRef.current) videoRef.current.playbackRate = r; }}
+                          className={`px-2 py-1 text-[11px] font-mono rounded-full transition-colors ${
+                            r === rate ? "bg-[#00f2ff]/20 text-[#00f2ff]" : "bg-white/5 text-white/60 hover:bg-white/10"
+                          }`}
+                        >
+                          {r}x
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

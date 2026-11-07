@@ -69,6 +69,7 @@ function RealDuration({ mp4 }: { mp4: string }) {
 interface WatchClientProps {
   video: BazzibaVideo;
   mp4: string | null;
+  sources?: { src: string; type: string }[];
   poster: string | null;
   comments: WpComment[];
   related: BazzibaVideo[];
@@ -81,7 +82,7 @@ interface WatchClientProps {
   sourceUrl: string;
 }
 
-export default function WatchClient({ video, mp4, poster, comments, related, moreFromAuthor, authorVideoCount, views, collectionName, collectionVideos, upNext, sourceUrl }: WatchClientProps) {
+export default function WatchClient({ video, mp4, sources, poster, comments, related, moreFromAuthor, authorVideoCount, views, collectionName, collectionVideos, upNext, sourceUrl }: WatchClientProps) {
   const [copied, setCopied] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
@@ -110,9 +111,10 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
           {/* Main Video Column */}
           <div className="lg:col-span-2 space-y-4">
             <GlassSurface tier="card" data-glass-scroll className="rounded-xl overflow-hidden">
-              {mp4 ? (
+              {mp4 || (sources && sources.length > 0) ? (
                 <VideoPlayer
-                  url={mp4}
+                  url={mp4 ?? sources[0].src}
+                  sources={sources}
                   poster={poster ?? undefined}
                   title={video.title}
                   autoPlay

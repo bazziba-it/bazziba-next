@@ -671,6 +671,59 @@ export async function fetchContestTerms(): Promise<WpTerm[]> {
 /* View counts (scraped — StreamTube renders them, REST hides them)    */
 /* ------------------------------------------------------------------ */
 
+export interface WpPlayerData {
+  sources: { src: string; type: string }[];
+  views: number | null;
+}
+
+/**
+ * Real player sources + view count, scraped from the video's bazziba.it page
+ * (StreamTube's data-settings JSON). Bunny-hosted videos expose an HLS
+ * playlist.m3u8 (multi-quality); newer ones a single wp-content MP4.
+ * The WP REST API exposes neither. Cached; nulls on any failure.
+ */
+export async function fetchVideoPlayerData(slug: string): Promise<WpPlayerData> {
+  const key = `playerdata:${slug}`;
+  const cached = getCached<WpPlayerData>(key);
+  if (cached) return cached;
+  const empty: WpPlayerData = { sources: [], views: null };
+  try {
+    const res = await fetch(`https://bazziba.it/video/${slug}/`, {
+      headers: { "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36" },
+      next: { revalidate: 300 },
+      signal: AbortSignal.timeout(12000),
+    } as RequestInit);
+    if (!res.ok) return empty;
+    const html = await res.text();
+
+    // data-settings JSON → sources[]
+    const sources: { src: string; type: string }[] = [];
+    const settingsMatch = html.match(/data-settings="(\{[^>]*\})"/);
+    if (settingsMatch) {
+      try {
+        const decoded = settingsMatch[1]
+          .replace(/&quot;/g, '"')
+          .replace(/&#038;|&amp;/g, "&")
+          .replace(/&#0?39;/g, "'");
+        const settings = JSON.parse(decoded) as { sources?: { src?: string; type?: string }[] };
+        for (const s of settings.sources ?? []) {
+          if (s.src) sources.push({ src: s.src, type: s.type ?? "video/mp4" });
+        }
+      } catch { /* malformed settings JSON — no sources */ }
+    }
+
+    // Views: first post-meta__views = the main video's counter
+    const viewsMatch = html.match(/post-meta__views[^]*?(\d[\d.,]*)\s*visualizzazioni/);
+    const views = viewsMatch ? parseInt(viewsMatch[1].replace(/[.,]/g, ""), 10) : null;
+
+    const data: WpPlayerData = { sources, views };
+    setCache(key, data);
+    return data;
+  } catch {
+    return empty;
+  }
+}
+
 /**
  * Real view count for a video, scraped from its bazziba.it page:
  * StreamTube server-renders `<div class="post-meta__views">…N visualizzazioni`

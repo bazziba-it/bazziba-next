@@ -9,6 +9,7 @@ import { ThemeProvider } from "next-themes";
 import { MotionProvider } from "@/components/ui/motion-provider";
 import { ServiceWorkerRegistration } from "@/components/layout/sw-registration";
 import { BackToTop } from "@/components/layout/back-to-top";
+import { NavProgress } from "@/components/layout/nav-progress";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const poppins = Poppins({
@@ -98,6 +99,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <MotionProvider>
             <div className="relative flex min-h-screen flex-col">
+              <NavProgress />
               <Navigation />
               <main className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">{children}</main>
               <Footer />
