@@ -9,11 +9,18 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { savePosition, getPosition, clearPosition } from "@/lib/watch-later";
 import {
   Play, Pause, Volume2, VolumeX, Maximize, Minimize,
   PictureInPicture2, Gauge, ExternalLink, Loader2,
 } from "lucide-react";
 import { MOTION } from "@/components/ui/glass";
+
+interface UpNext {
+  href: string;
+  title: string;
+  thumbnail: string | null;
+}
 
 interface VideoPlayerProps {
   url: string;
@@ -23,6 +30,10 @@ interface VideoPlayerProps {
   className?: string;
   width?: string | number;
   height?: string | number;
+  /** Stable video id — enables resume-position memory (localStorage). */
+  videoId?: string;
+  /** Autoplay-next overlay with countdown when the video ends. */
+  upNext?: UpNext | null;
 }
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -44,6 +55,8 @@ export default function VideoPlayer({
   title = "",
   autoPlay = false,
   className = "",
+  videoId,
+  upNext = null,
 }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -63,6 +76,8 @@ export default function VideoPlayer({
   const [errorCode, setErrorCode] = useState(0);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [rateOpen, setRateOpen] = useState(false);
+  const [upNextCountdown, setUpNextCountdown] = useState<number | null>(null);
+  const [resumeOffer, setResumeOffer] = useState<number | null>(null);
 
   const wakeControls = useCallback(() => {
     setControlsVisible(true);
@@ -102,6 +117,49 @@ export default function VideoPlayer({
       .then(() => setStarted(true))
       .catch(() => { setMuted(false); v.muted = false; });
   }, [autoPlay, url]);
+
+  // Resume-position offer (localStorage memory, 30-day TTL)
+  useEffect(() => {
+    if (!videoId) return;
+    const pos = getPosition(videoId);
+    if (pos && pos > 20) setResumeOffer(pos);
+  }, [videoId]);
+
+  // Save position ~every 5s while playing; clear on ended
+  const lastSave = useRef(0);
+  useEffect(() => {
+    if (!videoId) return;
+    const v = videoRef.current;
+    if (!v) return;
+    const onTime = () => {
+      const now = Date.now();
+      if (now - lastSave.current > 5000 && v.currentTime > 10 && !v.ended) {
+        lastSave.current = now;
+        savePosition(videoId, v.currentTime);
+      }
+    };
+    const onEnd = () => {
+      clearPosition(videoId);
+      if (upNext) setUpNextCountdown(8);
+    };
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("ended", onEnd);
+    return () => {
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("ended", onEnd);
+    };
+  }, [videoId, upNext]);
+
+  // Autoplay-next countdown ticks then navigates
+  useEffect(() => {
+    if (upNextCountdown == null || !upNext) return;
+    if (upNextCountdown <= 0) {
+      window.location.href = upNext.href;
+      return;
+    }
+    const t = setTimeout(() => setUpNextCountdown((s) => (s != null ? s - 1 : null)), 1000);
+    return () => clearTimeout(t);
+  }, [upNextCountdown, upNext]);
 
   // Keyboard shortcuts on the focused container
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -201,6 +259,65 @@ export default function VideoPlayer({
         }}
         aria-label={title}
       />
+
+      {/* Resume-position offer */}
+      {resumeOffer != null && !started && !error && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 bg-black/80 border border-white/15 rounded-full pl-3 pr-1.5 py-1.5 backdrop-blur-sm">
+          <span className="text-xs text-white/80">Riprendi da {fmt(resumeOffer)}?</span>
+          <button
+            onClick={() => {
+              if (videoRef.current) videoRef.current.currentTime = resumeOffer;
+              setResumeOffer(null);
+            }}
+            className="ml-1 px-3 py-1 bg-[#00f2ff] text-black text-xs font-bold rounded-full"
+          >
+            Sì
+          </button>
+          <button
+            onClick={() => setResumeOffer(null)}
+            className="px-3 py-1 text-xs text-white/60 hover:text-white rounded-full"
+          >
+            No
+          </button>
+        </div>
+      )}
+
+      {/* Autoplay-next countdown overlay */}
+      {upNext && upNextCountdown != null && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 z-40 bg-black/85 flex flex-col items-center justify-center gap-4 text-center px-6"
+        >
+          <p className="text-[11px] uppercase tracking-widest text-white/50">Prossimo video tra {upNextCountdown}s</p>
+          <a href={upNext.href} className="group relative rounded-xl overflow-hidden w-56 aspect-video border border-white/20">
+            {upNext.thumbnail ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={upNext.thumbnail} alt={upNext.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
+            ) : (
+              <div className="h-full w-full bg-white/5" />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+              <Play className="h-10 w-10 text-[#00f2ff] fill-current" />
+            </div>
+          </a>
+          <p className="text-sm font-medium text-white line-clamp-2 max-w-xs">{upNext.title}</p>
+          <div className="flex items-center gap-3">
+            <a
+              href={upNext.href}
+              className="px-5 py-2 bg-[#00f2ff] text-black text-sm font-bold rounded-full"
+            >
+              Riproduci ora
+            </a>
+            <button
+              onClick={() => setUpNextCountdown(null)}
+              className="px-5 py-2 bg-white/10 text-white text-sm rounded-full border border-white/20"
+            >
+              Annulla
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Error state — code-specific message + retry + direct-file fallback */}
       {error && (

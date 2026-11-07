@@ -123,6 +123,10 @@ export interface BazzibaVideo {
   videoUrl?: string | null;
   /** video_tag slugs, e.g. "in-evidenza", "vincitori-contest". */
   tags: string[];
+  /** video_collection term (user's story/playlist), when the video belongs to one. */
+  collectionId: number | null;
+  collectionName: string;
+  collectionSlug: string;
   /** Real duration in seconds from the MP4 attachment's media_details (null when unknown). */
   durationSec: number | null;
   /** Real video resolution label from media_details, e.g. "1080p" (null when unknown). */
@@ -278,6 +282,9 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
     .map((id) => terms.get(id)?.slug)
     .filter((s): s is string => Boolean(s));
 
+  const colId = wp.video_collection?.[0] ?? null;
+  const colTerm = colId != null ? terms.get(colId) : undefined;
+
   const avatarUrls = author?.avatar_urls ?? author?.avatarUrls;
 
   // Placeholder titles (UUID/filename/numeric from uploads without a title)
@@ -303,6 +310,9 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
     date: wp.date,
     videoUrl: null,
     tags: tagSlugs,
+    collectionId: colId,
+    collectionName: colTerm?.name ?? "",
+    collectionSlug: colTerm?.slug ?? "",
     durationSec: null,
     resolution: null,
     portrait: false,
@@ -576,6 +586,18 @@ export async function fetchVideosByTagSlug(tagSlug: string, perPage = 12): Promi
     _embed: "true",
     orderby: "date",
     order: "desc",
+  });
+  return withAuthors(rows);
+}
+
+/** Videos in a video_collection (artist story playlist), in date order. */
+export async function fetchVideosByCollection(collectionId: number, perPage = 20): Promise<BazzibaVideo[]> {
+  const rows = await wpFetch<WpVideo[]>("/video", {
+    video_collection: String(collectionId),
+    per_page: String(perPage),
+    _embed: "true",
+    orderby: "date",
+    order: "asc",
   });
   return withAuthors(rows);
 }

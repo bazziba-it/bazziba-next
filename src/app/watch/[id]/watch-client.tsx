@@ -22,10 +22,15 @@ import {
   User,
   Layers,
   Eye,
+  Bookmark,
+  BookmarkCheck,
+  Code,
+  ListMusic,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatDurationSec } from "@/lib/format";
+import { getWatchLater, inWatchLater, toggleWatchLater } from "@/lib/watch-later";
 
 function formatDateIT(iso: string): string {
   try {
@@ -70,13 +75,25 @@ interface WatchClientProps {
   moreFromAuthor: BazzibaVideo[];
   authorVideoCount: number;
   views: number | null;
+  collectionName: string;
+  collectionVideos: BazzibaVideo[];
+  upNext: { href: string; title: string; thumbnail: string | null } | null;
   sourceUrl: string;
 }
 
-export default function WatchClient({ video, mp4, poster, comments, related, moreFromAuthor, authorVideoCount, views, sourceUrl }: WatchClientProps) {
+export default function WatchClient({ video, mp4, poster, comments, related, moreFromAuthor, authorVideoCount, views, collectionName, collectionVideos, upNext, sourceUrl }: WatchClientProps) {
   const [copied, setCopied] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [embedOpen, setEmbedOpen] = useState(false);
+
+  useEffect(() => {
+    setSaved(inWatchLater(video.id));
+    const onChange = () => setSaved(inWatchLater(video.id));
+    window.addEventListener("watch-later-changed", onChange);
+    return () => window.removeEventListener("watch-later-changed", onChange);
+  }, [video.id]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -100,6 +117,8 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
                   title={video.title}
                   autoPlay
                   className="rounded-xl"
+                  videoId={video.id}
+                  upNext={upNext}
                 />
               ) : (
                 <div className="aspect-video">
@@ -163,6 +182,60 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
                   Scarica
                 </a>
               )}
+
+              {/* Watch later — local list, no account needed */}
+              <button
+                onClick={() => {
+                  const added = toggleWatchLater({
+                    id: video.id,
+                    slug: video.slug,
+                    title: video.title,
+                    thumbnail: video.thumbnail,
+                    authorName: video.authorName,
+                    category: video.category,
+                    categorySlug: video.categorySlug,
+                    durationSec: video.durationSec,
+                  });
+                  setSaved(added);
+                }}
+                aria-pressed={saved}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  saved
+                    ? "bg-[#00f2ff]/15 text-[#00f2ff] border border-[#00f2ff]/30"
+                    : "bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent"
+                }`}
+              >
+                {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                {saved ? "Salvato" : "Guarda più tardi"}
+              </button>
+
+              {/* Embed — the official StreamTube embed player on bazziba.it */}
+              <div className="relative">
+                <button
+                  onClick={() => setEmbedOpen((v) => !v)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+                >
+                  <Code className="h-4 w-4" />
+                  Incorpora
+                </button>
+                {embedOpen && (
+                  <div className="absolute top-11 left-0 z-30 w-80 glass-raised rounded-xl border border-white/10 p-3 shadow-xl">
+                    <p className="text-xs text-white/50 mb-2">Codice embed (player ufficiale bazziba.it):</p>
+                    <code className="block text-[11px] text-[#00f2ff] bg-black/40 rounded-lg p-2 break-all select-all">
+                      {`<iframe src="https://bazziba.it/video/${video.slug}/embed/" width="560" height="315" frameborder="0" allowfullscreen></iframe>`}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`<iframe src="https://bazziba.it/video/${video.slug}/embed/" width="560" height="315" frameborder="0" allowfullscreen></iframe>`);
+                        setEmbedOpen(false);
+                      }}
+                      className="mt-2 w-full px-3 py-1.5 bg-[#00f2ff] text-black text-xs font-bold rounded-full"
+                    >
+                      Copia il codice
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Title & real meta */}
@@ -247,6 +320,33 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
 
           {/* Sidebar — real related videos from the same category + author */}
           <div className="space-y-6 lg:sticky lg:top-24">
+            {collectionVideos.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 text-lg flex items-center gap-2">
+                  <ListMusic className="h-4 w-4 text-[#00f2ff]" />
+                  Dalla raccolta{ collectionName ? `: ${collectionName}` : "" }
+                </h3>
+                <div className="space-y-3">
+                  {collectionVideos.map((v, i) => (
+                    <Link key={v.id} href={`/watch/${v.id}`} className="flex gap-3 group items-center">
+                      <span className="text-xs font-mono text-white/25 w-4 flex-shrink-0">{i + 1}</span>
+                      <div className="relative flex-shrink-0 w-28 aspect-video bg-muted rounded-lg overflow-hidden">
+                        {v.thumbnail ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={v.thumbnail} alt={v.title} className="h-full w-full object-cover group-hover:brightness-110 transition-brightness" loading="lazy" />
+                        ) : (
+                          <ThumbPlaceholder title={v.title} className="h-full w-full" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-medium text-sm line-clamp-2 group-hover:text-[#00f2ff] transition-colors">{v.title}</h4>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {moreFromAuthor.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3 text-lg flex items-center gap-2">

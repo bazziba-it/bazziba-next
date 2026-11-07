@@ -36,6 +36,7 @@ const mainLinks: [string, string][] = [
   ["/", "Home"],
   ["/feed/trending", "Trending"],
   ["/contest", "Contest"],
+  ["/playlist", "Playlist"],
   ["/search", "Cerca"],
 ];
 
