@@ -89,6 +89,7 @@ export default function VideoPlayer({
   const [upNextCountdown, setUpNextCountdown] = useState<number | null>(null);
   const [resumeOffer, setResumeOffer] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [qualityLevels, setQualityLevels] = useState<{ height: number; index: number }[]>([]);
   const [quality, setQuality] = useState<number>(-1); // -1 = Auto
 
@@ -134,6 +135,8 @@ export default function VideoPlayer({
       .then(() => setStarted(true))
       .catch(() => { setMuted(false); v.muted = false; });
   }, [autoPlay, url]);
+
+  useEffect(() => setIsClient(true), []);
 
   // HLS attach: hls.js where supported, native (Safari) otherwise
   useEffect(() => {
@@ -279,9 +282,12 @@ export default function VideoPlayer({
       onTouchStart={wakeControls}
       className={`relative w-full aspect-video bg-black rounded-xl overflow-hidden group/player outline-none focus-visible:ring-2 focus-visible:ring-[#00f2ff] ${className}`}
     >
+      {/* src is always rendered (SSR-safe); hls.js swaps to MSE in the effect.
+          Never call Hls.isSupported() during render — it differs server/client
+          and caused React #418 hydration mismatches. */}
       <video
         ref={videoRef}
-        src={isHls && Hls.isSupported() ? undefined : src}
+        src={src}
         poster={poster ?? undefined}
         playsInline
         preload="metadata"
@@ -587,7 +593,7 @@ export default function VideoPlayer({
                 )}
               </div>
 
-              {typeof document !== "undefined" && document.pictureInPictureEnabled && (
+              {isClient && document.pictureInPictureEnabled && (
                 <button onClick={togglePiP} aria-label="Picture in Picture"
                   className="w-9 h-9 hidden sm:flex items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors">
                   <PictureInPicture2 className="h-5 w-5" />
