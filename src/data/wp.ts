@@ -32,7 +32,15 @@ export interface WpVideo {
   date: string;
   status: string;
   _embedded?: {
-    "wp:featuredmedia"?: { source_url?: string; guid?: { rendered: string } }[];
+    "wp:featuredmedia"?: {
+      source_url?: string;
+      guid?: { rendered: string };
+      media_details?: {
+        width?: number;
+        height?: number;
+        sizes?: Record<string, { source_url: string; width: number; height: number }>;
+      };
+    }[];
     "wp:term"?: { id: number; name: string; slug: string; taxonomy: string }[][];
   };
 }
@@ -119,6 +127,8 @@ export interface BazzibaVideo {
   durationSec: number | null;
   /** Real video resolution label from media_details, e.g. "1080p" (null when unknown). */
   resolution: string | null;
+  /** Portrait video (width < height) — cards use object-top so faces aren't center-cropped. */
+  portrait: boolean;
 }
 
 const WP_BASE = "https://bazziba.it/wp-json/wp/v2";
@@ -152,10 +162,12 @@ async function wpFetch<T>(path: string, params: Record<string, string> = {}): Pr
   let lastErr: Error | undefined;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
+      // next.revalidate makes server fetches ISR-cacheable (prerendered at
+      // build, revalidated every 5 min); browsers ignore the `next` option.
       const res = await fetch(url, {
-        cache: "no-store",
+        next: { revalidate: 300 },
         signal: AbortSignal.timeout(8000),
-      });
+      } as RequestInit);
       if (!res.ok) throw new Error(`WP ${res.status}: ${path}`);
       const data = (await res.json()) as T;
       setCache(url, data);
@@ -190,8 +202,16 @@ function cleanTitle(raw: string): string {
   let t = raw.replace(/#\S+/g, "").replace(/[-–—]+/g, "—").trim();
   // Repeated rights-disclaimer boilerplate (very common in this corpus) — strip to end of title
   t = t.replace(/\s*[-–—,]?\s*(non ho i diritti|nessun diritto|ho diritti|diritt[io] sul brano|belle cover italiane).*$/gi, "");
+  // Missing space after glued colon ("Cover:In mezzo" → "Cover: In mezzo")
+  t = t.replace(/(\p{Ll}):(\p{Lu})/gu, "$1: $2");
+  // Leading upload dates ("2025—04—20 TITLE" / "2025-04-20 TITLE")
+  t = t.replace(/^\d{4}[-–—]\d{1,2}[-–—]\d{1,2}\s*/, "");
   // "&" as Italian "e" when glued to a lowercase word ("Perche& fai" → "Perche e fai"; "R&B" untouched)
   t = t.replace(/(\p{Ll})&\s+/gu, "$1 e ").replace(/\s+&(\p{Ll})/gu, " e $1");
+  // Spaced standalone ampersand between words is "and" in this corpus ("Cover & Inediti" → "Cover e Inediti")
+  t = t.replace(/(\p{L}) & (\p{L})/gu, "$1 e $2");
+  // Stray leading/trailing ampersands ("& giovani&")
+  t = t.replace(/^[&\s]+|[&\s]+$/g, "");
   // Missing space at lowercase→uppercase boundary ("CantautoreBELLE" → "Cantautore BELLE")
   t = t.replace(/(\p{Ll})(\p{Lu})/gu, "$1 $2");
   t = t.replace(/\s{2,}/g, " ").replace(/[—–\-,;.:\s]+$/g, "").trim();
@@ -210,6 +230,7 @@ function isPlaceholderTitle(t: string): boolean {
   if (/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(s)) return true; // UUID
   if (/^[0-9a-f]{20,}$/i.test(s)) return true; // long hex blob
   if (/^\d+$/.test(s)) return true; // pure numeric (media id)
+  if (/^[A-Z]{2,4}[_-]?\d{3,6}$/i.test(s)) return true; // camera filename (IMG_6700, DSC_1234, VID_001)
   if (/\.(mp4|mov|webm|jpg|jpeg|png)$/i.test(s)) return true; // filename
   return false;
 }
@@ -223,13 +244,31 @@ function embeddedTermsById(wp: WpVideo): Map<number, { name: string; slug: strin
   return map;
 }
 
+/**
+ * Pick the WP-generated image size closest to ~768px wide (never the
+ * multi-MB original): WP creates medium/medium_large/large variants on
+ * upload — served directly by bazziba.it, fast and optimizer-friendly.
+ */
+function pickThumbSize(
+  media?: { media_details?: { sizes?: Record<string, { source_url: string; width: number }> } } | null
+): string | null {
+  const sizes = media?.media_details?.sizes;
+  if (!sizes) return null;
+  const variants = Object.values(sizes).filter((s) => s.source_url && s.width);
+  if (variants.length === 0) return null;
+  variants.sort((a, b) => a.width - b.width);
+  // smallest variant that is >= 640w, else the largest available
+  const fit = variants.find((v) => v.width >= 640) ?? variants[variants.length - 1];
+  return fit.source_url;
+}
+
 /** Map WP video to frontend shape. Real data only — missing fields become null. */
 export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
   let title = cleanTitle(rendered(wp.title));
   const description = stripHtml(rendered(wp.excerpt)).slice(0, 300);
 
   const embeddedMedia = wp._embedded?.["wp:featuredmedia"]?.[0];
-  const thumbnail = embeddedMedia?.source_url || embeddedMedia?.guid?.rendered || null;
+  const thumbnail = pickThumbSize(embeddedMedia) || embeddedMedia?.source_url || embeddedMedia?.guid?.rendered || null;
 
   const terms = embeddedTermsById(wp);
   const catId = wp.video_category?.[0] ?? null;
@@ -266,6 +305,7 @@ export function mapWpVideo(wp: WpVideo, author?: WpUser): BazzibaVideo {
     tags: tagSlugs,
     durationSec: null,
     resolution: null,
+    portrait: false,
   };
 }
 
@@ -284,6 +324,7 @@ function resolutionLabel(width?: number, height?: number): string | null {
 export interface VideoMediaMeta {
   durationSec: number | null;
   resolution: string | null;
+  portrait: boolean;
 }
 
 /**
@@ -317,6 +358,7 @@ export async function fetchVideoMediaMap(pages = 3): Promise<Map<number, VideoMe
     map.set(m.post, {
       durationSec: md.length && md.length > 0 ? Math.round(md.length) : null,
       resolution: resolutionLabel(md.width, md.height),
+      portrait: Boolean(md.width && md.height && md.width < md.height),
     });
   }
   return map;
@@ -329,6 +371,7 @@ function withMediaMeta(videos: BazzibaVideo[], map: Map<number, VideoMediaMeta>)
     if (meta) {
       v.durationSec = meta.durationSec;
       v.resolution = meta.resolution;
+      v.portrait = meta.portrait;
     }
   }
   return videos;

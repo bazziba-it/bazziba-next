@@ -141,37 +141,31 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
           }`}
           aria-hidden={i !== current}
         >
-          {/* Top-left: real category */}
-          <div className="absolute top-4 left-4">
+          {/* Stacked overlay: category chip → title → meta (no absolute collisions) */}
+          <div className="absolute top-4 left-4 right-4 flex flex-col items-start gap-2.5">
             <div className="bg-brand-cyan/90 text-black text-[11px] font-bold px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-lg">
               <TrendingUp className="h-3 w-3" />
               {video.categorySlug ? video.category : "In Evidenza"}
             </div>
-          </div>
-
-          {/* Title — staggered entrance replays per slide */}
-          <div className="absolute top-4 right-4 left-4 md:left-auto md:right-4">
             <AnimatedHeadline
               text={video.title}
-              className="font-display text-headline-lg text-white drop-shadow-lg line-clamp-2 max-w-[70%] md:max-w-[80%]"
+              className="font-display text-headline-lg text-white drop-shadow-lg line-clamp-2 max-w-[85%]"
             />
-          </div>
-
-          {/* Real meta: author + publish date */}
-          <div className="absolute top-20 left-4 right-4 flex flex-wrap items-center gap-3 text-xs text-slate-300">
-            <Link
-              href={`/u/${video.authorSlug || video.authorId}`}
-              className="flex items-center gap-2 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10 hover:border-[#00f2ff]/40 transition-colors"
-            >
-              <RealAvatar src={video.authorAvatar} name={video.authorName} className="w-4 h-4 text-[7px]" />
-              {video.authorName}
-            </Link>
-            {video.date && (
-              <span className="flex items-center gap-1 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10">
-                <Calendar className="h-3 w-3 text-brand-cyan" />
-                {formatDateIT(video.date)}
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+              <Link
+                href={`/u/${video.authorSlug || video.authorId}`}
+                className="flex items-center gap-2 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10 hover:border-[#00f2ff]/40 transition-colors"
+              >
+                <RealAvatar src={video.authorAvatar} name={video.authorName} className="w-4 h-4 text-[7px]" />
+                {video.authorName}
+              </Link>
+              {video.date && (
+                <span className="flex items-center gap-1 bg-brand-navy-800/70 px-2.5 py-1 rounded-full border border-white/10">
+                  <Calendar className="h-3 w-3 text-brand-cyan" />
+                  {formatDateIT(video.date)}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* CTAs */}
@@ -211,7 +205,7 @@ export function HeroCarousel({ videos }: { videos: BazzibaVideo[] }) {
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute bottom-6 right-4 flex items-center gap-1.5 z-30" role="tablist" aria-label="Slide del video in evidenza">
+          <div className="absolute bottom-[4.75rem] right-4 flex items-center gap-1.5 z-30" role="tablist" aria-label="Slide del video in evidenza">
             {/* WCAG 2.2.2: pause/play for the auto-rotation */}
             <button
               onClick={() => setPaused((v) => !v)}

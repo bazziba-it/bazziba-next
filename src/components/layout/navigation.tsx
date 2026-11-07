@@ -53,7 +53,7 @@ export function Navigation() {
         innerClassName="glass-nav-inner max-w-[1600px] mx-auto px-5"
         brand={
           <Link href="/" aria-label="BAZZIBA! — Home">
-            <BazzibaLogo size={30} />
+            <BazzibaLogo height={26} />
           </Link>
         }
         links={

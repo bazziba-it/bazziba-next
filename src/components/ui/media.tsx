@@ -1,7 +1,12 @@
+"use client";
+
 /**
  * Local media fallbacks (ADR-0003): when WP data has no avatar/thumbnail,
  * render these — never picsum/pravatar/external placeholder CDNs.
  */
+
+import Image from "next/image";
+import { useState } from "react";
 
 const AVATAR_COLORS = ["#00f2ff", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444", "#3b82f6"];
 
@@ -63,5 +68,37 @@ export function ThumbPlaceholder({ title, className = "" }: { title: string; cla
         </svg>
       </div>
     </div>
+  );
+}
+
+/**
+ * next/image with automatic ThumbPlaceholder fallback when the upstream
+ * image fails (dead WP attachment URL, optimizer timeout on huge originals).
+ */
+export function SafeImage({
+  src,
+  alt,
+  sizes,
+  className = "",
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  sizes?: string;
+  className?: string;
+  priority?: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <ThumbPlaceholder title={alt} className="absolute inset-0" />;
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes={sizes}
+      priority={priority}
+      className={className}
+      onError={() => setFailed(true)}
+    />
   );
 }

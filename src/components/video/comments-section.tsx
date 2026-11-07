@@ -63,7 +63,7 @@ export function CommentsSection({ videoId, initialComments, sourceUrl }: Comment
         </div>
       )}
 
-      <div className="flex gap-2 pt-2 border-t border-white/5">
+      <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-white/5">
         <input
           type="text"
           placeholder="Scrivi un commento..."
@@ -75,7 +75,7 @@ export function CommentsSection({ videoId, initialComments, sourceUrl }: Comment
           href={sourceUrl ?? `https://bazziba.it/?p=${videoId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-4 py-2 bg-[#00f2ff] text-black font-medium rounded-lg text-sm hover:bg-[#00d4e6] transition-colors flex items-center gap-1.5"
+          className="px-4 py-2.5 bg-[#00f2ff] text-black font-medium rounded-lg text-sm hover:bg-[#00d4e6] transition-colors flex items-center justify-center gap-1.5"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           Commenta

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { fetchVideoCategories } from "@/data/wp";
-import { BazzibaMark } from "@/components/ui/brand";
+import { BazzibaLogo } from "@/components/ui/brand";
 
 /** Real bazziba.it social profiles (verified on the live site). */
 const SOCIALS: { label: string; href: string; stroke?: boolean; icon: React.ReactNode }[] = [
@@ -45,7 +45,7 @@ export default async function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand col */}
           <div>
-            <div className="mb-3"><BazzibaMark size={42} /></div>
+            <div className="mb-3"><BazzibaLogo height={34} /></div>
             <h4 className="text-xs uppercase tracking-widest font-semibold text-[#00f2ff] mb-2">Chi siamo</h4>
             <p className="text-sm text-white/50 leading-relaxed mb-3 max-w-xs">
               La piattaforma digitale dedicata al mondo artistico.

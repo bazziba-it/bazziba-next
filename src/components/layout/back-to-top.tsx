@@ -27,7 +27,7 @@ export function BackToTop() {
           whileTap={{ scale: 0.9 }}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="Torna su"
-          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[var(--z-overlay)]
+          className="fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[var(--z-overlay)]
             w-11 h-11 rounded-full glass-raised border border-[#00f2ff]/30
             flex items-center justify-center text-[#00f2ff]
             shadow-lg shadow-black/40 hover:border-[#00f2ff]/60 hover:shadow-cyan-glow-1

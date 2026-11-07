@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import FeaturedHero from "@/components/homepage/featured-hero";
 import { GlassCard, FadeIn } from "@/components/ui";
-import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
+import { ThumbPlaceholder, RealAvatar, SafeImage } from "@/components/ui/media";
 import { formatDurationSec, timeAgoIT } from "@/lib/format";
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
 
@@ -54,7 +54,7 @@ export default function WpHomepageContent({
         {/* Mobile category chips — horizontal scroll (sidebar is xl-only) */}
         {categories.length > 0 && (
           <div className="xl:hidden max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-4">
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 [mask-image:linear-gradient(to_right,black_88%,transparent)]">
               <div className="flex gap-1.5 w-max py-1">
                 <Link
                   href="/feed"
@@ -125,12 +125,11 @@ export default function WpHomepageContent({
                   <Link href={`/watch/${vid.id}`} className="group block" prefetch={false}>
                     <div className="relative aspect-video overflow-hidden bg-black">
                       {vid.thumbnail ? (
-                        <Image
+                        <SafeImage
                           src={vid.thumbnail}
                           alt={vid.title}
-                          fill
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                          className={`object-cover transition-transform duration-300 group-hover:scale-[1.04] ${vid.portrait ? "object-top" : ""}`}
                         />
                       ) : (
                         <ThumbPlaceholder title={vid.title} className="h-full w-full" />
@@ -149,7 +148,7 @@ export default function WpHomepageContent({
                         </span>
                       )}
                       {vid.categorySlug && (
-                        <div className="absolute bottom-2.5 left-2.5 bg-brand-cyan/90 text-[#050a14] text-[10px] font-bold px-2 py-0.5 rounded capitalize">
+                        <div className="absolute bottom-2.5 left-2.5 bg-brand-cyan/90 text-[#050a14] text-[10px] font-bold px-2 py-0.5 rounded">
                           {vid.category}
                         </div>
                       )}
@@ -163,7 +162,7 @@ export default function WpHomepageContent({
                       <div className="flex-1 min-w-0">
                         <p className="text-[0.85rem] font-medium text-[#e5e7eb] leading-[1.3] line-clamp-2">{vid.title}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{vid.authorName}</p>
-                        <p className="text-[11px] text-white/25 mt-px">{timeAgoIT(vid.date)}</p>
+                        <p className="text-[11px] text-white/45 mt-px">{timeAgoIT(vid.date)}</p>
                       </div>
                     </div>
                     <div className="px-3 pb-3">

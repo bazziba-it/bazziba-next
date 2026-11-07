@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { BazzibaVideo, WpTerm } from "@/data/wp";
 import { GlassCard } from "@/components/ui";
-import { ThumbPlaceholder, RealAvatar } from "@/components/ui/media";
+import { ThumbPlaceholder, RealAvatar, SafeImage } from "@/components/ui/media";
 import { formatDurationSec, timeAgoIT } from "@/lib/format";
 
 /** Responsive sizes for grid cards (1→5 columns across breakpoints). */
@@ -34,12 +34,11 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
                 sizes={GRID_SIZES}
                 className="object-cover scale-125 blur-xl opacity-30"
               />
-              <Image
+              <SafeImage
                 src={video.thumbnail}
                 alt={video.title}
-                fill
                 sizes={GRID_SIZES}
-                className="relative object-cover group-hover:scale-105 transition-transform duration-300"
+                className={`relative object-cover group-hover:scale-105 transition-transform duration-300 ${video.portrait ? "object-top" : ""}`}
               />
             </>
           ) : (
@@ -76,7 +75,7 @@ export function VideoCard({ video, showAuthor, staggerIndex }: VideoCardProps) {
           )}
           {/* Real publish date */}
           {video.date && (
-            <p className="text-[11px] text-white/25 mt-1">{timeAgoIT(video.date)}</p>
+            <p className="text-[11px] text-white/45 mt-1">{timeAgoIT(video.date)}</p>
           )}
           {video.categorySlug && (
             <span className="inline-block mt-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#00f2ff]/10 text-[#00f2ff]">

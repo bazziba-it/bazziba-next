@@ -60,6 +60,7 @@ export default function VideoPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState(0);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [rateOpen, setRateOpen] = useState(false);
 
@@ -187,23 +188,46 @@ export default function VideoPlayer({
           setMuted(e.currentTarget.muted);
         }}
         onRateChange={(e) => setRate(e.currentTarget.playbackRate)}
-        onError={() => setError("Il video non può essere riprodotto (sorgente non raggiungibile).")}
+        onError={(e) => {
+          const code = e.currentTarget.error?.code;
+          setErrorCode(code ?? 0);
+          setError(
+            code === 2
+              ? "Connessione interrotta durante il caricamento del video."
+              : code === 3
+                ? "Il file video è danneggiato o non decodificabile."
+                : "Questo browser non supporta la riproduzione del formato video."
+          );
+        }}
         aria-label={title}
       />
 
-      {/* Error state */}
+      {/* Error state — code-specific message + retry + direct-file fallback */}
       {error && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/80 text-center px-6">
-          <p className="text-white/80 text-sm">{error}</p>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#00f2ff] text-black text-sm font-bold rounded-full"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Apri il file video
-          </a>
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/85 text-center px-6">
+          <p className="text-white/80 text-sm max-w-xs">{error}</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const v = videoRef.current;
+                setError(null);
+                setErrorCode(0);
+                if (v) { v.load(); v.play().catch(() => {}); }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#00f2ff] text-black text-sm font-bold rounded-full"
+            >
+              Riprova
+            </button>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white text-sm font-medium rounded-full border border-white/20"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Apri il file
+            </a>
+          </div>
         </div>
       )}
 

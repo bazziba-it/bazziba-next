@@ -20,6 +20,13 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, " ").replace(/\s{2,}/g, " ").trim();
 }
 
+/** Display-prettify a contest_taxonomy term: "maggio2025" → "Maggio 2025". */
+function prettifyTermName(name: string): string {
+  const m = name.replace(/[-_]/g, " ").match(/^([a-zàèéìòù]+)\s*(\d{4})$/i);
+  if (m) return m[1][0].toUpperCase() + m[1].slice(1) + " " + m[2];
+  return name[0]?.toUpperCase() + name.slice(1);
+}
+
 export default async function ContestPage() {
   const [contests, terms, winners] = await Promise.all([
     fetchContests(10).catch(() => []),
@@ -27,9 +34,12 @@ export default async function ContestPage() {
     fetchVideosByTagSlug("vincitori-contest", 8).catch(() => []),
   ]);
 
-  // Latest edition = first contest CPT entry; entries = videos carrying its contest_taxonomy term
+  // Latest edition = first contest CPT entry; find the taxonomy term whose
+  // slug matches the CPT title ("Settembre 2025" → "settembre2025"), else newest by count
   const latest = contests[0] ?? null;
-  const latestTerm = terms[0] ?? null;
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9àèéìòù]/g, "");
+  const latestTitleNorm = latest ? normalize(stripHtml(rendered(latest.title))) : "";
+  const latestTerm = (latestTitleNorm && terms.find((t) => normalize(t.slug) === latestTitleNorm || normalize(t.name) === latestTitleNorm)) || terms[0] || null;
   const entries = latestTerm ? await fetchVideosByContestTerm(latestTerm.id, 24).catch(() => []) : [];
 
   const latestTitle = latest ? stripHtml(rendered(latest.title)) : "Contest Bazziba";
@@ -56,12 +66,12 @@ export default async function ContestPage() {
               <p className="text-lg text-muted-foreground mb-8 max-w-3xl">{latestDescription}</p>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
               <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
                 <Calendar className="h-5 w-5 text-[#00f2ff] flex-shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Edizione</p>
-                  <p className="font-medium">{latestTitle}</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{latestTitle}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 rounded-xl glass-card text-card-foreground">
@@ -95,7 +105,7 @@ export default async function ContestPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Trophy className="h-6 w-6 text-[#00f2ff]" />
-              {latestTerm ? `Video in gara — ${latestTerm.name}` : "Video in gara"}
+              {latestTerm ? `Video in gara — ${prettifyTermName(latestTerm.name)}` : "Video in gara"}
             </h2>
           </div>
           <VideoGrid
