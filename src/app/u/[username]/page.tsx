@@ -54,8 +54,22 @@ async function ProfileView({ user }: { user: WpUser }) {
   return (
     <div className="min-h-screen bg-[#050a14] text-white">
       <div className="max-w-4xl mx-auto px-4 py-10">
+        {/* Cinematic cover: the artist's latest video artwork, blurred */}
+        {videos[0]?.thumbnail && (
+          <div className="relative h-40 sm:h-52 rounded-2xl overflow-hidden mb-[-3rem] z-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={videos[0].thumbnail}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-50"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#050a14]/40 via-[#050a14]/60 to-[#050a14]" />
+          </div>
+        )}
+
         {/* Profile header — real WP user data */}
-        <GlassSurface tier="card" className="rounded-2xl p-6 mb-8">
+        <GlassSurface tier="card" className="relative z-10 rounded-2xl p-6 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             <RealAvatar
               src={avatar}

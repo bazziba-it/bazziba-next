@@ -152,7 +152,7 @@ function setCache<T>(key: string, data: T): void {
   cache.set(key, { data, ts: Date.now() });
 }
 
-async function wpFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+async function wpFetch<T>(path: string, params: Record<string, string> = {}, timeoutMs = 8000): Promise<T> {
   const qs = new URLSearchParams(params).toString();
   const url = `${WP_BASE}${path}${qs ? "?" + qs : ""}`;
   const cached = getCached<T>(url);
@@ -166,7 +166,7 @@ async function wpFetch<T>(path: string, params: Record<string, string> = {}): Pr
       // build, revalidated every 5 min); browsers ignore the `next` option.
       const res = await fetch(url, {
         next: { revalidate: 300 },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(timeoutMs),
       } as RequestInit);
       if (!res.ok) throw new Error(`WP ${res.status}: ${path}`);
       const data = (await res.json()) as T;
@@ -638,6 +638,75 @@ export async function fetchContestTerms(): Promise<WpTerm[]> {
 }
 
 /* ------------------------------------------------------------------ */
+/* Artist directory stats                                              */
+/* ------------------------------------------------------------------ */
+
+export interface WpArtistStat {
+  count: number;
+  dominantCategory: string;
+  dominantCategorySlug: string;
+}
+
+/**
+ * Per-author activity from the ~300 most recent videos: video count and
+ * dominant category per artist (used by the /u artists directory).
+ * Honest metric — artists quiet in the recent window show no stat.
+ */
+export async function fetchArtistStats(): Promise<Map<number, WpArtistStat>> {
+  const map = new Map<number, { count: number; cats: Map<string, { name: string; slug: string; n: number }> }>();
+  // Sequential + lighter pages: 3 parallel per_page=100 _embed requests choke
+  // the WP server (all timeout); 2 sequential pages of 50 succeed.
+  const pages: WpVideo[][] = [];
+  for (const page of [1, 2]) {
+    const rows = await wpFetch<WpVideo[]>("/video", {
+      per_page: "50",
+      page: String(page),
+      _embed: "true",
+      orderby: "date",
+      order: "desc",
+    }, 20000).catch((err) => {
+      console.error(`[wp] artist stats page ${page} failed:`, err?.message ?? err);
+      return [] as WpVideo[];
+    });
+    pages.push(rows);
+  }
+
+  // term id -> name/slug from one embedded sample per id
+  const termNames = new Map<number, { name: string; slug: string }>();
+  for (const v of pages.flat()) {
+    for (const group of v._embedded?.["wp:term"] ?? []) {
+      for (const t of group) if (!termNames.has(t.id)) termNames.set(t.id, { name: t.name, slug: t.slug });
+    }
+  }
+
+  for (const v of pages.flat()) {
+    if (!v.author) continue;
+    const entry = map.get(v.author) ?? { count: 0, cats: new Map() };
+    entry.count++;
+    const catId = v.video_category?.[0];
+    if (catId != null) {
+      const t = termNames.get(catId);
+      const key = t?.name ?? String(catId);
+      const cur = entry.cats.get(key) ?? { name: t?.name ?? "", slug: t?.slug ?? "", n: 0 };
+      cur.n++;
+      entry.cats.set(key, cur);
+    }
+    map.set(v.author, entry);
+  }
+
+  const out = new Map<number, WpArtistStat>();
+  for (const [author, e] of map) {
+    const dom = [...e.cats.values()].sort((a, b) => b.n - a.n)[0];
+    out.set(author, {
+      count: e.count,
+      dominantCategory: dom?.name ?? "",
+      dominantCategorySlug: dom?.slug ?? "",
+    });
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
 /* Explore (filtered / sorted browsing)                                */
 /* ------------------------------------------------------------------ */
 
@@ -797,13 +866,25 @@ export async function fetchUserById(id: number | string): Promise<WpUser | null>
   return u ? cleanUser(u) : null;
 }
 
-/** All public users (directory). */
-export async function fetchUsers(perPage = 100): Promise<WpUser[]> {
+/** Public users, one page (directory is paged at 100). */
+export async function fetchUsers(perPage = 100, page = 1): Promise<WpUser[]> {
   const users = await wpFetch<WpUser[]>("/users", {
     per_page: String(perPage),
+    page: String(page),
     _fields: "id,name,slug,avatar_urls,description",
   });
   return users.map(cleanUser);
+}
+
+/** Every public user — pages through /users until a short page. */
+export async function fetchAllWpUsers(): Promise<WpUser[]> {
+  const all: WpUser[] = [];
+  for (let page = 1; page <= 5; page++) {
+    const batch = await fetchUsers(100, page).catch(() => [] as WpUser[]);
+    all.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return all;
 }
 
 /** Real comments for a video post. */

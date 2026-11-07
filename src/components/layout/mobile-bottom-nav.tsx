@@ -12,7 +12,7 @@ const mobileMenuItems = [
   { name: "Trending", href: "/feed/trending", icon: TrendingUp },
   { name: "Cerca", href: "/search", icon: Search },
   { name: "Contest", href: "/contest", icon: Trophy },
-  { name: "Profilo", href: "/u", icon: User },
+  { name: "Artisti", href: "/u", icon: User },
 ];
 
 export function MobileBottomNav() {
