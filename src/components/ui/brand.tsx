@@ -47,7 +47,7 @@ export function BazzibaMark({ size = 32, className = "" }: { size?: number; clas
 export function BazzibaWordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`font-bold tracking-tight text-white ${className}`}>
-      BAZZIBA<span className="text-[#00f2ff]">!</span>
+      BAZZIBA<span className="text-[#00f2ff] ml-[0.08em]">!</span>
     </span>
   );
 }

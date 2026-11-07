@@ -4,7 +4,8 @@ import { fetchUserBySlug, fetchUserById, fetchUsers, fetchVideosByAuthor, search
 import { VideoGrid } from "@/components/video/video-card";
 import { RealAvatar } from "@/components/ui/media";
 import { GlassSurface } from "@/components/ui";
-import { ExternalLink, Film, UserSearch, ArrowRight } from "lucide-react";
+import { ExternalLink, Film, UserSearch, ArrowRight, Clock, Tag } from "lucide-react";
+import { ProfileBio } from "@/components/user/profile-bio";
 
 export const revalidate = 300;
 
@@ -45,6 +46,11 @@ async function ProfileView({ user }: { user: WpUser }) {
   const avatar = user.avatar_urls?.["96"] ?? user.avatar_urls?.["48"] ?? null;
   const bio = (user.description ?? "").trim();
 
+  // Real computed stats from the fetched videos
+  const totalSeconds = videos.reduce((acc, v) => acc + (v.durationSec ?? 0), 0);
+  const totalMinutes = totalSeconds > 0 ? Math.round(totalSeconds / 60) : 0;
+  const categoryNames = [...new Set(videos.map((v) => v.category).filter((c) => c && c !== "Senza categoria"))];
+
   return (
     <div className="min-h-screen bg-[#050a14] text-white">
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -56,11 +62,11 @@ async function ProfileView({ user }: { user: WpUser }) {
               name={user.name}
               className="w-24 h-24 rounded-full border-2 border-[#00f2ff]/50 text-2xl"
             />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 w-full">
               <h1 className="text-2xl font-bold">{user.name}</h1>
               <p className="text-white/50 text-sm">@{user.slug}</p>
               {bio ? (
-                <p className="mt-3 text-white/70 leading-relaxed line-clamp-4">{bio}</p>
+                <ProfileBio bio={bio} />
               ) : (
                 <p className="mt-3 text-white/40 text-sm">Artista della community Bazziba.</p>
               )}
@@ -76,13 +82,27 @@ async function ProfileView({ user }: { user: WpUser }) {
             </a>
           </div>
 
-          {/* Real stat: published videos fetched from WP */}
-          <div className="mt-6 pt-6 border-t border-white/5">
-            <div className="inline-flex items-center gap-3 bg-white/5 rounded-xl px-5 py-3 border border-white/5">
-              <Film className="h-5 w-5 text-[#00f2ff]" />
-              <div>
-                <p className="text-xl font-bold text-[#00f2ff]">{videos.length}</p>
-                <p className="text-xs text-white/40">Video pubblicati</p>
+          {/* Real stats computed from the artist's videos */}
+          <div className="mt-6 pt-6 border-t border-white/5 grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="flex items-center gap-2.5 bg-white/5 rounded-xl px-3 sm:px-4 py-3 border border-white/5">
+              <Film className="h-5 w-5 text-[#00f2ff] flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-lg sm:text-xl font-bold text-[#00f2ff]">{videos.length}</p>
+                <p className="text-[11px] text-white/40 truncate">Video</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 bg-white/5 rounded-xl px-3 sm:px-4 py-3 border border-white/5">
+              <Clock className="h-5 w-5 text-[#00f2ff] flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-lg sm:text-xl font-bold text-[#00f2ff]">{totalMinutes}</p>
+                <p className="text-[11px] text-white/40 truncate">Minuti</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 bg-white/5 rounded-xl px-3 sm:px-4 py-3 border border-white/5">
+              <Tag className="h-5 w-5 text-[#00f2ff] flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-lg sm:text-xl font-bold text-[#00f2ff]">{categoryNames.length}</p>
+                <p className="text-[11px] text-white/40 truncate">{categoryNames.slice(0, 2).join(" · ")}{categoryNames.length > 2 ? "…" : ""}</p>
               </div>
             </div>
           </div>

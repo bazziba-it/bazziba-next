@@ -99,7 +99,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <MotionProvider>
             <div className="relative flex min-h-screen flex-col">
               <Navigation />
-              <main className="flex-1 pb-16 md:pb-0">{children}</main>
+              <main className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">{children}</main>
               <Footer />
               <MobileBottomNav />
             </div>

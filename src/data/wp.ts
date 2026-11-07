@@ -291,21 +291,27 @@ export interface VideoMediaMeta {
  * ONE request per 100 recent attachments (media_details carries `length`
  * seconds and dimensions; the REST parent key is `post`).
  */
-export async function fetchVideoMediaMap(perPage = 100): Promise<Map<number, VideoMediaMeta>> {
+export async function fetchVideoMediaMap(pages = 3): Promise<Map<number, VideoMediaMeta>> {
   const map = new Map<number, VideoMediaMeta>();
-  const rows = await wpFetch<
-    { post: number | null; media_details?: { length?: number; width?: number; height?: number } }[]
-  >("/media", {
-    media_type: "video",
-    per_page: String(perPage),
-    orderby: "date",
-    order: "desc",
-    _fields: "id,post,media_details",
-  }).catch((err) => {
-    console.error(`[wp] media map failed: ${err.message}`);
-    return [] as never[];
-  });
-  for (const m of rows) {
+  // N parallel pages of 100 attachments — covers ~300 recent videos' metadata
+  const results = await Promise.all(
+    Array.from({ length: pages }, (_, i) =>
+      wpFetch<
+        { post: number | null; media_details?: { length?: number; width?: number; height?: number } }[]
+      >("/media", {
+        media_type: "video",
+        per_page: "100",
+        page: String(i + 1),
+        orderby: "date",
+        order: "desc",
+        _fields: "id,post,media_details",
+      }).catch((err) => {
+        console.error(`[wp] media map page ${i + 1} failed: ${err.message}`);
+        return [] as never[];
+      })
+    )
+  );
+  for (const m of results.flat()) {
     if (!m.post) continue;
     const md = m.media_details ?? {};
     map.set(m.post, {
@@ -601,7 +607,8 @@ function cleanUser(u: WpUser): WpUser {
   if (!u.description) return u;
   let bio = stripHtml(u.description);
   // YouTube transcript timestamp junk ("00:00.", " 12:34.") pasted into bios
-  bio = bio.replace(/(?:^|[\s"'\u201c\u201d])\d{1,2}:\d{2}(?::\d{2})?\./g, " ").replace(/\s{2,}/g, " ").trim();
+  bio = bio.replace(/(?:^|[\s"'\u201c\u201d])\d{1,2}:\d{2}(?::\d{2})?\./g, " ");
+  bio = bio.replace(/"Aggiungi dettagli"\s*/g, "").replace(/\s{2,}/g, " ").trim();
   return { ...u, description: bio };
 }
 

@@ -101,14 +101,14 @@ export function Navigation() {
               <div className="hidden sm:block w-[220px]">
                 <SearchAutocomplete />
               </div>
-              <Link href="/upload" className="px-4 py-2 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg hover:bg-[#00d4e6] transition-colors flex items-center gap-1.5">
+              <Link href="/upload" className="hidden md:flex px-4 py-2 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg hover:bg-[#00d4e6] transition-colors items-center gap-1.5">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
                 Carica
               </Link>
-              <Link href="/auth/signin" className="px-4 py-2 text-sm font-semibold text-[#00f2ff] bg-white/5 rounded-full hover:bg-white/10 transition-colors border border-white/10">
+              <Link href="/auth/signin" className="hidden md:block px-4 py-2 text-sm font-semibold text-[#00f2ff] bg-white/5 rounded-full hover:bg-white/10 transition-colors border border-white/10">
                 ACCEDI
               </Link>
-              <Link href="/auth/signup" className="px-4 py-2 text-sm font-semibold text-black bg-[#00f2ff] rounded-full hover:bg-[#00d4e6] transition-colors">
+              <Link href="/auth/signup" className="hidden md:block px-4 py-2 text-sm font-semibold text-black bg-[#00f2ff] rounded-full hover:bg-[#00d4e6] transition-colors">
                 REGISTRATI
               </Link>
             </div>
@@ -184,6 +184,22 @@ export function Navigation() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
                 Carica video
               </Link>
+              <div className="flex gap-2 mt-2">
+                <Link
+                  href="/auth/signin"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex-1 text-center px-4 py-2.5 text-sm font-semibold text-[#00f2ff] bg-white/5 rounded-lg border border-white/10"
+                >
+                  ACCEDI
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex-1 text-center px-4 py-2.5 text-sm font-semibold text-black bg-[#00f2ff] rounded-lg"
+                >
+                  REGISTRATI
+                </Link>
+              </div>
             </nav>
           </motion.div>
         )}
