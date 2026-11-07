@@ -21,6 +21,7 @@ import {
   Download,
   User,
   Layers,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -68,10 +69,11 @@ interface WatchClientProps {
   related: BazzibaVideo[];
   moreFromAuthor: BazzibaVideo[];
   authorVideoCount: number;
+  views: number | null;
   sourceUrl: string;
 }
 
-export default function WatchClient({ video, mp4, poster, comments, related, moreFromAuthor, authorVideoCount, sourceUrl }: WatchClientProps) {
+export default function WatchClient({ video, mp4, poster, comments, related, moreFromAuthor, authorVideoCount, views, sourceUrl }: WatchClientProps) {
   const [copied, setCopied] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
@@ -189,6 +191,13 @@ export default function WatchClient({ video, mp4, poster, comments, related, mor
                   <Badge variant="outline" className="text-xs font-mono">
                     {video.resolution}
                   </Badge>
+                )}
+                {/* Real view count (scraped from the StreamTube counter on bazziba.it) */}
+                {views != null && (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Eye className="h-3.5 w-3.5 text-[#00f2ff]" />
+                    {views.toLocaleString("it-IT")} visualizzazioni
+                  </span>
                 )}
                 {video.date && (
                   <span className="text-sm text-muted-foreground">

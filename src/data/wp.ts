@@ -638,6 +638,37 @@ export async function fetchContestTerms(): Promise<WpTerm[]> {
 }
 
 /* ------------------------------------------------------------------ */
+/* View counts (scraped — StreamTube renders them, REST hides them)    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Real view count for a video, scraped from its bazziba.it page:
+ * StreamTube server-renders `<div class="post-meta__views">…N visualizzazioni`
+ * (first occurrence = the main video, right after its category link).
+ * The WP REST API does not expose this meta. Cached; null on any failure.
+ */
+export async function fetchVideoViews(slug: string): Promise<number | null> {
+  const key = `views:${slug}`;
+  const cached = getCached<number | null>(key);
+  if (cached !== null) return cached;
+  try {
+    const res = await fetch(`https://bazziba.it/video/${slug}/`, {
+      headers: { "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36" },
+      next: { revalidate: 300 },
+      signal: AbortSignal.timeout(12000),
+    } as RequestInit);
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/post-meta__views[^]*?(\d[\d.,]*)\s*visualizzazioni/);
+    const views = m ? parseInt(m[1].replace(/[.,]/g, ""), 10) : null;
+    setCache(key, views);
+    return views;
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Artist directory stats                                              */
 /* ------------------------------------------------------------------ */
 
