@@ -138,7 +138,7 @@ export function Navigation() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12, transition: { duration: 0.15 } }}
             transition={MOTION.page}
-            className="md:hidden glass-docked border-b border-white/10 sticky top-[64px] z-[var(--z-docked)]"
+            className="md:hidden glass-docked border-b border-white/10 sticky top-[64px] z-[var(--z-docked)] bg-[#050a14]/95 backdrop-blur-xl shadow-2xl shadow-black/60"
           >
             {/* Real search with autocomplete */}
             <div className="px-4 pt-3">
