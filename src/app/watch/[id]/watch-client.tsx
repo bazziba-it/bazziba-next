@@ -18,6 +18,9 @@ import {
   Copy,
   Check,
   MessageSquare,
+  Download,
+  User,
+  Layers,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -63,10 +66,12 @@ interface WatchClientProps {
   poster: string | null;
   comments: WpComment[];
   related: BazzibaVideo[];
+  moreFromAuthor: BazzibaVideo[];
+  authorVideoCount: number;
   sourceUrl: string;
 }
 
-export default function WatchClient({ video, mp4, poster, comments, related, sourceUrl }: WatchClientProps) {
+export default function WatchClient({ video, mp4, poster, comments, related, moreFromAuthor, authorVideoCount, sourceUrl }: WatchClientProps) {
   const [copied, setCopied] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
@@ -142,6 +147,20 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
                   </>
                 )}
               </button>
+
+              {/* Real download: the actual MP4 from bazziba.it */}
+              {mp4 && (
+                <a
+                  href={mp4}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-card/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
+                >
+                  <Download className="h-4 w-4" />
+                  Scarica
+                </a>
+              )}
             </div>
 
             {/* Title & real meta */}
@@ -206,7 +225,9 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
                 />
                 <div>
                   <p className="font-semibold group-hover:text-[#00f2ff] transition-colors">{video.authorName}</p>
-                  <p className="text-sm text-muted-foreground">Artista su Bazziba</p>
+                  <p className="text-sm text-muted-foreground">
+                    {authorVideoCount > 0 ? `${authorVideoCount} video pubblicati` : "Artista su Bazziba"}
+                  </p>
                 </div>
               </Link>
             </div>
@@ -215,12 +236,44 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
             <CommentsSection videoId={video.id} initialComments={comments} sourceUrl={sourceUrl} />
           </div>
 
-          {/* Sidebar — real related videos from the same category */}
-          <div className="space-y-3 lg:sticky lg:top-24">
-            <h3 className="font-semibold mb-3 text-lg flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              Video Suggeriti
-            </h3>
+          {/* Sidebar — real related videos from the same category + author */}
+          <div className="space-y-6 lg:sticky lg:top-24">
+            {moreFromAuthor.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 text-lg flex items-center gap-2">
+                  <User className="h-4 w-4 text-[#00f2ff]" />
+                  Altro da {video.authorName}
+                </h3>
+                <div className="space-y-3">
+                  {moreFromAuthor.map((v) => (
+                    <Link key={v.id} href={`/watch/${v.id}`} className="flex gap-3 group">
+                      <div className="relative flex-shrink-0 w-32 aspect-video bg-muted rounded-lg overflow-hidden">
+                        {v.thumbnail ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={v.thumbnail} alt={v.title} className="h-full w-full object-cover group-hover:brightness-110 transition-brightness" loading="lazy" />
+                        ) : (
+                          <ThumbPlaceholder title={v.title} className="h-full w-full" />
+                        )}
+                        {v.durationSec && (
+                          <span className="absolute bottom-1 right-1 bg-black/75 text-white text-[10px] font-mono px-1 rounded">
+                            {formatDurationSec(v.durationSec)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-medium text-sm line-clamp-2 group-hover:text-[#00f2ff] transition-colors">{v.title}</h4>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h3 className="font-semibold mb-3 text-lg flex items-center gap-2">
+                <Layers className="h-4 w-4 text-[#00f2ff]" />
+                Video Suggeriti
+              </h3>
             {related.length === 0 ? (
               <p className="text-sm text-white/30">Nessun video correlato in questa categoria.</p>
             ) : (
@@ -257,6 +310,7 @@ export default function WatchClient({ video, mp4, poster, comments, related, sou
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>

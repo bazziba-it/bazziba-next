@@ -638,6 +638,46 @@ export async function fetchContestTerms(): Promise<WpTerm[]> {
 }
 
 /* ------------------------------------------------------------------ */
+/* Explore (filtered / sorted browsing)                                */
+/* ------------------------------------------------------------------ */
+
+export interface ExploreQuery {
+  categoryId?: number;
+  orderby?: "date" | "title" | "rand";
+  order?: "asc" | "desc";
+  perPage?: number;
+  page?: number;
+}
+
+/** Filtered + sorted video browse for the trending/explore page. */
+export async function fetchVideosExplore(q: ExploreQuery = {}): Promise<BazzibaVideo[]> {
+  const params: Record<string, string> = {
+    per_page: String(q.perPage ?? 24),
+    page: String(q.page ?? 1),
+    _embed: "true",
+    orderby: q.orderby ?? "date",
+    order: q.order ?? (q.orderby === "title" ? "asc" : "desc"),
+  };
+  if (q.categoryId) params.video_category = String(q.categoryId);
+  const rows = await wpFetch<WpVideo[]>("/video", params);
+  return withAuthors(rows);
+}
+
+/** Total published videos by an author (X-WP-Total — one tiny call). */
+export async function fetchAuthorVideoCount(authorId: number): Promise<number> {
+  try {
+    const res = await fetch(`${WP_BASE}/video?author=${authorId}&per_page=1`, {
+      next: { revalidate: 600 },
+      signal: AbortSignal.timeout(8000),
+    } as RequestInit);
+    if (!res.ok) return 0;
+    return parseInt(res.headers.get("X-WP-Total") ?? "0", 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Site pulse (latest comments + their videos)                         */
 /* ------------------------------------------------------------------ */
 
